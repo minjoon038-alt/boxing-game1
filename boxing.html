@@ -1,0 +1,2222 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>BOXING</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html,body{margin:0;height:100%;background:#0b0b0f;overflow:hidden}
+  body{display:flex;align-items:center;justify-content:center}
+  :root{--cw:min(100vw,calc(100vh*16/9));--u:calc(var(--cw)/960)}   /* --u: 캔버스 폭 1/960 (메인 화면 글자/버튼을 화면 크기에 맞춰 키우고 줄이는 단위) */
+  #wrap{position:relative;width:var(--cw);aspect-ratio:16/9;background:#0e0e13}
+  canvas{width:100%;height:100%;display:block}
+  #menu{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .45s ease both}
+  #menu.hidden{display:none}
+  #menu>*{pointer-events:auto}
+  @keyframes menuIn{from{opacity:0;transform:translateY(calc(var(--u)*10))}to{opacity:1;transform:none}}
+  #menu .who{position:absolute;left:0;right:0;top:calc(var(--u)*134);text-align:center;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.85)}
+  #menu .who .id{font-size:calc(var(--u)*20);font-weight:700;letter-spacing:calc(var(--u)*2)}
+  #menu .who .best{margin-top:calc(var(--u)*6);font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*3);color:#ffd166}
+  #menu .play{position:absolute;left:50%;top:calc(var(--u)*296);transform:translate(-50%,-50%);width:calc(var(--u)*232);height:calc(var(--u)*66);border:0;border-radius:calc(var(--u)*33);background:#f2f2f2;color:#0e0e13;font-family:inherit;font-size:calc(var(--u)*24);font-weight:800;letter-spacing:calc(var(--u)*10);padding-left:calc(var(--u)*10);cursor:pointer;box-shadow:0 0 calc(var(--u)*28) rgba(255,255,255,.28),0 calc(var(--u)*8) calc(var(--u)*20) rgba(0,0,0,.45);transition:transform .15s,box-shadow .15s,background .15s}
+  #menu .play:hover,#menu .play:focus-visible{background:#fff;transform:translate(-50%,-50%) scale(1.06);box-shadow:0 0 calc(var(--u)*40) rgba(255,255,255,.5),0 calc(var(--u)*10) calc(var(--u)*24) rgba(0,0,0,.5);outline:none}
+  #menu .play:active{transform:translate(-50%,-50%) scale(.98)}
+  #menu .enter{position:absolute;left:0;right:0;top:calc(var(--u)*342);text-align:center;font-size:calc(var(--u)*11);letter-spacing:calc(var(--u)*3);color:#aab0c4;pointer-events:none;text-shadow:0 0 calc(var(--u)*6) rgba(0,0,10,.9)}
+  #menu .sub{position:absolute;left:0;right:0;top:calc(var(--u)*378);display:flex;justify-content:center;gap:calc(var(--u)*12)}
+  .ghost{background:rgba(8,10,22,.6);border:1px solid rgba(255,255,255,.2);border-radius:calc(var(--u)*16);padding:calc(var(--u)*7) calc(var(--u)*20);color:#c4c9da;font-family:inherit;font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*2);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+  .ghost:hover,.ghost:focus-visible{color:#fff;border-color:rgba(255,255,255,.55);background:rgba(20,24,44,.75);outline:none}
+  .ghost.gold{color:#ffd166;border-color:rgba(255,209,102,.45)}
+  .ghost.gold:hover,.ghost.gold:focus-visible{color:#ffe29a;border-color:#ffd166;background:rgba(60,44,10,.6)}
+
+  /* ----- 랭킹 화면 ----- */
+  #rank{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .4s ease both}
+  #rank.hidden{display:none}
+  #rank .panel{pointer-events:auto;position:absolute;left:50%;top:calc(var(--u)*108);transform:translateX(-50%);width:calc(var(--u)*400);height:calc(var(--u)*388);box-sizing:border-box;padding:calc(var(--u)*16) calc(var(--u)*18) calc(var(--u)*14);background:rgba(6,8,20,.86);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);-webkit-backdrop-filter:blur(calc(var(--u)*5));backdrop-filter:blur(calc(var(--u)*5));box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55);display:flex;flex-direction:column}
+  #rank .head{display:flex;align-items:center;justify-content:space-between}
+  #rank .ttl{font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*8);padding-left:calc(var(--u)*2)}
+  #rank .live{display:flex;align-items:center;gap:calc(var(--u)*6);font-size:calc(var(--u)*10);font-weight:700;letter-spacing:calc(var(--u)*2);color:#7e849a}
+  #rank .live::before{content:'';width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:50%;background:#7e849a}
+  #rank .live.on{color:#7dffa6}
+  #rank .live.on::before{background:#35e07a;animation:livePulse 1.6s ease-in-out infinite}
+  #rank .live.bump{animation:liveBump .8s ease}
+  #rank .cols{display:grid;grid-template-columns:calc(var(--u)*46) 1fr calc(var(--u)*96);margin-top:calc(var(--u)*12);padding:0 calc(var(--u)*6) calc(var(--u)*6);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a;border-bottom:1px solid rgba(255,255,255,.12)}
+  #rank .cols span:last-child{text-align:right}
+  #rank ol{list-style:none;margin:0;padding:0;flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
+  #rank li{display:grid;grid-template-columns:calc(var(--u)*46) 1fr calc(var(--u)*96);align-items:center;height:calc(var(--u)*28);padding:0 calc(var(--u)*6);font-size:calc(var(--u)*14);border-bottom:1px solid rgba(255,255,255,.05);border-left:calc(var(--u)*3) solid transparent}
+  #rank li .no{display:inline-flex;align-items:center;justify-content:center;width:calc(var(--u)*22);height:calc(var(--u)*22);border-radius:50%;font-size:calc(var(--u)*12);font-weight:700;color:#aab0c4}
+  #rank li.r1 .no{background:#ffd166;color:#241a00}
+  #rank li.r2 .no{background:#c9ccd6;color:#1a1c24}
+  #rank li.r3 .no{background:#d9955f;color:#2a1405}
+  #rank li .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  #rank li.r1 .nm{color:#ffd166}
+  #rank li .st{text-align:right;font-size:calc(var(--u)*12);font-weight:700;letter-spacing:calc(var(--u)*1);color:#c4c9da}
+  #rank li.me{background:rgba(81,133,255,.18);border-left-color:#5185ff}
+  #rank li.flash{animation:rowFlash 1.6s ease}
+  #rank [hidden]{display:none !important}   /* display:flex 인 .empty 가 hidden 속성을 무시하고 목록 아래에 계속 보이던 문제 방지 */
+  #rank .empty{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.7;padding:0 calc(var(--u)*20);font-size:calc(var(--u)*13);color:#9aa0b4}
+  #rank .foot{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*10);margin-top:calc(var(--u)*10);padding-top:calc(var(--u)*10);border-top:1px solid rgba(255,255,255,.12)}
+  #rank .foot .ghost{flex:none;white-space:nowrap}   /* 안내 문구가 길어도 버튼이 두 줄로 찌그러지지 않게 */
+  #rank .mine{font-size:calc(var(--u)*12);color:#c4c9da;line-height:1.5;min-width:0;flex:1}
+  #rank .mine b{color:#fff;font-size:calc(var(--u)*13)}
+  #rank .mine .gold{color:#ffd166;font-weight:700}
+  @keyframes livePulse{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes liveBump{0%{transform:scale(1.35);color:#fff}100%{transform:none}}
+  @keyframes rowFlash{0%{background:rgba(255,209,102,.55)}100%{background:transparent}}
+  #rank li.me.flash{animation-name:rowFlashMe}
+  @keyframes rowFlashMe{0%{background:rgba(255,209,102,.55)}100%{background:rgba(81,133,255,.18)}}
+
+  /* ----- 캐릭터 선택 창 (홈 화면에서 연다): 세 캐릭터가 링 위에 나란히 서 있고, 카드에는 이름·설명(위)과 능력치·기술(아래)이 있다 ----- */
+  #menu .who .chr{margin-top:calc(var(--u)*5);font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*2);color:#c4c9da}
+  #chars{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .4s ease both}
+  #chars.hidden{display:none}
+  #chars .ttl{position:absolute;left:calc(var(--u)*30);top:calc(var(--u)*16);font-size:calc(var(--u)*15);font-weight:700;letter-spacing:calc(var(--u)*6);text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.9)}
+  #chars .ttl small{display:block;margin-top:calc(var(--u)*4);font-size:calc(var(--u)*10);font-weight:500;letter-spacing:calc(var(--u)*1);color:#aab0c4}
+  #chars .done{pointer-events:auto;position:absolute;right:calc(var(--u)*30);top:calc(var(--u)*18)}
+  #chars .card{pointer-events:auto;cursor:pointer;position:absolute;top:calc(var(--u)*84);height:calc(var(--u)*452);width:calc(var(--u)*262);box-sizing:border-box;border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);transition:border-color .15s,box-shadow .15s,background .15s}
+  #chars .card[data-ch=outfighter]{left:calc(var(--u)*59)} #chars .card[data-ch=infighter]{left:calc(var(--u)*349)} #chars .card[data-ch=slugger]{left:calc(var(--u)*639)}
+  #chars .card:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.04)}
+  #chars .card.on{border-color:#ffd166;box-shadow:0 0 calc(var(--u)*26) rgba(255,209,102,.28);background:rgba(255,209,102,.05)}
+  #chars .ct,#chars .cb{position:absolute;left:0;right:0;box-sizing:border-box;padding:calc(var(--u)*12) calc(var(--u)*14);background:rgba(6,8,20,.74);-webkit-backdrop-filter:blur(calc(var(--u)*3));backdrop-filter:blur(calc(var(--u)*3))}
+  #chars .ct{top:0;border-radius:calc(var(--u)*13) calc(var(--u)*13) 0 0;text-align:center}
+  #chars .cb{bottom:0;border-radius:0 0 calc(var(--u)*13) calc(var(--u)*13)}
+  #chars .nm{font-size:calc(var(--u)*20);font-weight:800;letter-spacing:calc(var(--u)*3)}
+  #chars .tg{margin-top:calc(var(--u)*2);font-size:calc(var(--u)*10);font-weight:600;letter-spacing:calc(var(--u)*3);color:#7e849a}
+  #chars .ds{margin-top:calc(var(--u)*8);font-size:calc(var(--u)*11.5);line-height:1.55;color:#c4c9da}
+  #chars .badge{position:absolute;right:calc(var(--u)*10);top:calc(var(--u)*-11);padding:calc(var(--u)*3) calc(var(--u)*10);border-radius:calc(var(--u)*10);background:#ffd166;color:#241a00;font-size:calc(var(--u)*10);font-weight:800;letter-spacing:calc(var(--u)*2);opacity:0;transition:opacity .15s}
+  #chars .card.on .badge{opacity:1}
+  #chars .stat{display:grid;grid-template-columns:calc(var(--u)*56) 1fr;align-items:center;height:calc(var(--u)*16);font-size:calc(var(--u)*10.5);color:#aab0c4}
+  #chars .bar{height:calc(var(--u)*6);border-radius:calc(var(--u)*3);background:rgba(255,255,255,.1);overflow:hidden}
+  #chars .bar i{display:block;height:100%;border-radius:inherit;background:#5185ff}
+  #chars .stat.p .bar i{background:#ff5a5f} #chars .stat.s .bar i{background:#8de0c4} #chars .stat.r .bar i{background:#ffd166}
+  #chars .mv{margin-top:calc(var(--u)*7);font-size:calc(var(--u)*10.5);color:#9aa0b4;line-height:1.5}
+  #chars .mv b{color:#e6e9f5;font-weight:700}
+  /* ----- 스테이지 선택 창 (랭킹 창과 같은 모양) ----- */
+  #stages{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .4s ease both}
+  #stages.hidden{display:none}
+  #stages .panel{pointer-events:auto;position:absolute;left:50%;top:calc(var(--u)*108);transform:translateX(-50%);width:calc(var(--u)*400);height:calc(var(--u)*388);box-sizing:border-box;padding:calc(var(--u)*16) calc(var(--u)*18) calc(var(--u)*14);background:rgba(6,8,20,.86);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);-webkit-backdrop-filter:blur(calc(var(--u)*5));backdrop-filter:blur(calc(var(--u)*5));box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55);display:flex;flex-direction:column}
+  #stages .head{display:flex;align-items:center;justify-content:space-between}
+  #stages .ttl{font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*8);padding-left:calc(var(--u)*2)}
+  #stages .sub{font-size:calc(var(--u)*11);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166}
+  #stages .grid{flex:1;min-height:0;margin-top:calc(var(--u)*12);padding:calc(var(--u)*4) calc(var(--u)*2);display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:calc(var(--u)*46);gap:calc(var(--u)*8);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
+  #stages .stb{font-family:inherit;font-size:calc(var(--u)*17);font-weight:700;border-radius:calc(var(--u)*10);cursor:pointer;color:#e6e9f5;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);transition:background .15s,border-color .15s,transform .12s}
+  #stages .stb.clear:hover,#stages .stb.clear:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.55);outline:none;transform:translateY(calc(var(--u)*-1))}
+  #stages .stb.next{color:#241a00;background:#ffd166;border-color:#ffd166;box-shadow:0 0 calc(var(--u)*14) rgba(255,209,102,.35)}
+  #stages .stb.next:hover,#stages .stb.next:focus-visible{background:#ffe29a;outline:none;transform:translateY(calc(var(--u)*-1))}
+  #stages .stb.lock{cursor:default;color:#4a5068;background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.07)}
+  #stages .foot{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*10);margin-top:calc(var(--u)*10);padding-top:calc(var(--u)*10);border-top:1px solid rgba(255,255,255,.12)}
+  #stages .foot .ghost{flex:none;white-space:nowrap}
+  #stages .mine{font-size:calc(var(--u)*11.5);color:#9aa0b4;line-height:1.5;min-width:0;flex:1}
+  /* ----- 멀티플레이 창 / 안내 문구 ----- */
+  #menu .sub2{top:calc(var(--u)*416)}
+  #menu .toast{position:absolute;left:0;right:0;top:calc(var(--u)*458);text-align:center;font-size:calc(var(--u)*13);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;opacity:0;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.9);transition:opacity .4s}
+  #menu .toast.on{opacity:1}
+  #mp{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .4s ease both}
+  #mp.hidden{display:none}
+  #mp .hide{display:none !important}
+  #mp .panel{pointer-events:auto;position:absolute;left:50%;top:calc(var(--u)*128);transform:translateX(-50%);width:calc(var(--u)*400);box-sizing:border-box;padding:calc(var(--u)*18) calc(var(--u)*22) calc(var(--u)*16);background:rgba(6,8,20,.88);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);-webkit-backdrop-filter:blur(calc(var(--u)*5));backdrop-filter:blur(calc(var(--u)*5));box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55)}
+  #mp .head{display:flex;align-items:center;justify-content:space-between}
+  #mp .ttl{font-size:calc(var(--u)*17);font-weight:700;letter-spacing:calc(var(--u)*6)}
+  #mp .live{font-size:calc(var(--u)*10);font-weight:700;letter-spacing:calc(var(--u)*2);color:#7e849a}
+  #mp .body{display:flex;flex-direction:column;align-items:center;margin-top:calc(var(--u)*20)}
+  #mp .lbl{font-size:calc(var(--u)*12);color:#aab0c4;letter-spacing:calc(var(--u)*1)}
+  #mp input{margin-top:calc(var(--u)*12);width:calc(var(--u)*230);box-sizing:border-box;text-align:center;padding:calc(var(--u)*10) 0 calc(var(--u)*10) calc(var(--u)*14);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.22);border-radius:calc(var(--u)*10);color:#fff;font-family:inherit;font-size:calc(var(--u)*30);font-weight:700;letter-spacing:calc(var(--u)*14);outline:none}
+  #mp input:focus{border-color:#ffd166}
+  #mp input::placeholder{color:#3d4256}
+  #mp .code{margin-top:calc(var(--u)*12);font-size:calc(var(--u)*40);font-weight:800;letter-spacing:calc(var(--u)*12);padding-left:calc(var(--u)*12);color:#ffd166;text-shadow:0 0 calc(var(--u)*16) rgba(255,209,102,.35);user-select:all}
+  #mp .go{margin-top:calc(var(--u)*14)}
+  #mp .status{min-height:calc(var(--u)*34);margin-top:calc(var(--u)*14);text-align:center;font-size:calc(var(--u)*12.5);line-height:1.5;color:#c4c9da}
+  #mp .status.err{color:#ff7b80}
+  #mp .foot{display:flex;justify-content:center;margin-top:calc(var(--u)*6);padding-top:calc(var(--u)*12);border-top:1px solid rgba(255,255,255,.12)}
+  #auth{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(11,11,15,.82);font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2}
+  #auth.hidden{display:none}
+  #auth .box{width:300px;max-width:86vw}
+  #auth h1{margin:0 0 28px;text-align:center;font-weight:200;font-size:44px;letter-spacing:14px;padding-left:14px}
+  #auth .tabs{display:flex;margin-bottom:18px;border-bottom:1px solid #2a2a35}
+  #auth .tab{flex:1;padding:10px 0;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;color:#5f5f6e;font-weight:600;font-size:13px;font-family:inherit;letter-spacing:2px;cursor:pointer}
+  #auth .tab.on{color:#f2f2f2;border-bottom-color:#f2f2f2}
+  #auth label{display:block;font-size:11px;letter-spacing:2px;color:#5f5f6e;margin:14px 0 6px}
+  #auth input{width:100%;box-sizing:border-box;padding:10px 12px;background:transparent;border:1px solid #2a2a35;border-radius:6px;color:#f2f2f2;font-size:14px;font-family:inherit;outline:none}
+  #auth input:focus{border-color:#f2f2f2}
+  #auth .submit{width:100%;margin-top:22px;padding:11px;background:#f2f2f2;color:#0e0e13;border:0;border-radius:6px;font-weight:700;font-size:13px;font-family:inherit;letter-spacing:3px;cursor:pointer}
+  #auth .submit:hover{background:#fff}
+  #auth .msg{min-height:20px;margin-top:14px;font-size:13px;font-weight:600;text-align:center;color:#ff5a5f}
+  #auth .msg.ok{color:#ffd166}
+  #auth .hint{margin-top:6px;font-size:11px;color:#5f5f6e;text-align:center}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c" width="960" height="540"></canvas>
+  <!-- 메인 화면: 로그인 후 가장 먼저 보이고, PLAY를 누르면 게임이 시작된다 -->
+  <div id="menu" class="hidden">
+    <div class="who"><div class="id" id="menuUser"></div><div class="best" id="menuBest"></div><div class="chr" id="menuChar"></div></div>
+    <button class="play" id="playBtn" type="button">PLAY</button>
+    <div class="enter">또는 ENTER</div>
+    <div class="sub">
+      <button class="ghost" id="stageBtn" type="button">스테이지</button>
+      <button class="ghost" id="charBtn" type="button">캐릭터</button>
+      <button class="ghost gold" id="rankBtn" type="button">랭킹</button>
+      <button class="ghost" id="logoutBtn" type="button">로그아웃</button>
+    </div>
+    <div class="sub sub2">
+      <button class="ghost" id="hostBtn" type="button">방 만들기</button>
+      <button class="ghost" id="joinBtn" type="button">멀티플레이</button>
+    </div>
+    <div class="toast" id="mpToast"></div>
+  </div>
+  <!-- 멀티플레이 창: 방 만들기(6자리 코드 생성) / 멀티플레이(친구의 6자리 코드 입력). 두 PC가 인터넷으로 직접 연결된다 -->
+  <div id="mp" class="hidden">
+    <div class="panel">
+      <div class="head"><span class="ttl" id="mpTtl">MULTIPLAYER</span><span class="live" id="mpLive"></span></div>
+      <div id="mpJoin" class="body">
+        <div class="lbl">친구가 알려 준 방 코드 6자리를 입력하세요</div>
+        <input id="mpCode" inputmode="numeric" maxlength="6" autocomplete="off" spellcheck="false" placeholder="000000">
+        <button class="ghost gold go" id="mpGo" type="button">입장</button>
+      </div>
+      <div id="mpHost" class="body">
+        <div class="lbl">친구에게 이 코드를 알려 주세요</div>
+        <div class="code" id="mpShow">------</div>
+        <button class="ghost go" id="mpCopy" type="button">코드 복사</button>
+      </div>
+      <div class="status" id="mpMsg"></div>
+      <div class="foot"><button class="ghost" id="mpBack" type="button">← 메인 (ESC)</button></div>
+    </div>
+  </div>
+  <!-- 랭킹 화면: 베스트 스테이지가 높은 순서. 열려 있는 동안 1.2초마다 서버를 확인해 바뀌면 바로 갱신한다 -->
+  <div id="rank" class="hidden">
+    <div class="panel">
+      <div class="head"><span class="ttl">RANKING</span><span class="live" id="rankLive">CONNECTING</span></div>
+      <div class="cols"><span>순위</span><span>아이디</span><span>베스트 스테이지</span></div>
+      <ol id="rankList"></ol>
+      <div class="empty" id="rankEmpty">불러오는 중…</div>
+      <div class="foot">
+        <div class="mine" id="rankMine"></div>
+        <button class="ghost" id="rankBack" type="button">← 메인 (ESC)</button>
+      </div>
+    </div>
+  </div>
+  <!-- 스테이지 선택 창: 깬 스테이지 + 다음 스테이지까지 열려 있고, 누르면 그 스테이지부터 시작 -->
+  <div id="stages" class="hidden">
+    <div class="panel">
+      <div class="head"><span class="ttl">STAGE</span><span class="sub" id="stSub"></span></div>
+      <div class="grid" id="stGrid"></div>
+      <div class="foot">
+        <div class="mine" id="stMine"></div>
+        <button class="ghost" id="stBack" type="button">← 메인 (ESC)</button>
+      </div>
+    </div>
+  </div>
+  <!-- 캐릭터 선택 창: 카드(또는 ← →)로 고르면 바로 저장되고, 메인 화면의 내 캐릭터가 바뀐다 -->
+  <div id="chars" class="hidden">
+    <div class="ttl">CHARACTER<small>카드를 눌러 선택 · ← → 키 · Enter / ESC 로 메인</small></div>
+    <button class="ghost done" id="charsBack" type="button">← 메인 (ESC)</button>
+    <div class="card" data-ch="outfighter"></div>
+    <div class="card" data-ch="infighter"></div>
+    <div class="card" data-ch="slugger"></div>
+  </div>
+</div>
+<div id="auth">
+  <form class="box" id="authForm" autocomplete="off">
+    <h1>BOXING</h1>
+    <div class="tabs">
+      <button type="button" class="tab on" data-mode="login">로그인</button>
+      <button type="button" class="tab" data-mode="signup">가입하기</button>
+    </div>
+    <label for="uid">ID</label>
+    <input id="uid" maxlength="12" autocomplete="username" spellcheck="false">
+    <label for="upw">PASSWORD</label>
+    <input id="upw" type="password" maxlength="40" autocomplete="current-password">
+    <div id="pw2wrap" style="display:none">
+      <label for="upw2">PASSWORD 확인</label>
+      <input id="upw2" type="password" maxlength="40" autocomplete="new-password">
+    </div>
+    <div class="msg" id="authMsg"></div>
+    <button class="submit" id="authSubmit" type="submit">로그인</button>
+    <div class="hint" id="authHint">가입한 계정으로 로그인하세요</div>
+  </form>
+</div>
+<script>
+/* 진단용: 게임 스크립트가 실행되지 않거나 오류가 나면 로그인 화면의 메시지 줄에 원인을 표시한다 */
+(function(){
+  function show(t){ var m = document.getElementById('authMsg'); if(m) m.textContent = t; }
+  window.addEventListener('error', function(e){ show('오류: ' + e.message + (e.lineno ? ' (줄 ' + e.lineno + ')' : '')); });
+  window.addEventListener('load', function(){ if(!window.__boxingReady) show('게임 스크립트가 실행되지 않았습니다 (' + location.protocol + ')'); });
+})();
+</script>
+<script>
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const W = 960, H = 540, GY = 430;
+const COL = { bg:'#0e0e13', fg:'#f2f2f2', dim:'#5f5f6e', red:'#ff5a5f', gold:'#ffd166', blue:'#6ea8ff' };
+const FONT = "system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
+
+/* ---------- 조작키 ----------
+   A / D (← →) 이동 · J 잽 · K 스트레이트 · S (↓) 가드(누르는 동안) · SPACE 회피
+*/
+const ACTION_KEYS = { KeyJ:'jab', KeyK:'straight', KeyL:'uppercut', KeyU:'skill', Space:'dodge' };
+const GUARD_KEYS = ['KeyS', 'ArrowDown'];
+const keys = {};
+
+/* ---------- 입력 버퍼 ----------
+   모션 중에 눌린 입력을 잠깐 저장했다가, 행동 가능한(idle) 순간에 실행한다.
+   ms     : 버퍼 유효시간(밀리초). 150~200 사이에서 시험해 보며 맞춘다
+   actions: 동작별 버퍼 적용 여부. false면 누른 그 프레임에 행동 가능할 때만 실행(저장 안 됨)
+   저장 칸은 1개뿐이다: 새 입력이 들어오면 대기 중이던 입력을 최신 입력으로 바꾼다.
+   키를 누르고 있는 것(e.repeat)은 입력으로 세지 않고, 새로 누른 순간만 저장한다 (keydown 쪽에서 걸러냄). */
+const INPUT_BUFFER = {
+  ms: 170,
+  actions: { jab:true, straight:true, uppercut:true, skill:true, dodge:true, guard:true }
+};
+const bufWindow = a => INPUT_BUFFER.actions[a] ? INPUT_BUFFER.ms/1000 : .5/60;
+let buf = [];
+function pushInput(action){
+  buf = [{ a:action, age:0 }];                          // 최대 1개: 기존 대기 입력은 최신 입력으로 교체
+}
+/* 지금 다음 행동을 시작할 수 있는가. 공격이 적중한 뒤에는 그 공격의 cxAt(초, 공격 시작 기준)부터 다음 공격으로 이어 칠 수 있다.
+   cxAt을 안 적으면 타격이 닿는 순간(windup)부터 — 공격별로 이어치기 시작 시점을 따로 조절하려면 공격 데이터에 cxAt을 적는다.
+   적중하지 못한 공격은 후딜레이가 끝나(idle) 전까지 버퍼 입력이 실행되지 않는다. */
+function canAct(f){
+  return f.state === 'idle' || (f.state === 'dodge' && f.t >= DODGE_CANCEL) ||
+    (f.state === 'attack' && f.connected && f.t >= (f.atk.cxAt !== undefined ? f.atk.cxAt : f.atk.windup));
+}
+const STAM_USE = .82;                                   // 스태미나 소모 배율 (공격·회피·바디 블로우 모두 이전보다 18% 적게 닳는다)
+const DODGE_CANCEL =.12;                              // 회피 시작 후 이 시간(초)부터는 회피 동작을 끊고 바로 공격할 수 있다 (무적은 .26초까지 그대로)
+function takeBuffered(f){                             // 행동 가능할 때(대기 중, 또는 공격이 적중한 직후)만 가장 오래된 입력부터 꺼냄
+  if(!canAct(f) || !buf.length) return null;
+  const i = buf.findIndex(b => !(f.atkCd[b.a] > 0));   // 재사용 대기 중인 공격 입력은 남겨 두고(시간이 지나면 폐기) 다른 입력을 먼저 처리
+  return i < 0 ? null : buf.splice(i, 1)[0].a;
+}
+function ageBuffer(dt){                                // 시간이 지난 입력은 폐기 (늦게 실행 방지)
+  for(const b of buf) b.age += dt;
+  buf = buf.filter(b => b.age < bufWindow(b.a) - 1e-6);
+}
+
+// 타격 종류별 타격감. freeze: 히트스톱(초) / shake: 화면 흔들림 / snap: 맞은 쪽 고개 젖힘(0~1) / recoil: 때린 쪽 반동 속도
+// sparks·ring·star·dust: 맞는 자리 이펙트 크기(0이면 없음) / kick: 화면 살짝 확대 / sfx: 타격음 종류
+// 히트스톱은 일반 타격 40~80ms, 카운터 130ms, 스킬 200ms. 화면 흔들림·임팩트 별은 강한 공격에만 아주 약하게(잽은 없음)
+const HIT_FEEL = {
+  jab:      { freeze:.04, shake:0,   snap:.35, recoil:0,  sparks:5, ring:30, star:0,  dust:0, kick:0,    sfx:'hit_jab' },
+  straight: { freeze:.07, shake:4,   snap:.80, recoil:60, sparks:8, ring:54, star:34, dust:2, kick:.010, sfx:'hit_straight' },
+  uppercut: { freeze:.08, shake:4.5, snap:.90, recoil:50, sparks:9, ring:52, star:34, dust:3, kick:.012, sfx:'hit_upper' },
+  hook:     { freeze:.075, shake:4.5, snap:.95, recoil:55, sparks:9, ring:56, star:36, dust:2, kick:.012, sfx:'hit_hook' },
+  body:     { freeze:.06,  shake:2.5, snap:.70, recoil:30, sparks:6, ring:40, star:0,  dust:2, kick:.006, sfx:'hit_body' }
+};
+
+/* ---------- 캐릭터 ----------
+   입력은 캐릭터와 상관없이 슬롯 3개: J = 'jab' 슬롯(빠른 기본기), K = 'straight' 슬롯(주력 강타), L = 'uppercut' 슬롯.
+   캐릭터마다 이 슬롯에 서로 다른 공격이 들어간다 (아웃파이터 잽/스트레이트/어퍼컷, 인파이터 바디/훅/어퍼컷, 슬러거 잽/스트레이트/어퍼컷).
+   공격 값 — windup/active/recover: 준비/타격/후딜레이(초), reach: 사정거리, dmg: 대미지, stamina: 소모량, stun: 맞은 쪽 경직, kb: 밀어내기,
+   cg: 적중 시 채워지는 카운터 게이지, gm: 가드 게이지 소모 배율, launch: 띄우기, pierce: 가드 관통, stDrain: 맞은 쪽 스태미나 깎기,
+   rd: 같은 공격 연타 억제(공격 한 번의 길이 + rd 가 지나야 같은 공격이 다시 나간다 — 데미지가 클수록 길다), fx: 타격감 배율(강할수록 큼) */
+const SKILL_BASE = { windup:.22, active:.14, recover:.46, dmg:34, stamina:0, stun:1.0, kb:560, glove:'rear', lean:36, name:'skill', cg:0, gm:3, launch:300, pierce:true, style:'skill' };
+const CHARS = {
+  outfighter: {                                    // 사정거리가 길고 가볍게 치고 빠지는 타입. 회피는 뒤로 물러남
+    key:'outfighter', name:'아웃파이터', tag:'OUT-FIGHTER', desc:'긴 사정거리로 거리를 재며 싸운다. 회피는 뒤로 물러난다.',
+    hp:93, stunMul:.8, mv:{ f:200, b:170 }, dodge:'back', dodgeCd:.75, labels:['잽','스트레이트','어퍼컷'],
+    ai:{ retreat:1, strong:.3, upper:0, delay:.3 },
+    look:{ crouch:0, lean:6, shR:13.5, hipR:17, headR:21, armW:11, legW:14, gloveS:1, armTh:70, neck:false,
+           lead:{ x:62, y:-161 }, rear:{ x:25, y:-154 }, guard:{ lean:0, crouch:8, lead:{ x:38, y:-182 }, rear:{ x:24, y:-174 } } },
+    atk:{
+      jab:      { windup:.07, active:.09, recover:.16, reach:111, dmg:7, stamina:7, stun:.30, kb:90,  glove:'lead', lean:10, name:'jab',      cg:20, gm:1,   rd:.21 },
+      straight: { windup:.16, active:.10, recover:.30, reach:139, dmg:15, stamina:18, stun:.50, kb:260, glove:'rear', lean:24, name:'straight', cg:20, gm:1,   rd:.42 },
+      uppercut: { windup:.14, active:.10, recover:.36, reach:117, dmg:13, stamina:15, stun:.62, kb:140, glove:'rear', lean:12, name:'uppercut', cg:20, gm:1.8, rd:.50, launch:520, style:'up' },
+      skill:    Object.assign({}, SKILL_BASE, { reach:180 })
+    }
+  },
+  infighter: {                                     // 낮은 자세로 파고들어 짧고 강하게 치는 타입. 회피는 앞으로 더킹하며 돌진
+    key:'infighter', name:'인파이터', tag:'IN-FIGHTER', desc:'낮은 자세로 파고들어 바디·훅·어퍼를 몰아친다. 회피는 앞으로 더킹하며 돌진한다.',
+    hp:97, mv:{ f:215, b:140 }, dodge:'dash', dashV:340, dodgeCd:.85, labels:['바디','훅','어퍼컷'],         // 펀치가 아웃파이터보다 25~30% 강한 대신 체력이 조금 적다 (AI 대 AI 시뮬레이션으로 맞춘 값)
+    ai:{ retreat:.15, strong:.5, upper:.25, delay:1 },
+    look:{ crouch:14, lean:16, shR:16.5, hipR:20.5, headR:21, armW:13, legW:15, gloveS:1.04, armTh:46, neck:false,
+           lead:{ x:38, y:-170 }, rear:{ x:24, y:-163 }, guard:{ lean:10, crouch:6, lead:{ x:40, y:-176 }, rear:{ x:26, y:-168 } } },
+    atk:{
+      jab:      { windup:.08, active:.09, recover:.20, reach:86,  dmg:8,  stamina:8,  stun:.34, kb:80,  glove:'rear', lean:14, name:'body',     cg:20, gm:1.2, rd:.22, style:'body', stDrain:12 },
+      straight: { windup:.14, active:.10, recover:.30, reach:104, dmg:17, stamina:19, stun:.52, kb:300, glove:'lead', lean:26, name:'hook',     cg:20, gm:1.2, rd:.42, style:'hook' },
+      uppercut: { windup:.13, active:.10, recover:.34, reach:94,  dmg:15, stamina:16, stun:.64, kb:150, glove:'rear', lean:14, name:'uppercut', cg:20, gm:1.9, rd:.50, launch:540, style:'up' },
+      skill:    Object.assign({}, SKILL_BASE, { reach:128 })
+    }
+  },
+  slugger: {                                       // 느리지만 한 방이 가장 강한 타입. 회피는 제자리에서 숙이기만 한다
+    key:'slugger', name:'슬러거', tag:'SLUGGER', desc:'펀치가 느리고 텀이 길지만 한 방이 가장 강하다. 회피는 제자리에서 숙인다.',
+    hp:104, mv:{ f:175, b:135 }, dodge:'duck', dodgeCd:.75, labels:['잽','스트레이트','어퍼컷'],
+    ai:{ retreat:.3, strong:.55, upper:.15, delay:1.9 },
+    look:{ crouch:0, lean:8, shR:17.5, hipR:20, headR:22, armW:14, legW:16, gloveS:1.16, armTh:70, neck:true,
+           lead:{ x:60, y:-158 }, rear:{ x:26, y:-152 }, guard:{ lean:2, crouch:8, lead:{ x:38, y:-180 }, rear:{ x:24, y:-172 } } },
+    atk:{
+      // 펀치 한 번이 느리고(준비 + 긴 후딜레이) 다음 펀치까지 텀이 길다. 대신 한 방의 대미지가 세 캐릭터 중 가장 크다
+      jab:      { windup:.10, active:.10, recover:.30, reach:106, dmg:14, stamina:11, stun:.38, kb:120, glove:'lead', lean:12, name:'jab',      cg:20, gm:1.2, rd:.30, fx:1.15 },
+      straight: { windup:.20, active:.12, recover:.54, reach:126, dmg:31, stamina:26, stun:.80, kb:420, glove:'rear', lean:30, name:'straight', cg:20, gm:1.7, rd:.60, fx:1.3,  pull:{ x:-30, y:-150 }, windLean:-16 },
+      uppercut: { windup:.17, active:.11, recover:.50, reach:112, dmg:30, stamina:22, stun:.78, kb:200, glove:'rear', lean:14, name:'uppercut', cg:20, gm:2.2, rd:.70, fx:1.25, launch:600, style:'up' },
+      skill:    Object.assign({}, SKILL_BASE, { reach:150 })
+    }
+  }
+};
+const CHAR_KEYS = ['outfighter', 'infighter', 'slugger'];
+const ATK = CHARS.outfighter.atk;                  // (테스트용 별칭) 게임 코드는 각 파이터의 chATK 를 쓴다
+const ATTACK_SLOTS = ['jab', 'straight', 'uppercut'];
+// 스테이지마다 CPU 캐릭터가 돌아가며 나온다: 1 아웃파이터, 2 인파이터, 3 슬러거, 4 아웃파이터 ...
+const cpuChar = level => CHAR_KEYS[(level - 1) % 3];
+
+const game = { state:'auth', user:null, char:'outfighter', level:1, shake:0, freeze:0, slow:0, flash:0, t:0, introT:0, koT:0, zoom:0, kick:0 };
+const net = { on:false, role:'', panel:false, sub:'', names:['', ''], vote:{ me:false, peer:false }, rematch(){} };      // 멀티플레이 상태 (실제 동작은 맨 아래 멀티플레이 모듈). 평소엔 꺼져 있어 싱글 게임에는 영향이 없다
+let P, E, PV = [];                               // PV: 캐릭터 선택 화면에 세워 두는 미리보기 파이터 3명
+const parts = [], rings = [], texts = [], stars = [];
+
+/* ---------- 사운드 (WebAudio 합성) ---------- */
+let AC = null;
+function audio(){
+  try{
+    if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if(AC.state === 'suspended') AC.resume();
+  }catch(e){}
+}
+// 모든 소리는 컴프레서를 거쳐 나가서 타격음이 뭉쳐서 묵직하게 들린다
+function out(){
+  if(!AC._out){
+    const c = AC.createDynamicsCompressor();
+    c.threshold.value = -16; c.knee.value = 8; c.ratio.value = 6; c.attack.value = .002; c.release.value = .14;
+    const g = AC.createGain(); g.gain.value = 1.15;                        // 타격이 꽉 차게 들리도록 크게 키운 뒤,
+    const sat = AC.createWaveShaper(), cv = new Float32Array(2048);        // 한계를 넘는 큰 소리는 부드럽게 눌러서(소프트 클리핑) 찢어지지 않고 묵직하게 만든다
+    for(let i = 0; i < cv.length; i++) cv[i] = Math.tanh(i/(cv.length - 1)*2*2 - 2);
+    sat.curve = cv; sat.oversample = '2x';
+    c.connect(g); g.connect(sat); sat.connect(AC.destination); AC._out = c; AC._master = sat;
+  }
+  return AC._out;
+}
+// curve: 감쇠 곡선(클수록 빨리 사라짐) / poles: 로우패스를 몇 겹 걸지(2겹이면 훨씬 먹먹함)
+function noise(dur, freq, q, vol, type='lowpass', curve=1, poles=1){
+  const n = Math.floor(AC.sampleRate*dur), b = AC.createBuffer(1,n,AC.sampleRate), d = b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i] = (Math.random()*2-1)*Math.pow(1-i/n, curve);
+  const s = AC.createBufferSource(); s.buffer = b;
+  let node = s;
+  for(let p=0;p<poles;p++){
+    const f = AC.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    node.connect(f); node = f;
+  }
+  const g = AC.createGain(); g.gain.value = vol;
+  node.connect(g); g.connect(out()); s.start();
+}
+function tone(f0, f1, dur, vol, type='sine'){
+  const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol,t+.004); g.gain.exponentialRampToValueAtTime(.001,t+dur);   // 4ms 어택으로 '틱' 소리 제거
+  o.connect(g); g.connect(out()); o.start(); o.stop(t+dur);
+}
+function later(ms, fn){ setTimeout(() => { if(AC){ try{ fn(); }catch(e){} } }, ms); }
+// 패딩이 눌리는 짧은 '쿵': 100Hz 안팎의 소리를 아주 조금만 내려앉히고(피치가 뚝 떨어지는 북소리가 되지 않게) 빠르게 끊는다. 살짝 찌그러뜨려 작은 스피커에서도 들리게 한다
+let THUMP_CURVE = null;
+function thump(f, dur, vol){
+  if(!THUMP_CURVE){ THUMP_CURVE = new Float32Array(2048); for(let i = 0; i < 2048; i++) THUMP_CURVE[i] = Math.tanh((i/2047*2 - 1)*2.2); }
+  const t = AC.currentTime, o = AC.createOscillator(), ws = AC.createWaveShaper(), g = AC.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(f*1.18, t); o.frequency.exponentialRampToValueAtTime(f, t + .03);
+  ws.curve = THUMP_CURVE; ws.oversample = '2x';
+  g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + .003); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  o.connect(ws); ws.connect(g); g.connect(out()); o.start(t); o.stop(t + dur + .02);
+}
+// 가죽 글러브가 '짝' 하고 닿는 소리: 중고음 대역의 아주 짧은 노이즈
+function slap(freq, q, vol, dur){ freq *= SLAP_PITCH; noise(dur*1.4, freq, q, vol*1.4, 'bandpass', 2, 1); noise(dur*2.2, freq*.5, .7, vol*.85, 'bandpass', 2.4, 1); }
+const SLAP_PITCH = .8;                                     // 슬랩(짝) 소리의 높이 배율: 낮출수록 덜 날카롭고 둔탁해진다 (1 = 이전 소리)
+// 짧은 잔향(작은 방 울림): 무거운 타격에만 살짝 섞어 '퍽' 뒤에 공간감이 남게 한다
+function rev(){
+  if(!AC._rev){
+    const len = Math.floor(AC.sampleRate*.55), ir = AC.createBuffer(2, len, AC.sampleRate);
+    for(let ch=0; ch<2; ch++){
+      const d = ir.getChannelData(ch); let lp = 0;
+      for(let i=0;i<len;i++){ lp += ((Math.random()*2 - 1) - lp)*.18; d[i] = lp*Math.pow(1 - i/len, 3.2); }
+    }
+    const c = AC.createConvolver(); c.buffer = ir;
+    const g = AC.createGain(); g.gain.value = .55;
+    c.connect(g); g.connect(out()); AC._rev = c;
+  }
+  return AC._rev;
+}
+function tail(vol, freq=500, dur=.07){                       // 잔향으로만 보내는 짧은 저음 덩어리
+  const n = Math.floor(AC.sampleRate*dur), b = AC.createBuffer(1, n, AC.sampleRate), d = b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i] = (Math.random()*2 - 1)*Math.pow(1 - i/n, 2);
+  const s = AC.createBufferSource(); s.buffer = b;
+  const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = freq;
+  const g = AC.createGain(); g.gain.value = vol;
+  s.connect(f); f.connect(g); g.connect(rev()); s.start();
+}
+function crack(vol, freq=2200, dur=.012){ noise(dur, freq, 1.1, vol, 'bandpass', 1.6, 1); }   // 가죽이 '탁' 닿는 아주 짧은 순간음 (실감을 위해 작게)
+function sweepNoise(dur, f0, f1, vol, curve=2){               // 필터가 열리며 음색이 올라가는 '후웁' (음높이가 튀지 않는다)
+  const n = Math.floor(AC.sampleRate*dur), b = AC.createBuffer(1, n, AC.sampleRate), d = b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i] = (Math.random()*2 - 1)*Math.pow(1 - i/n, curve);
+  const t = AC.currentTime, s = AC.createBufferSource(); s.buffer = b;
+  const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = .7;
+  f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = AC.createGain(); g.gain.value = vol;
+  s.connect(f); f.connect(g); g.connect(out()); s.start();
+}
+
+/* 타격음: 종류마다 다르게 쌓는다. 공통 원칙 — 음높이가 뚝 떨어지는 '통통' 소리는 쓰지 않고,
+   ① 로우패스 노이즈(몸통 충격) ② 일정한 서브 베이스(무게) ③ 글러브 패딩 중저음 ④ 짧은 '탁' 순간음 ⑤ 몇십 ms 뒤 작은 되울림 ⑥ 강타는 잔향 을 조합한다.
+   combo: 연속으로 맞을수록 아주 조금씩 높고 날카로워진다(최대 +7%). */
+function sfx(k, p=1, combo=0){
+  if(!AC) return;
+  try{
+    const j = .94 + Math.random()*.12, cj = 1 + Math.min(5, combo)*.014;
+    if(k === 'thud' || k === 'hit') k = 'hit_straight';        // 예전 이름 호환
+    /* 복싱 글러브로 때리는 소리: 가죽이 '짝' 하고 닿는 소리(슬랩) + 패딩이 눌리는 '퍽'(몸통 노이즈) + 짧은 '쿵'(100Hz 안팎) 로 쌓는다.
+       북 같은 낮은 울림은 쓰지 않고, 소리가 남는 길이는 공격이 셀수록 조금씩 길어진다: 잽 ≈ 0.1초 < 스트레이트 ≈ 0.2초 < 훅·어퍼컷 ≈ 0.25초 < 바디 ≈ 0.3초 < 카운터 ≈ 0.4초 < 스킬 ≈ 0.55초. */
+    if(k === 'hit_jab'){                                       // 잽: 짧게 끊는 '짝' — 가죽 슬랩 중심, 쿵은 아주 짧게
+      slap(2600*j*cj, 1.0, 1.6, .022);
+      noise(.06, 1300*j*cj, .7, .9, 'lowpass', 3, 2);
+      thump(150*j, .06, .55);
+    }
+    else if(k === 'hit_straight'){                             // 스트레이트: '짝' + 묵직한 '퍽' + 짧은 '쿵'
+      slap(2100*j, .9, 1.9, .03);
+      noise(.13, 900*j*cj, .6, 1.25, 'lowpass', 3, 2);
+      noise(.07, 1400*j, .8, .8, 'bandpass', 2.4, 1);
+      thump(125*j, .13, .8);
+      later(24, () => noise(.08, 420, .5, .45, 'lowpass', 3, 1));
+      tail(.2, 900, .05);
+    }
+    else if(k === 'hit_upper'){                                // 어퍼컷: 올려치는 '후웁' + 턱에 닿는 '딱' + 쿵
+      sweepNoise(.11, 400, 1800, 1.0, 2.2);
+      slap(1700*j, .9, 1.9, .034);
+      noise(.15, 800*j*cj, .6, 1.2, 'lowpass', 3, 2);
+      thump(112*j, .16, .8);
+      later(20, () => slap(1100*j, 1.0, .8, .02));
+      tail(.22, 850, .06);
+    }
+    else if(k === 'hit_hook'){                                 // 훅: 옆에서 휘두르는 '짜악' — 슬랩이 가장 크고 선명하다
+      slap(1900*j, .9, 2.1, .036);
+      slap(3200*j, 1.2, .8, .016);
+      noise(.14, 950*j*cj, .6, 1.2, 'lowpass', 3, 2);
+      thump(125*j, .13, .75);
+      later(26, () => noise(.09, 450, .5, .45, 'lowpass', 3, 1));
+      tail(.22, 880, .06);
+    }
+    else if(k === 'hit_body'){                                 // 바디: 배에 박히는 둔한 '푹' — 슬랩은 낮고 작게, 쿵이 더 길다
+      slap(1400*j, .8, 1.4, .04);
+      noise(.19, 800*j, .5, 1.4, 'lowpass', 2.6, 2);
+      thump(110*j, .19, .85);
+      later(28, () => noise(.12, 900, .5, .3, 'lowpass', 1.6, 1));
+      tail(.26, 550, .06);
+    }
+    else if(k === 'hit_counter'){                              // 카운터: 같은 타격을 더 크고 길게 — 슬랩 두 겹 + 큰 퍽 + 끝에 아주 작은 금속성 여운
+      slap(2200*j, .9, 2.3, .042);
+      slap(1000*j, .9, 1.2, .045);
+      noise(.2, 950*j, .6, 1.55, 'lowpass', 2.6, 2);
+      thump(115*j, .24, 1.0);
+      later(32, () => noise(.13, 420, .5, .7, 'lowpass', 3, 1));
+      later(70, () => tone(1180, 1560, .14, .07, 'triangle'));
+      tail(.38, 800, .08);
+    }
+    else if(k === 'guardbreak'){                               // 가드 깨짐: 단단한 것이 갈라지는 '쩍'
+      slap(1700, .9, 1.8, .042);
+      noise(.17, 650, .5, 1.4, 'lowpass', 3, 2);
+      thump(105, .22, .9);
+      later(45, () => noise(.12, 380, .5, .6, 'lowpass', 3, 1));
+      tail(.33, 700, .07);
+    }
+    else if(k==='skill'){                                      // 카운터 스킬: 가장 크고 가장 길다
+      slap(2000, .9, 2.5, .05);
+      slap(900, .9, 1.4, .06);
+      noise(.4, 650, .5, 1.7, 'lowpass', 2.2, 2);
+      thump(98, .38, 1.1);
+      later(60, () => noise(.22, 420, .5, .9, 'lowpass', 3, 1));
+      later(140, () => noise(.14, 330, .5, .4, 'lowpass', 3, 1));
+      tail(.5, 750, .1);
+    }
+    else if(k==='charge'){ tone(110,220,.25,.18,'triangle'); }
+    else if(k==='ready'){ tone(660,990,.18,.18,'triangle'); }
+    else if(k==='block'){ noise(.08, 360*j, .6, .8, 'lowpass', 3, 2); tone(105*j, 88, .08, .5); crack(.1, 1400, .008); }   // 팔로 막는 둔한 '툭' (맞는 소리보다 작고 짧다)
+    else if(k==='whoosh'){ noise(.12, 1800, .6, .07, 'bandpass', 1.5); }
+    else if(k==='slip'){ tone(520,900,.14,.14,'triangle'); }
+    else if(k==='ko'){ thump(70, .5, 1.3); tone(60,32,.9,1); noise(.6,200,.6,1,'lowpass',2,2); }
+    else if(k==='bell'){ tone(1250,1200,.9,.22,'triangle'); }
+    else if(k==='dodge'){ noise(.1,2200,.6,.05,'bandpass',1.5); }
+  }catch(e){}
+}
+
+/* ---------- 파이터 ---------- */
+function mk(x, face, player, lvl, ch){
+  ch = CHARS[ch] ? ch : 'outfighter';
+  return { x, vx:0, face, player, lvl:lvl||1, ch, cd:CHARS[ch], chATK:CHARS[ch].atk, hitKind:'',
+    hp:CHARS[ch].hp, maxhp:CHARS[ch].hp, lag:CHARS[ch].hp, st:100,
+    gd:100, gdBroken:false, gdT:0, spd:1, cg:0, guardForce:0, z:0, vz:0, squash:0, hitPow:.5, recoilV:0, trail:[], counterAtk:false,
+    state:'idle', t:0, atk:null, hitDone:false, connected:false, sw:false, stun:0,
+    dodgeCd:0, atkCd:{ jab:0, straight:0, uppercut:0 }, flash:0, counter:0, combo:0, comboT:0, bob:Math.random()*6,
+    ctrl:{ move:0, guard:false, act:null },
+    ai:{ think:0, react:0, reacting:false, did:false, hold:0, move:0, choice:0,
+         t:0, pg:false, pgStart:0, holds:[], punishT:-1, punishWait:0, fired:false, willReact:true } };
+}
+function setState(f, s){ f.state = s; f.t = 0; }
+
+function start(level){
+  hideMenu();
+  game.level = level; game.newBest = false; game.rank = null; game.saveError = null; game.escAt = 0;
+  P = mk(310, 1, true, 1, game.char);
+  E = mk(650, -1, false, level, cpuChar(level));
+  // 스테이지가 올라가도 CPU의 체력·공격력·이동속도는 그대로(그 캐릭터의 기본값). 달라지는 건 AI의 '실력'뿐이다 (aiProfile 참고)
+  E.spd = 1;
+  // 10스테이지부터 CPU 체력이 오른다: 10~19 → 110, 20~29 → 120, 30 이상 → 130 (이후 고정). 공격력/속도는 그대로
+  const hpUp = level >= 30 ? 130 : level >= 20 ? 120 : level >= 10 ? 110 : 0;
+  if(hpUp){ E.maxhp = E.hp = E.lag = hpUp; }
+  game.state = 'intro'; game.introT = 0; game.koT = 0; game.slow = 0; game.freeze = 0;
+  parts.length = rings.length = texts.length = stars.length = 0; buf = [];
+}
+
+function perform(f, act){
+  if(act === 'dodge'){
+    if(f.dodgeCd > 0 || f.st < 12*STAM_USE) return false;
+    f.st -= 12*STAM_USE; f.dodgeCd = f.cd.dodgeCd; f.dodgeInv = .26; setState(f,'dodge'); sfx('dodge');
+    return true;
+  }
+  const k = (f.player || f.human) ? f.chATK[act] : cpuAtk(f.lvl, f.ch, act);    // CPU는 스테이지 초반일수록 준비/후딜레이가 길다
+  if(!k || f.st < k.stamina*STAM_USE) return false;
+  if(f.atkCd[act] > 0) return false;
+  if(k.name === 'skill'){
+    if(f.cg < 100) return false;                      // 카운터 게이지가 가득 차야 사용 가능
+    f.cg = 0;
+    addText(f.x, GY-250, 'COUNTER SKILL!', COL.gold, 20); sfx('charge');
+    game.flash = Math.max(game.flash, .12);
+  }
+  f.st -= k.stamina*STAM_USE; f.atk = k; f.hitDone = false; f.connected = false; f.sw = false; f.vx = 0;
+  if(k.rd !== undefined) f.atkCd[act] = k.windup + k.active + k.recover + k.rd;
+  setState(f,'attack');
+  f.counterAtk = f.counter > 0;       // 회피(SLIP) 직후의 카운터 기회를 잡고 낸 공격인지 — 궤적을 더 강하게 그린다 (적중하면 counter 값은 소모되므로 미리 기억해 둔다)
+  return true;
+}
+
+// 펀치 글러브가 지나가는 길: pull = 준비 동작에서 뒤로 당긴 위치, ext = 가장 멀리 뻗은 위치 (몸 중심 기준 x, y). 그리기와 타격 판정이 같은 값을 쓴다
+function punchGeom(k){
+  const up = k.style === 'up', sk = k.style === 'skill', hk = k.style === 'hook', bd = k.style === 'body';
+  return {
+    pull: k.pull || (up ? { x:12, y:-58 } : sk ? { x:-14, y:-150 } : hk ? { x:-18, y:-158 } : bd ? { x:8, y:-92 } : { x:6, y:-140 }),
+    ext:  up ? { x:k.reach - 40, y:-214 } : hk ? { x:k.reach - 26, y:-166 } : bd ? { x:k.reach - 24, y:-108 } : { x:k.reach - 24, y:k.glove==='lead' ? -158 : -162 }
+  };
+}
+const HIT_BODY = 30;                                    // 상대 중심에서 이만큼 앞(몸통 앞면 + 글러브 반지름)까지 글러브가 와야 '닿은' 것으로 본다
+// 이 순간 글러브가 상대 몸에 닿았는가: 팔이 뻗는 동안(준비 동작이 끝난 뒤) 글러브의 실제 위치로 판정한다
+function gloveTouches(k, t, dist){
+  const { pull, ext } = punchGeom(k), u = easeOut(Math.min(1, (t - k.windup)/k.active));
+  const gx = lerp(pull.x, ext.x, u);
+  return gx >= Math.min(dist - HIT_BODY, lerp(pull.x, ext.x, .93));      // 사거리 안이면 늦어도 뻗는 동작 끝무렵에는 반드시 닿는다
+}
+
+function updF(f, o, dt){
+  f.t += dt; f.dodgeInv = Math.max(0, (f.dodgeInv||0) - dt); f.flash = Math.max(0, f.flash-dt); f.dodgeCd = Math.max(0, f.dodgeCd-dt); for(const a in f.atkCd) f.atkCd[a] = Math.max(0, f.atkCd[a]-dt);
+  f.counter = Math.max(0, f.counter-dt); f.comboT -= dt; if(f.comboT <= 0) f.combo = 0;
+  f.bob += dt*5;
+  f.squash = Math.max(0, f.squash - dt*6);
+  if(f.z > 0 || f.vz !== 0){                          // 어퍼컷에 맞고 뜬 높이
+    f.vz -= 2600*dt; f.z += f.vz*dt;
+    if(f.z <= 0){ f.z = 0; f.vz = 0; }
+  }
+  f.lag = f.lag > f.hp ? Math.max(f.hp, f.lag - dt*28) : f.hp;
+  const c = f.ctrl;
+
+  // 가드 게이지: 가드 중이 아니면 잠시 후 회복, 0이 되면 40까지 찰 때까지 가드 불능
+  f.gdT = Math.max(0, f.gdT - dt);
+  if(!(f.state === 'idle' && c.guard) && f.gdT <= 0 && f.state !== 'ko'){
+    f.gd = Math.min(100, f.gd + (f.gdBroken ? 14 : 20)*dt);
+    if(f.gdBroken && f.gd >= 40) f.gdBroken = false;
+  }
+
+  if(f.state === 'idle'){
+    f.face = o.x >= f.x ? 1 : -1;
+    // 가드 게이지가 남아 있는 동안 가드하면 스태미나(초당 18.4 = 이전 16의 115%)와 체력(최대 체력의 2%/s)이 회복된다
+    const guarding = c.guard && !f.gdBroken && f.gd > 0;
+    f.st = Math.min(100, f.st + (guarding ? 16*1.15 : c.guard ? 10 : 24)*dt);
+    if(guarding && f.hp > 0) f.hp = Math.min(f.maxhp, f.hp + f.maxhp*.02*dt);
+    // 가드 중에도 앞뒤로 움직일 수 있다(플레이어만): 가드를 유지한 채 평소 속도의 60%로 이동. CPU는 예전처럼 가드 중엔 멈춘다(난이도 곡선 유지)
+    f.vx = c.move * (c.move*f.face > 0 ? f.cd.mv.f : f.cd.mv.b) * f.spd * (c.guard ? (f.player || f.human ? .6 : 0) : 1);
+    if(c.act) perform(f, c.act);
+  }
+  else if(f.state === 'attack'){
+    const k = f.atk, w = k.windup, e = w + k.active;
+    if(f.t >= w && !f.sw){ f.sw = true; sfx('whoosh'); }
+    if(f.t >= w && f.t < e && !f.hitDone && Math.abs(o.x - f.x) <= k.reach && gloveTouches(k, f.t, Math.abs(o.x - f.x))){ f.hitDone = true; resolve(f, o, k); }   // 준비 동작(글러브를 뒤로 당기는 중)엔 맞지 않고, 글러브가 상대 몸에 닿는 순간 맞는다
+    f.vx = (f.t >= w && f.t < e) ? f.face*70 : 0;
+    if(f.connected && c.act){                           // 적중 후 딜레이 취소: 입력된 다음 행동을 곧바로 실행
+      const next = c.act; f.atk = null; setState(f,'idle'); perform(f, next);
+    }
+    else if(f.connected && f.guardForce > 0){ f.atk = null; setState(f,'idle'); }   // 적중 후 가드 입력도 즉시 반영
+    else if(f.t >= e + k.recover){ f.atk = null; setState(f,'idle'); }
+  }
+  else if(f.state === 'hit'){
+    f.vx -= f.vx*Math.min(1, dt*8);
+    if(f.t >= f.stun) setState(f,'idle');
+  }
+  else if(f.state === 'dodge'){
+    // 아웃파이터: 뒤로 물러남 / 인파이터: 앞으로 더킹하며 돌진 / 슬러거: 제자리에서 숙이기만 함
+    const dk = f.cd.dodge, fade = Math.max(0, 1 - f.t/.34);
+    f.vx = dk === 'back' ? -f.face*420*fade : dk === 'dash' ? f.face*f.cd.dashV*fade : 0;
+    if(f.t >= DODGE_CANCEL && c.act && c.act !== 'dodge'){ const next = c.act; f.vx = 0; setState(f,'idle'); perform(f, next); }   // 피한 직후 곧바로 반격
+    else if(f.t >= .34) setState(f,'idle');
+  }
+  else if(f.state === 'ko'){
+    f.vx -= f.vx*Math.min(1, dt*3);
+  }
+  f.x = Math.max(100, Math.min(860, f.x + f.vx*dt));
+  if(f.recoilV){                                          // 때린 직후의 반동: 빠르게 줄어들며 몸이 살짝 뒤로 밀린다
+    f.x = Math.max(100, Math.min(860, f.x + f.recoilV*dt));
+    f.recoilV *= Math.pow(.0004, dt);
+    if(Math.abs(f.recoilV) < 4) f.recoilV = 0;
+  }
+}
+
+/* ---------- 타격 처리 ---------- */
+function resolve(a, d, k){
+  if(d.state === 'ko') return;
+  const dir = a.face, hx = d.x - dir*20;
+  const hy = GY - d.z - (k.style === 'up' ? 192 : k.style === 'body' ? 112 : k.glove === 'lead' ? 168 : 172);   // 맞는 높이: 어퍼컷은 턱, 바디는 복부
+
+  // 회피 성공 (무적 프레임)
+  if(d.dodgeInv > 0){
+    d.counter = 1.3; game.slow = .5;
+    addText(d.x, GY-235, 'SLIP!', COL.gold, 22); sfx('slip');
+    return;
+  }
+
+  // 가드
+  if(d.state === 'idle' && d.ctrl.guard && !d.gdBroken && !k.pierce){
+    d.gd -= k.dmg*2.2*k.gm; d.gdT = 1.0; d.hp -= k.dmg*.08; d.squash = .5;
+    d.vx = dir*k.kb*.4;
+    addText(d.x, GY-225, 'BLOCK', '#9aa0b4', 14);
+    game.freeze = Math.max(game.freeze, .03); game.shake = Math.max(game.shake, 3);
+    sfx('block');
+    if(d.gd <= 0){
+      d.gd = 0; d.gdBroken = true; d.gdT = 1.4;
+      addText(d.x, GY-250, 'GUARD BROKEN', COL.red, 20);
+      game.freeze = .1; game.shake = 8; sfx('guardbreak');
+    }
+    koCheck(a, d, dir);
+    return;
+  }
+
+  // 정타 (가드 게이지가 0이면 가드 자세여도 그대로 맞음)
+  const brokenGuard = d.state === 'idle' && d.ctrl.guard && d.gdBroken;
+  a.combo++; a.comboT = 1.6;
+  let dmg = k.dmg * Math.max(.5, 1 - .08*(a.combo-1));
+  let tag = '';
+  if(a.counter > 0){ dmg *= 1.6; a.counter = 0; tag = 'COUNTER!'; }
+  else if(d.state === 'attack' && d.t < d.atk.windup + d.atk.active){ dmg *= 1.3; tag = 'CLEAN HIT'; }
+  if(k.pierce && d.state === 'idle' && d.ctrl.guard){   // 카운터 스킬은 가드를 부수고 들어간다
+    d.gd = 0; d.gdBroken = true; d.gdT = 1.4; tag = 'GUARD CRUSH';
+  }
+  if(brokenGuard && !tag) tag = 'NO GUARD';
+  d.gdT = Math.max(d.gdT, 1.0);
+  a.connected = true;                                    // 적중 성공: 남은 후딜레이는 다음 입력으로 즉시 취소 가능
+  d.hp -= dmg; d.atk = null; setState(d,'hit'); d.stun = k.stun*(d.cd.stunMul||1); d.vx = dir*k.kb; d.flash = .14; d.squash = 1;
+  d.hitKind = k.style === 'body' ? 'body' : '';                       // 바디 블로우는 몸이 앞으로 접히는 반응
+  if(k.stDrain) d.st = Math.max(0, d.st - k.stDrain*STAM_USE);                  // 바디 블로우: 대미지 외에 스태미나도 깎는다
+  if(k.launch){ d.vz = k.launch; d.z = 1; }
+  if(d.player) buf.length = 0;                           // 맞으면 저장된 입력은 비운다
+
+  // 적중 게이지 (가드가 아닌 정타일 때만 충전)
+  if(k.cg){
+    const before = a.cg; a.cg = Math.min(100, a.cg + k.cg);
+    if(before < 100 && a.cg >= 100){ addText(a.x, GY-250, 'COUNTER READY', COL.gold, 16); if(a.player || a.human) sfx('ready'); }
+  }
+
+  // ----- 타격감 -----
+  // 일반 타격: 종류별로 히트스톱·타격음·피격 반응이 다르고(잽은 가볍고 빠르게, 스트레이트/어퍼컷은 묵직하게), 이펙트는 작게 절제한다.
+  // 카운터: 같은 타격에 더 긴 정지, 더 큰 소리, 금빛 이펙트와 아주 짧은 슬로모션을 얹어 확실히 짜릿하게 만든다.
+  const big = k.name === 'skill', counterHit = big || tag === 'COUNTER!';
+  const F0 = HIT_FEEL[k.name] || HIT_FEEL.straight, fxm = k.fx || 1;     // fx: 슬러거처럼 한 방이 센 공격은 정지·흔들림·스파크가 조금 더 크다
+  const F = fxm === 1 ? F0 : Object.assign({}, F0, { freeze:Math.min(.08, F0.freeze*fxm), shake:F0.shake*fxm, sparks:Math.round(F0.sparks*fxm), ring:F0.ring*Math.min(1.15, fxm), recoil:F0.recoil*fxm });
+  d.hitPow = counterHit ? 1 : F.snap;                                 // 맞은 쪽 고개가 젖혀지는 정도 (drawFighter가 사용)
+  d.squash = counterHit ? 1 : .55 + .45*F.snap;
+  d.vx = dir*k.kb*(counterHit && !big ? 1.35 : 1);
+  a.recoilV = -dir*F.recoil*(counterHit ? 1.4 : 1);                   // 때린 쪽도 반동으로 살짝 밀린다
+  addText(d.x + dir*10, GY-d.z-215, String(Math.max(1,Math.round(dmg))), counterHit ? COL.gold : '#fff', counterHit ? (big ? 40 : 30) : (k.name === 'jab' ? 17 : 22));
+  if(tag && tag !== 'COUNTER!') addText(d.x, GY-d.z-248, tag, '#9aa0b4', 13);
+  game.freeze = Math.max(game.freeze, counterHit ? (big ? .2 : .13) : F.freeze);
+  game.shake = Math.max(game.shake, counterHit ? (big ? 18 : 10) : F.shake);
+  game.kick = Math.max(game.kick, counterHit ? (big ? .07 : .03) : F.kick);
+  // 맞는 자리 이펙트: 날카로운 흰색 스파크(얇고 길쭉하며 0.1~0.2초 만에 사라짐) + 짧고 얇은 원형 충격파. 강타만 아주 짧은 임팩트 별과 먼지
+  // 이 코드는 실제 적중이 판정된 이 한 곳에서만 실행되므로, 빗나가거나 막힌 공격에서는 절대 나오지 않는다
+  if(F.sparks) burst(hx, hy, dir, F.sparks + Math.min(3, a.combo - 1), '#ffffff', 430 + F.ring*4, { life:[.1, .2], w:2, k:.055 });
+  if(F.ring) ring(hx, hy, '#ffffff', F.ring, .15, 2.4);
+  if(F.star && !counterHit) stars.push({ x:hx, y:hy, r:F.star, life:.07, max:.07, rot:Math.random()*3 });
+  if(F.dust && !counterHit) dust(d.x, F.dust, dir);
+  if(counterHit){
+    burst(hx, hy, dir, big ? 30 : 20, COL.gold, big ? 850 : 650);
+    burst(hx, hy, dir, big ? 16 : 10, '#ffffff', big ? 950 : 750, { life:[.1, .22], w:2.4, k:.06 });
+    ring(hx, hy, COL.gold, big ? 150 : 96, .2, 3.4);
+    ring(hx, hy, '#ffffff', big ? 96 : 62, .16, 2.6);
+    stars.push({ x:hx, y:hy, r:big ? 110 : 66, life:.09, max:.09, rot:Math.random()*3 });
+    dust(d.x, 8, dir);
+    if(tag === 'COUNTER!') addText(d.x, GY-d.z-250, tag, COL.gold, 16);
+    game.flash = big ? .25 : .12;
+    game.slow = Math.max(game.slow, big ? .3 : .12);
+  }
+  sfx(big ? 'skill' : counterHit ? 'hit_counter' : F.sfx, 1, a.combo);
+  koCheck(a, d, dir);
+}
+function koCheck(a, d, dir){
+  if(d.hp > 0 || d.state === 'ko') return;
+  d.hp = 0; setState(d,'ko'); d.vx = dir*420; if(d.player) buf.length = 0;
+  if(!d.player && !net.on) recordWin();
+  game.state = 'ko'; game.koT = 0; game.slow = 1.5; game.freeze = .22; game.shake = 24; game.flash = .5;
+  sfx('ko');
+}
+
+/* ---------- 이펙트 ---------- */
+// o: { life:[최소,최대], w:선 굵기, k:꼬리 길이 } — 일반 타격의 스파크는 짧게 살고(0.1~0.2초) 얇고 길쭉해서 '날카롭게' 보이고, 기본값은 예전 스파크
+function burst(x, y, dir, n, color, spd, o){
+  o = o || {}; const lf = o.life || [.28, .53];
+  for(let i=0;i<n;i++){
+    const a = (Math.random()-.5)*2.4, s = spd*(.3+Math.random()*.7);
+    parts.push({ x, y, vx:Math.cos(a)*s*dir + (Math.random()-.5)*80, vy:Math.sin(a)*s - 80, life:lf[0] + Math.random()*(lf[1]-lf[0]), max:lf[1], color, w:o.w || 3, k:o.k || .03 });
+  }
+}
+function dust(x, n, dir){
+  for(let i=0;i<n;i++) parts.push({ x:x + (Math.random()-.5)*50, y:GY-2, vx:dir*(40+Math.random()*180) + (Math.random()-.5)*60, vy:-60-Math.random()*160, life:.3+Math.random()*.3, max:.6, color:'#8b8b9a', dot:true, size:2+Math.random()*3 });
+}
+function ring(x, y, color, r, life, w){ life = life || .22; rings.push({ x, y, r:8, R:r, life, max:life, color, w:w || 3 }); }
+function addText(x, y, s, color, size){ texts.push({ x, y, s, color, size, life:.9, max:.9 }); }
+
+/* ---------- AI ---------- */
+/* CPU 난이도: 체력·공격력·이동속도는 모든 스테이지에서 똑같고, AI의 '실력'만 올라간다.
+   스테이지 1 → 반응과 판단이 매우 느리고, 펀치 준비/후딜레이가 길며, 헛스윙도 잦다
+   스테이지 3 → 내가 가드를 내린 순간을 노리기 시작
+   스테이지 4 → 가드 게이지가 바닥나기 직전이면 몰아붙임
+   스테이지 5 이상 → 내가 가드를 쥐고 있는 시간을 학습해서, 가드가 풀리는 순간에 주먹이 닿도록 미리 휘두름 */
+function aiProfile(lv){
+  const c = Math.min(1, (lv-1)/4);               // 스테이지 1 → 0, 스테이지 5 이상 → 1
+  const cs = Math.min(1, (lv-1)/3);              // 펀치 속도 곡선: 스테이지 1 → 0, 스테이지 4 이상 → 1
+  const late = Math.min(3, Math.max(0, lv-5));   // 6스테이지부터는 반응 속도만 조금씩 더 빨라진다
+  const p = Math.min(1, Math.max(0, (lv-3)/2));  // 가드 타이밍 읽기 숙련도 (스테이지 3 → 0, 5 → 1)
+  return {
+    react: lerp(.62, .10, c) - .012*late,        // 내 공격을 본 뒤 반응하기까지 걸리는 시간
+    defend: Math.min(.97, lerp(.10, .90, c) + .008*Math.min(10, Math.max(0, lv-5))),   // 반응(회피/가드)을 시도할 확률 (스테이지 6 이후에도 15까지 조금씩 오른다)
+    think: Math.max(.05, lerp(.85, .10, c) - .005*Math.min(10, Math.max(0, lv-5))),   // 다음 판단까지 걸리는 시간
+    thinkJit: lerp(.60, .10, c),
+    aggr: lerp(.32, .88, c),
+    windupMul: lerp(2.1, 1.4625, cs),            // CPU 펀치의 준비 동작 길이 배율 (길수록 눈에 보인다). 스테이지 1 → 4에서만 빨라지고, 4 이상은 같은 속도로 고정 → 사람이 보고 반응할 여지를 남긴다
+    recoverMul: lerp(1.7, 1.175, cs),            // CPU 펀치의 후딜레이 배율 (마찬가지로 스테이지 4에서 멈춘다)
+    whiff: lerp(.5, 0, c),                       // 사거리 밖에서 헛스윙할 확률
+    punishP: lv < 3 ? 0 : lerp(.25, .97, p),     // 내가 가드를 내린 순간 공격할 확률
+    punishDelay: lerp(.55, .08, p),              // 가드가 내려간 걸 보고 공격하기까지의 시간
+    pressure: lv >= 4,
+    patience: lv < 4 ? 0 : lv === 4 ? .5 : .9,   // 내가 가드 중일 때 공격을 참고 기다릴 확률
+    read: lv >= 4,                               // 4스테이지부터 가드 유지 시간을 학습하지만, 예측이 부정확(오차 ±0.14초) → 5스테이지 ±0.03초 → 6스테이지 이상 ±0.01초
+    readJitter: lv === 4 ? .14 : lv === 5 ? .03 : .01
+  };
+}
+const cpuAtkCache = {};
+function cpuAtk(lv, ch, act){
+  const key = Math.min(lv, 5) + ch + act;
+  if(!cpuAtkCache[key]){
+    const pf = aiProfile(lv), k = CHARS[ch].atk[act];
+    cpuAtkCache[key] = Object.assign({}, k, { windup: k.windup*pf.windupMul, recover: k.recover*pf.recoverMul });
+  }
+  return cpuAtkCache[key];
+}
+
+// 판마다 다른 '싸우는 스타일'과 오프닝 대기 시간을 무작위로 정한다 → 시작하자마자 똑같은 타이밍으로 달려드는 패턴이 사라진다
+const AIX = { open:1, pend:1, step:1, ext:1, mid:1 };           // 새 AI 동작 강도 (1 = 켬, 0 = 끔). 밸런스 점검용 조절값
+function aiInit(A){
+  const r = Math.random();
+  A.style = r < .30 ? 'rush' : r < .55 ? 'wait' : r < .80 ? 'probe' : 'guard';     // rush: 바로 압박 / wait: 기다림 / probe: 스텝으로 간격 재기 / guard: 가드 올리고 접근
+  const span = { rush:[.1, .7], wait:[1.0, 2.4], probe:[.5, 1.3], guard:[.6, 1.5] }[A.style];
+  A.open = AIX.open*(span[0] + Math.random()*(span[1] - span[0]));       // 이 시간 동안은 먼저 공격하지 않는다 (반응/가드/회피는 그대로)
+  A.seq = []; A.pend = null; A.chain = 0; A.last = ''; A.dpun = false; A.firstDone = false;
+}
+function runAI(f, o, dt){
+  const c = f.ctrl, A = f.ai, d = Math.abs(o.x - f.x), lv = f.lvl, pf = aiProfile(lv);
+  if(A.style === undefined) aiInit(A);
+  A.open = Math.max(0, A.open - dt);
+  let pre = false;                                        // true: 타이밍이 정확해야 하는 공격(가드 풀림 노리기, 회피 직후 반격 등)은 무작위 지연/오프닝 대기를 적용하지 않는다
+  if(f.state !== 'attack') A.chain = 0;
+  // 이 CPU 캐릭터의 공격 사정거리 기준으로 판단한다 (아웃파이터는 멀리서, 인파이터는 파고들어서)
+  const fa = s => f.chATK[s], R = s => fa(s).reach, far = R('straight') + 10, cai = f.cd.ai;
+  c.act = null;
+  const now = game.t;                                     // 히트스톱 중에도 흐르는 실제 시간 (사람이 가드를 쥔 시간과 같은 기준)
+
+  // ① 내 가드를 관찰: 가드를 올린 시점/내린 시점 기록, 가드 유지 시간 학습
+  const pg = o.state === 'idle' && o.ctrl.guard && !o.gdBroken;
+  if(pg && !A.pg){ A.pgStart = now; A.fired = false; A.jit = (Math.random()*2 - 1)*pf.readJitter; }
+  if(!pg && A.pg){
+    const released = o.state === 'idle' && !o.ctrl.guard;  // 맞아서/가드가 깨져서 풀린 건 '내가 내린 타이밍'이 아니므로 학습하지 않는다
+    if(released){
+      const held = now - A.pgStart;
+      if(held > .1){ A.holds.push(held); if(A.holds.length > 6) A.holds.shift(); }
+    }
+    if(Math.random() < pf.punishP) A.punishT = pf.punishDelay * (.8 + Math.random()*.4);   // 가드를 내렸다! → 곧 공격
+  }
+  A.pg = pg;
+
+  // ② 내 공격에 대한 반응 (회피 / 가드). 반응이 느린 초반엔 공격이 끝난 뒤에야 반응한다
+  if(o.state === 'attack' && d < o.atk.reach + 30){
+    if(!A.reacting){ A.reacting = true; A.did = false; A.react = pf.react*(.85 + Math.random()*.3); A.choice = Math.random(); A.willReact = Math.random() < pf.defend; }
+    else {
+      A.react -= dt;
+      if(A.react <= 0 && !A.did){
+        A.did = true;
+        if(A.willReact && f.state === 'idle'){
+          const sk = o.atk.name === 'skill';              // 카운터 스킬은 막아도 뚫리니 피하려 한다
+          if(A.choice < (sk ? .65 : lerp(.15, .40, Math.min(1, (lv-1)/4)) + .015*Math.min(10, Math.max(0, lv-5)))) c.act = 'dodge';   // 높은 스테이지일수록 막기보다 회피를 더 쓴다
+          else A.hold = .55;
+        }
+      }
+    }
+  } else { A.reacting = false; A.did = false; }
+
+  // ③ 가드를 내린 순간 공격
+  if(A.punishT >= 0){ A.punishT -= dt; if(A.punishT < 0) A.punishWait = .35; }   // 반응 시간이 지나면, 행동 가능해질 때까지 최대 0.35초 기다렸다 공격
+  if(A.punishWait > 0){
+    A.punishWait -= dt;
+    if(f.state === 'idle' && !c.act){
+      if(d <= R('jab') - 4) c.act = (lv >= 5 && Math.random() < .4) ? 'straight' : 'jab';
+      else if(d <= R('straight') - 8) c.act = 'straight';
+      else A.move = 1;                                     // 간격이 멀면 일단 붙는다
+      if(c.act){ A.punishWait = 0; pre = true; }
+    }
+  }
+
+  // ④ (5스테이지~) 가드 유지 시간을 학습해서 가드가 풀리는 순간에 주먹이 닿도록 미리 휘두른다
+  if(pf.read && pg && !A.fired && A.holds.length >= 2 && f.state === 'idle' && !c.act){
+    // 상위 30% 지점 값: 가끔 짧게 끊긴 가드에 휘둘리지 않고, 예측이 빗나가도 '가드가 풀리기 전에 막히는' 쪽보다 '풀린 직후 맞는' 쪽이 되도록 살짝 늦게 잡는다
+    const sorted = A.holds.slice().sort((a, b) => a - b), avg = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length*.7))];
+    let use = d <= R('jab') - 4 ? 'jab' : d <= R('straight') - 8 ? 'straight' : null;
+    if(use && f.st < fa(use).stamina) use = null;                                        // 스태미나가 모자라면 이 타이밍은 포기
+    // 준비 동작이 끝나 주먹이 나가는 순간(= 평균 가드 유지 시간 + 0.03초)이 내가 가드를 내린 직후가 되도록 시작 시점을 계산
+    const realWind = (f.player || f.human) ? fa(use || 'jab').windup : cpuAtk(lv, f.ch, use || 'jab').windup;      // CPU는 스테이지별로 늘어난 준비 동작 길이로 계산한다
+    if(use && now - A.pgStart >= avg - realWind + .03 + A.jit){ c.act = use; A.fired = true; pre = true; }
+  }
+
+  // ⑤ (스테이지 5~) 사람처럼 노린다: 회피 직후 바로 반격 / 상대가 회피하는 순간 공격 / 맞춘 뒤 이어치기. 스테이지가 오를수록 더 자주, 더 빠르게
+  const late6 = Math.min(10, Math.max(0, lv - 5));       // 스테이지 6~15에 걸쳐 조금씩 더 어려워진다 (15 이후는 고정)
+  if(AIX.ext && lv >= 5 && !c.act && f.state === 'idle'){
+    if(f.counter > 0 && d <= R('straight') - 6 && Math.random() < dt*(8 + late6*1.5)){ c.act = f.atkCd.straight > 0 ? 'jab' : 'straight'; pre = true; }       // 내가 피했다 → 곧바로 카운터
+    else if(o.state === 'dodge' && o.t > .14 && !A.dpun && d <= R('straight') - 10){ A.dpun = true; if(Math.random() < Math.min(.85, .25 + .06*late6)){ c.act = 'straight'; pre = true; } }   // 상대 회피 끝자락을 노린다
+  }
+  if(o.state !== 'dodge') A.dpun = false;
+  if(lv >= 6 && f.state === 'attack' && f.connected && !c.act && A.chain < (lv >= 9 ? 2 : 1) && Math.random() < Math.min(.6, .1 + .05*late6)){
+    const cand = ATTACK_SLOTS.filter(s => s !== A.last && f.atkCd[s] <= 0 && d <= R(s) && f.st >= fa(s).stamina*STAM_USE);
+    if(cand.length){ c.act = cand[Math.floor(Math.random()*cand.length)]; A.chain++; pre = true; }                                                         // 맞춘 직후 이어치기 (콤보)
+  }
+
+  A.hold -= dt; A.think -= dt;
+  c.guard = A.hold > 0 && !f.gdBroken;
+
+  if(A.think <= 0 && f.state === 'idle' && !c.act){
+    A.think = pf.think + Math.random()*pf.thinkJit;
+    const r = Math.random();
+    const stunned = o.state === 'hit' || (o.state === 'attack' && o.t > o.atk.windup + o.atk.active);
+    const pressing = pf.pressure && pg && o.gd < 40 && d <= R('straight') - 8;         // 내 가드가 거의 바닥났다
+    // 내가 가드를 올리고 있으면, 숙련된 CPU는 가드에 막히는 헛수고를 줄이고 풀리는 순간을 기다린다
+    const waiting = pg && !pressing && A.holds.length >= 2 && Math.random() < pf.patience;
+    const tired = pf.read && f.st < 34;                  // 숙련된 CPU는 스태미나를 바닥내지 않고 아껴 둔다 (결정적인 순간 휘두르려고)
+    const stepP = A.style === 'probe' ? .5 : A.style === 'wait' ? .38 : A.style === 'guard' ? .2 : .12;
+    const mid = d > R('jab') + 6 && d <= far + 70;
+    if(AIX.step && !stunned && !pressing && !A.seq.length && mid && (A.open > 0 || Math.random() < stepP + .05*Math.min(1, (lv-1)/4))){
+      // 스텝: 앞뒤로 발을 움직이며 간격을 잰다 (가만히 서서 달려들지 않는다)
+      const pats = [[[1, .16], [-1, .2]], [[-1, .2], [1, .18]], [[1, .14], [0, .1], [1, .14]], [[-1, .16], [0, .12], [-1, .16]], [[0, .3]]];
+      A.seq = pats[Math.floor(Math.random()*pats.length)].map(s => [s[0], s[1]*(.8 + Math.random()*.5)]);
+      if(A.style === 'guard' && Math.random() < .5) A.hold = .4;
+    } else if(A.open > 0 && !stunned){
+      // 오프닝 대기 중: 스타일에 맞게 간격만 맞춘다 (먼저 공격하지 않는다)
+      A.move = d > far + 20 ? (A.style === 'wait' && Math.random() < .5 ? 0 : 1) : 0;
+      if(A.style === 'guard' && d <= far + 40 && Math.random() < .5) A.hold = .45;
+    } else if(waiting || tired){
+      A.move = d > far ? 1 : 0;
+    } else if(f.cg >= 100 && lv >= 3 && d <= R('skill') - 10 && r < .55){
+      c.act = 'skill'; A.move = 0;
+    } else if(stunned && d <= R('straight') - 6 && r < pf.aggr){
+      c.act = (d <= R('uppercut') && lv >= 2 && Math.random() < .25 + cai.upper) ? 'uppercut'
+            : (d <= R('jab') && Math.random() < .55 + (.3 - cai.strong)*.5) ? 'jab' : 'straight';
+    } else if(pressing && r < .85){
+      c.act = (d <= R('jab') - 4 && Math.random() < .5) ? 'jab' : 'straight'; A.move = 0;
+    } else if(d > far){ A.move = 1; }
+    else if(d > R('jab')){
+      if(r < pf.aggr){
+        if((d <= R('straight') - 6 && Math.random() < AIX.mid && (A.firstDone || Math.random() >= .35)) || Math.random() < pf.whiff){ c.act = 'straight'; A.move = 0; }   // 초반엔 사거리 밖에서도 헛스윙. 사거리 안이어도 가끔은 한 걸음 더 붙어서 다른 펀치를 낸다
+        else A.move = 1;
+      } else A.move = 0;
+    } else {
+      const rt = .16*cai.retreat;                         // 뒤로 빠지는 성향: 아웃파이터는 그대로, 인파이터는 거의 안 물러난다
+      if(f.st < 14){ A.move = -1; A.hold = .5; }
+      else if(r < pf.aggr*.62){
+        const pS = Math.min(.9, cai.strong + .03*Math.min(lv, 8));
+        c.act = (cai.upper > 0 && Math.random() < cai.upper && d <= R('uppercut')) ? 'uppercut' : Math.random() < pS ? 'straight' : 'jab'; A.move = 0;
+      }
+      else if(r < pf.aggr*.62 + rt){ A.move = -1; }
+      else if(r < pf.aggr*.62 + rt + .14){ A.hold = .4; A.move = 0; }
+      else A.move = 0;
+    }
+  }
+  // 재사용 대기 중인 공격은 낼 수 없으니 가까우면 기본기(J 슬롯)로 대신하고, 아니면 이번 판단은 넘긴다
+  if(c.act && f.atkCd[c.act] > 0) c.act = (f.atkCd.jab === 0 && d <= R('jab') - 4) ? 'jab' : null;
+  // 오프닝 대기 / 무작위 지연: 같은 타이밍으로 달려드는 패턴을 없앤다 (정확한 타이밍이 필요한 공격은 제외). 판단한 공격의 약 70%는 잠깐 뜸을 들였다가 나간다
+  if(c.act && c.act !== 'dodge' && !pre){
+    if(A.open > 0) c.act = null;
+    else if(Math.random() < Math.min(1, .7*AIX.pend*cai.delay)){ A.pend = { act:c.act, t:Math.random()*lerp(.36, .18, Math.min(1, (lv-1)/6))*cai.delay }; c.act = null; }   // cai.delay: 캐릭터마다 뜸 들이는 정도 (밸런스 값)
+  }
+  if(A.pend){
+    A.pend.t -= dt;
+    if(c.act && c.act !== 'dodge') A.pend = null;
+    else if(A.pend.t <= 0){ if(f.state === 'idle' && f.atkCd[A.pend.act] <= 0 && d <= R(A.pend.act) + 6) c.act = A.pend.act; A.pend = null; }
+  }
+  if(c.act && c.act !== 'dodge'){ A.last = c.act; A.seq.length = 0; A.firstDone = true; }
+  if(A.seq.length){
+    const s = A.seq[0]; c.move = s[0]*f.face; s[1] -= dt;
+    if(s[1] <= 0) A.seq.shift();
+    if(f.state !== 'idle') A.seq.length = 0;
+  } else c.move = A.move * f.face;
+}
+
+/* ---------- 업데이트 ---------- */
+function step(dt){
+  game.t += dt;
+  if(game.state === 'ko') game.koT += dt;
+  if(game.state === 'ko' && P.hp <= 0 && game.koT > 3.6 && !net.on){ toTitle(); return; }   // 패배하면 잠시 결과를 보여준 뒤 자동으로 메인 화면으로 (Enter로 바로 넘어갈 수도 있음)
+  game.shake *= Math.pow(.0008, dt);
+  game.flash = Math.max(0, game.flash - dt);
+
+  game.kick = Math.max(0, game.kick - dt*.35);
+  if(game.freeze > 0){ game.freeze -= dt; return; }
+  let ts = 1;
+  if(game.slow > 0){ game.slow -= dt; ts = game.state === 'ko' ? .2 : .3; }
+  const rdt = dt;                                       // 입력 버퍼는 슬로모션과 무관한 실제 프레임 기준
+  dt *= ts;
+
+  for(const p of parts){ p.life -= dt; p.vy += 1100*dt; p.x += p.vx*dt; p.y += p.vy*dt; }
+  for(const r of rings){ r.life -= dt; }
+  for(const s of stars){ s.life -= dt; }
+  for(let i=stars.length-1;i>=0;i--) if(stars[i].life<=0) stars.splice(i,1);
+  for(const t of texts){ t.life -= dt; t.y -= 38*dt; }
+  for(let i=parts.length-1;i>=0;i--) if(parts[i].life<=0) parts.splice(i,1);
+  for(let i=rings.length-1;i>=0;i--) if(rings[i].life<=0) rings.splice(i,1);
+  for(let i=texts.length-1;i>=0;i--) if(texts[i].life<=0) texts.splice(i,1);
+
+  if(game.state === 'title' || game.state === 'auth' || game.state === 'ranking' || game.state === 'charsel' || game.state === 'stagesel'){ P.bob += dt*5; E.bob += dt*5; for(const v of PV) v.bob += dt*5; return; }
+
+  if(game.state === 'intro'){
+    game.introT += dt; P.bob += dt*5; E.bob += dt*5;
+    if(game.introT > .9 && !game.bell){ game.bell = true; sfx('bell'); }
+    if(game.introT > 1.6){ game.state = 'fight'; game.bell = false; }
+    return;
+  }
+
+  if(game.state === 'fight'){
+    if(game.autoP){                                     // (밸런스 시뮬레이션 전용) 플레이어 쪽도 CPU 두뇌로 움직인다. 평소엔 꺼져 있다
+      runAI(P, E, dt);
+    } else {
+      // 플레이어 입력
+      P.ctrl.move = (keys.KeyD||keys.ArrowRight ? 1 : 0) - (keys.KeyA||keys.ArrowLeft ? 1 : 0);
+      P.ctrl.act = null;
+      P.guardForce = Math.max(0, P.guardForce - rdt);
+      let a;
+      while((a = takeBuffered(P))){                       // 행동 가능한 순간에 저장된 입력 실행
+        if(a === 'guard') P.guardForce = .18;             // 가드 탭은 짧게라도 가드 자세를 취함
+        else { P.ctrl.act = a; break; }
+      }
+      P.ctrl.guard = GUARD_KEYS.some(k => keys[k]) || P.guardForce > 0;
+      ageBuffer(rdt);
+    }
+    runAI(E, P, dt);
+  } else {
+    P.ctrl.move = E.ctrl.move = 0; P.ctrl.guard = E.ctrl.guard = false; P.ctrl.act = E.ctrl.act = null; buf.length = 0;
+  }
+
+  updF(P, E, dt); updF(E, P, dt);
+
+  const dx = E.x - P.x, minD = 66;
+  if(Math.abs(dx) < minD){
+    const push = (minD - Math.abs(dx))/2, s = dx >= 0 ? 1 : -1;
+    E.x += s*push; P.x -= s*push;
+    P.x = Math.max(100, Math.min(860, P.x)); E.x = Math.max(100, Math.min(860, E.x));
+  }
+}
+
+/* ---------- 배경 (링 이미지: ring-bg.webp) ----------
+   이미지는 0.72배로 줄여 가로 중앙에 두고, 링 매트의 한가운데(원본 y=808)가 캐릭터 발 위치(GY)에 오도록 세로 위치를 맞춘다.
+   이렇게 하면 좌우 코너 패드가 캐릭터 이동 범위(x 100~860) 끝에 맞닿고, 좌우로 30px씩 여유가 있어 가장 센 화면 흔들림(±21px)에도 가장자리가 비지 않는다. */
+const BG = { scale: .72, feetY: 808, canvas: null };
+(function(){
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth*BG.scale); c.height = Math.round(img.naturalHeight*BG.scale);
+    const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height);
+    BG.canvas = c;
+  };
+  img.src = 'ring-bg.webp';
+})();
+
+/* ---------- 그리기 ---------- */
+const lerp = (a,b,u) => a + (b-a)*u;
+const easeIn = u => u*u, easeOut = u => 1 - (1-u)*(1-u);
+
+/* ---------- 글러브 (블루: 플레이어 / 레드: 상대) ---------- */
+const GLOVE = {
+  blue: { main:'#4f84ff', shade:'#3a67e0', dark:'#2b4fb8', light:'#9bb8ff', trim:'#5b8dff' },
+  red:  { main:'#ff5a5f', shade:'#d2414a', dark:'#a8323a', light:'#ffa3a6', trim:'#ff6b70' }
+};
+function rrPath(x, y, w, h, r){
+  ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+// (x,y)=주먹 중심, ang=팔 방향. 로컬 +x가 팔이 뻗는 방향이라 어떤 자세에서도 손목→주먹 방향으로 자연스럽게 회전한다
+const GLOVE_CFG = { scale: 1.1, tilt: -.75 };   // scale: 글러브 크기, tilt: 팔을 접었을 때 글러브가 위로 기울어지는 각도
+function drawGlove(x, y, ang, th, flash, back, sMul){
+  const main = flash ? '#ffffff' : back ? th.shade : th.main;
+  const shade = flash ? '#d4d4de' : back ? th.dark : th.shade;
+  const gs = GLOVE_CFG.scale*(sMul || 1);                  // 캐릭터별 글러브 크기 (슬러거는 조금 더 크다)
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(gs, gs);
+  // 손목 스트랩: 검정 + 포인트 라인
+  ctx.fillStyle = '#12121a'; ctx.strokeStyle = flash ? '#fff' : th.trim; ctx.lineWidth = 2;
+  rrPath(-29, -11, 18, 22, 4); ctx.fill(); ctx.stroke();
+  // 주먹 본체
+  ctx.fillStyle = main; ctx.strokeStyle = COL.bg; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.ellipse(0, 0, 18, 15.5, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  // 엄지(아래쪽)
+  ctx.fillStyle = shade; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(5, 10.5, 9, 5.5, -.25, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  // 하이라이트
+  ctx.globalAlpha = .45; ctx.fillStyle = flash ? '#fff' : th.light;
+  ctx.beginPath(); ctx.ellipse(1, -7.5, 9, 3.6, -.15, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+  // 로고(흰 사선 두 줄)
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  ctx.beginPath(); ctx.moveTo(-6, 1); ctx.lineTo(-2, -6); ctx.lineTo(2, -6); ctx.lineTo(-2, 1); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(1, 4); ctx.lineTo(5, -3); ctx.lineTo(9, -3); ctx.lineTo(5, 4); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+/* ---------- 펀치 궤적 ----------
+   주먹이 나가는 동안(active 구간) 글러브의 실제 위치를 매 프레임 기록해서, 그 점들을 이은 짧고 날렵한 잔상을 그린다.
+   그래서 궤적은 공격 모션(곧게 뻗는 잽/스트레이트, 아래에서 위로 휘는 어퍼컷)을 그대로 따라가고, 0.08~0.14초 만에 사라진다.
+   중심은 밝은 흰색, 바깥은 공격별 색: 잽=얇은 파랑 / 스트레이트=흰색+파랑 / 어퍼컷(휘는 공격)=굵은 빨강 / 카운터·스킬=굵은 금빛.
+   기록은 파이터 객체(f.trail)에 따로 저장되어 서로 간섭하지 않고, 수명이 지나면 지워진다 (최대 길이도 제한). */
+// 색: 일반 공격은 주인의 색(파란 캐릭터=파랑, 빨간 캐릭터=빨강, outer:null), 카운터와 스킬은 둘 다 똑같이 노란빛. 공격 종류는 굵기로 구분한다
+const TRAIL = {
+  jab:      { life:.085, w:14, core:4,    outer:null,      glow:.12 },
+  straight: { life:.10,  w:22, core:7.5,  outer:null,      glow:.28 },
+  uppercut: { life:.11,  w:29, core:9.5,  outer:null,      glow:.36 },     // 휘는 궤적에 가장 굵게
+  hook:     { life:.11,  w:27, core:9,    outer:null,      glow:.34 },     // 인파이터의 훅: 호를 그리며 굵게
+  body:     { life:.09,  w:19, core:6.5,  outer:null,      glow:.2 },      // 인파이터의 바디: 낮은 높이로 찌르는 짧은 궤적
+  counter:  { life:.12,  w:33, core:11,   outer:'#ffc94d', glow:.45 },     // 카운터 기회를 잡고 낸 공격
+  skill:    { life:.15,  w:42, core:14,   outer:'#ffc94d', glow:.55 }      // 카운터 스킬
+};
+function pushTrail(f, x, y, style){
+  const T = f.trail, now = game.t, last = T[T.length - 1];
+  if(last && Math.hypot(x - last.x, y - last.y) < .5) return;        // 히트스톱 중처럼 제자리면 점을 늘리지 않는다
+  if(last && now - last.t < .08){                                     // 프레임 사이가 벌어졌으면 사이를 채워 부드럽게 이어 준다
+    const d = Math.hypot(x - last.x, y - last.y), n = Math.min(6, Math.floor(d/12));
+    for(let i = 1; i <= n; i++){ const u = i/(n + 1); T.push({ x:lerp(last.x, x, u), y:lerp(last.y, y, u), t:lerp(last.t, now, u), s:style }); }
+  }
+  T.push({ x, y, t:now, s:style });
+  while(T.length && now - T[0].t > .2) T.shift();                     // 오래된 점은 버린다
+  while(T.length > 40) T.shift();
+}
+function drawTrail(f){
+  const T = f.trail, now = game.t;
+  while(T.length && now - T[0].t > .2) T.shift();
+  if(T.length < 2) return;
+  const S = TRAIL[T[T.length - 1].s] || TRAIL.jab;
+  const outer = S.outer || (f.player ? '#3d8bff' : '#ff3d4b');                  // 파란 캐릭터는 파란 불빛, 빨간 캐릭터는 빨간 불빛
+  let pts = T.filter(p => now - p.t < S.life).map(p => ({ x:(p.x - f.x)*f.face, y:p.y - GY + f.z, t:p.t }));   // 월드 → 이 파이터의 좌우 반전/높이가 적용된 좌표
+  if(pts.length < 2) return;
+  let rem = 17;                                                                   // 글러브 중심에서 17px 뒤(글러브 둘레 근처)에서 시작해 글러브를 가리지 않는다
+  while(rem > 0 && pts.length > 1){
+    const p = pts[pts.length - 1], q = pts[pts.length - 2], d = Math.hypot(p.x - q.x, p.y - q.y);
+    if(d <= rem){ rem -= d; pts.pop(); } else { const u = rem/d; pts[pts.length - 1] = { x:p.x + (q.x - p.x)*u, y:p.y + (q.y - p.y)*u, t:p.t }; rem = 0; }
+  }
+  if(pts.length < 2) return;
+  ctx.save();
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.globalCompositeOperation = 'lighter';
+  for(let pass = 0; pass < 2; pass++){                                            // 0: 바깥 색 빛 / 1: 밝은 흰색 중심
+    for(let i = 1; i < pts.length; i++){
+      const a = pts[i - 1], b = pts[i], fresh = Math.max(0, 1 - (now - b.t)/S.life), pos = i/(pts.length - 1);
+      if(fresh <= 0) continue;
+      const k = Math.pow(fresh, .7)*pos;                                          // 최신(글러브 쪽)일수록 굵고 진하고, 꼬리로 갈수록 가늘어지며 사라진다
+      ctx.globalAlpha = (pass ? .95 : .6)*Math.min(1, k*1.4);
+      ctx.strokeStyle = pass ? '#ffffff' : outer;
+      ctx.lineWidth = Math.max(.8, (pass ? S.core : S.w)*k);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+  }
+  if(S.glow){                                                                     // 주먹 둘레의 은은한 빛 (밝게 번쩍이지 않도록 작고 약하게)
+    const h = T[T.length - 1], fr = Math.max(0, 1 - (now - h.t)/S.life);
+    if(fr > 0){
+      const hx = (h.x - f.x)*f.face, hy = h.y - GY + f.z, R = S.w*1.7;
+      const gr = ctx.createRadialGradient(hx, hy, 0, hx, hy, R);
+      gr.addColorStop(0, 'rgba(255,255,255,' + (S.glow*fr) + ')'); gr.addColorStop(.45, outer + '55'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = 1; ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(hx, hy, R, 0, Math.PI*2); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawFighter(f){
+  const base = f.player ? '#5185ff' : COL.red;          // 블루는 참고 이미지에서 측정한 색, 빨강은 같은 형태를 좌우 반전(face=-1)한 상대
+  const col = f.flash > 0 ? '#fff' : base;
+  ctx.save();
+  ctx.translate(f.x, GY); ctx.scale(f.face, 1);
+
+  // 그림자
+  ctx.fillStyle = 'rgba(0,0,0,.4)';
+  const sh0 = Math.max(.4, 1 - f.z/260);
+  ctx.beginPath(); ctx.ellipse(-3, 2, 62*sh0, 8*sh0, 0, 0, Math.PI*2); ctx.fill();
+
+  // 배경이 밝은 링/조명 위에서도 캐릭터 윤곽이 묻히지 않도록 은은한 어두운 테두리 그림자
+  ctx.shadowColor = 'rgba(0,0,10,.6)'; ctx.shadowBlur = 9;
+
+  // 공중에 뜬 높이 / 피격 찌그러짐 / 히트스톱 중 떨림
+  ctx.translate(0, -f.z);
+  if(f.squash > 0){ ctx.scale(1 - .14*f.squash, 1 + .1*f.squash); }
+  if(game.freeze > 0 && f.state === 'hit') ctx.translate((Math.random()-.5)*7, (Math.random()-.5)*4);
+
+  // 캐릭터별 외형(CHARS[..].look). 아웃파이터는 참고 이미지 그대로: 머리가 몸통보다 앞으로 나오고, 글러브 두 개가 턱 높이에 붙어 있다
+  const L = f.cd.look;
+  let lean = L.lean, crouch = 0, headSnap = 0, lead = { x:L.lead.x, y:L.lead.y }, rear = { x:L.rear.x, y:L.rear.y };
+  const bob = Math.sin(f.bob)*2.2;
+  const guarding = f.state === 'idle' && f.ctrl.guard;
+  let trail = null;
+
+  if(guarding){ const G = L.guard; lean = G.lean; crouch = G.crouch; lead = { x:G.lead.x, y:G.lead.y }; rear = { x:G.rear.x, y:G.rear.y }; }
+  if(f.state === 'attack'){
+    const k = f.atk, w = k.windup, e = w + k.active;
+    const idle = k.glove === 'lead' ? lead : rear;
+    const up = k.style === 'up', sk = k.style === 'skill', hk = k.style === 'hook', bd = k.style === 'body';
+    // 어퍼컷은 아래에서 위로 쓸어올리고, 훅은 옆에서 휘둘러 호를 그리고, 바디는 낮게 복부로 찌르고, 스킬은 크게 뒤로 당겼다가 내지른다
+    const { pull, ext } = punchGeom(k);
+    const wl = k.windLean !== undefined ? k.windLean : (sk ? -16 : hk ? -12 : -6);        // 준비 동작에서 몸을 뒤로 젖히는 정도
+    let g, cr = 2;
+    if(f.t < w){
+      const u = easeIn(f.t/w); g = { x:lerp(idle.x,pull.x,u), y:lerp(idle.y,pull.y,u) };
+      lean = L.lean*(1-u) + wl*u; cr = up ? 2 + 18*u : sk ? 2 + 8*u : bd ? 2 + 16*u : hk ? 2 + 5*u : 2;
+      if(sk){ ctx.strokeStyle = COL.gold; ctx.globalAlpha = .5*u; ctx.lineWidth = 3;   // 기 모으는 오라
+        ctx.beginPath(); ctx.arc(0, -110, 40 + 60*(1-u), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1; }
+    }
+    else if(f.t < e){
+      const u = easeOut((f.t-w)/k.active); g = { x:lerp(pull.x,ext.x,u), y:lerp(pull.y,ext.y,u) };
+      if(hk) g.y -= 24*Math.sin(Math.PI*u);                                              // 훅: 가운데에서 가장 높이 올라갔다 내려오는 호
+      lean = lerp(wl, k.lean, u); cr = up ? lerp(20, -8, u) : bd ? lerp(18, 6, u) : hk ? lerp(7, 0, u) : 2;
+      // 궤적 종류: 스킬 > (카운터 기회를 잡고 낸 공격) > 공격 종류. 이 구간의 글러브 위치를 기록해 둔다
+      trail = { g, style: sk ? 'skill' : f.counterAtk ? 'counter' : up ? 'uppercut' : k.name };
+    }
+    else {
+      const u = (f.t-e)/k.recover, s = u*u*(3-2*u); g = { x:lerp(ext.x,idle.x,s), y:lerp(ext.y,idle.y,s) };
+      lean = lerp(k.lean, L.lean, s); cr = up ? lerp(-8, 2, s) : bd ? lerp(6, 2, s) : 2;
+    }
+    if(k.glove === 'lead') lead = g; else rear = g;
+    crouch = cr;
+  }
+  if(f.state === 'dodge'){
+    const u = Math.sin(Math.PI*Math.min(1, f.t/.34)), dk = f.cd.dodge;
+    if(dk === 'back'){ lean = -40*u; crouch = 18*u; lead = { x:30 - 12*u, y:-170 }; rear = { x:16, y:-160 }; }        // 아웃파이터: 몸을 뒤로 젖히며 물러남
+    else if(dk === 'dash'){ lean = L.lean + 22*u; crouch = 34*u; lead = { x:42, y:-150 + 8*u }; rear = { x:28, y:-146 + 8*u }; headSnap = 8*u; }   // 인파이터: 머리를 숙이고 앞으로 파고듦
+    else { lean = L.lean - 6*u; crouch = 40*u; lead = { x:30, y:-168 + 22*u }; rear = { x:18, y:-160 + 22*u }; }       // 슬러거: 제자리에서 그냥 숙임
+  }
+  if(f.state === 'hit'){
+    // 맞은 세기(hitPow)에 따라 몸이 젖혀지는 정도가 다르고, 맞은 직후 0.12초 동안 고개가 한 번 더 꺾였다가 돌아온다. 바디 블로우는 몸이 앞으로 접힌다
+    const u = Math.max(0, 1 - f.t/f.stun), pw = f.hitPow, sn = Math.max(0, 1 - f.t/.12);
+    if(f.hitKind === 'body'){ lean = (12 + 12*pw)*u + 6*pw*sn; crouch = (10 + 10*pw)*u; headSnap = 8*pw*sn; }
+    else { lean = -(10 + 16*pw)*u - 8*pw*sn; crouch = (2 + 4*pw)*u; headSnap = -9*pw*sn; }
+    crouch += L.crouch*u;                                            // 낮은 자세(인파이터)는 경직이 풀리면서 천천히 원래 높이로 돌아간다
+    lead = { x:22, y:-128 }; rear = { x:8, y:-124 };
+  }
+  if(f.state === 'ko'){
+    const u = Math.min(1, f.t*2.2);
+    ctx.rotate(-u*1.4); lean = -20; lead = { x:20, y:-120 }; rear = { x:6, y:-116 };
+  }
+  if(f.state !== 'ko' && f.state !== 'hit') crouch += L.crouch;       // 인파이터의 낮은 자세 (피격·KO 연출은 건드리지 않는다)
+
+  if(trail) pushTrail(f, f.x + f.face*trail.g.x, GY - f.z + trail.g.y, trail.style);   // 글러브의 월드 좌표를 기록 (이펙트가 글러브에 그대로 연결된다)
+
+  // 참고 이미지 실측 비율(0.88배): 어깨 y≈-153, 골반 y≈-96, 머리 중심 (몸통보다 +13 앞, y≈-191), 머리 반지름 21
+  const hip = { x:0, y:-96 + crouch*.4 }, sh = { x:lean*.7 - 7, y:-153 + crouch + bob*.4 }, head = { x:lean + 8 + headSnap, y:-191 + crouch + bob*.6 };
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+  const theme = f.player ? GLOVE.blue : GLOVE.red;
+  const arm = g => {
+    const dx = g.x - sh.x, dy = g.y - sh.y, dist = Math.hypot(dx, dy), ang0 = Math.atan2(dy, dx);
+    // ext: 0 = 팔을 접어 글러브만 보이는 가드 자세(이미지처럼 위로 기울어진 글러브), 1 = 팔을 쭉 뻗은 펀치
+    const ext = Math.max(0, Math.min(1, (dist - L.armTh)/20));
+    const ang = lerp(GLOVE_CFG.tilt, ang0, ext);
+    if(ext > 0){
+      ctx.strokeStyle = col; ctx.lineWidth = L.armW*ext;
+      ctx.beginPath(); ctx.moveTo(sh.x, sh.y); ctx.lineTo(g.x - Math.cos(ang0)*16, g.y - Math.sin(ang0)*16); ctx.stroke();
+    }
+    drawGlove(g.x, g.y, ang, theme, f.flash > 0, false, L.gloveS);
+  };
+
+  // 뒷팔 → 다리 → 몸통 → 머리 → 앞팔
+  arm(rear);
+  // 다리: 이미지처럼 뒷다리는 뒤로, 앞다리는 앞으로 벌린 역V 자세 + 작은 발 (낮은 자세일수록 더 넓게 벌어진다)
+  ctx.strokeStyle = col; ctx.lineWidth = L.legW;
+  const bf = -52 - crouch*.5, ff = 46 + crouch*.5, ly = hip.y + 14;
+  ctx.beginPath(); ctx.moveTo(hip.x - 6, ly); ctx.lineTo(bf, -4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(hip.x + 22, ly); ctx.lineTo(ff, -4); ctx.stroke();
+  ctx.lineWidth = 10;
+  ctx.beginPath(); ctx.moveTo(bf, -3); ctx.lineTo(bf + 8, -3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ff, -3); ctx.lineTo(ff + 9, -3); ctx.stroke();
+  // 몸통: 어깨(shR)는 좁고 골반(hipR)은 넓은 둥근 테이퍼형. 인파이터·슬러거는 더 두껍다
+  ctx.fillStyle = col;
+  const tdx = sh.x - hip.x, tdy = sh.y - hip.y, tl = Math.hypot(tdx, tdy) || 1, tnx = -tdy/tl, tny = tdx/tl;
+  ctx.beginPath();
+  ctx.moveTo(hip.x + tnx*L.hipR, hip.y + tny*L.hipR); ctx.lineTo(sh.x + tnx*L.shR, sh.y + tny*L.shR);
+  ctx.lineTo(sh.x - tnx*L.shR, sh.y - tny*L.shR); ctx.lineTo(hip.x - tnx*L.hipR, hip.y - tny*L.hipR); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.arc(hip.x, hip.y, L.hipR, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(sh.x, sh.y, L.shR, 0, Math.PI*2); ctx.fill();
+  if(L.neck){                                           // 슬러거: 목의 경계가 없다 — 어깨(승모근)에서 머리까지 하나로 이어진 굵은 목
+    ctx.beginPath();
+    ctx.moveTo(sh.x - L.shR*1.15, sh.y + 2); ctx.lineTo(head.x - L.headR*.8, head.y + 6);
+    ctx.lineTo(head.x + L.headR*.8, head.y + 6); ctx.lineTo(sh.x + L.shR*1.15, sh.y + 2); ctx.closePath(); ctx.fill();
+  }
+  ctx.beginPath(); ctx.arc(head.x, head.y, L.headR, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = COL.bg; ctx.beginPath(); ctx.arc(head.x + L.headR*.52, head.y + 2, 4.4, 0, Math.PI*2); ctx.fill();
+  arm(lead);
+  drawTrail(f);                                        // 펀치 궤적: 팔 위에, 글러브 가장자리 뒤에서 시작하므로 글러브를 가리지 않는다
+  ctx.restore();
+}
+
+function txt(s, x, y, size, color, align='left', weight=400, spacing=0){
+  ctx.font = `${weight} ${size}px ${FONT}`; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
+  if('letterSpacing' in ctx) ctx.letterSpacing = spacing + 'px';
+  ctx.shadowColor = 'rgba(0,0,10,.8)'; ctx.shadowBlur = 6;           // 배경 위에서도 글자가 읽히도록
+  ctx.fillText(s, x, y);
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+  if('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+}
+
+function drawBar(x, w, y, h, f, right){
+  const pct = Math.max(0, f.hp/f.maxhp), lagp = Math.max(0, f.lag/f.maxhp);
+  ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.fillRect(x, y, w, h);
+  const px = v => right ? x + w - w*v : x;
+  ctx.fillStyle = COL.gold; ctx.fillRect(px(lagp), y, w*lagp, h);
+  ctx.fillStyle = f.player ? COL.fg : COL.red; ctx.fillRect(px(pct), y, w*pct, h);
+  // 가드 게이지 (0이 되면 붉게 깜빡이며 가드 불능)
+  const gy = y + h + 5;
+  ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fillRect(x, gy, w, 4);
+  const gp = Math.max(0, f.gd/100);
+  ctx.fillStyle = f.gdBroken ? (Math.sin(game.t*20) > 0 ? COL.red : '#7a2d30') : '#8de0c4';
+  ctx.fillRect(px(gp), gy, w*gp, 4);
+  // 스태미나
+  ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fillRect(x, gy + 7, w, 3);
+  ctx.fillStyle = f.st < 18 ? COL.red : COL.blue;
+  const sp = f.st/100; ctx.fillRect(px(sp), gy + 7, w*sp, 3);
+  // 카운터 게이지 (적중 시 충전, 가득 차면 카운터 스킬 사용 가능)
+  const cy = gy + 14, cp = Math.min(1, f.cg/100), full = f.cg >= 100;
+  ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fillRect(x, cy, w, 5);
+  ctx.fillStyle = full ? (Math.sin(game.t*14) > 0 ? '#fff' : COL.gold) : '#c9a227';
+  ctx.fillRect(px(cp), cy, w*cp, 5);
+}
+
+function drawKeys(){
+  const me = net.on && net.role === 'guest' ? E : P;
+  const lb = me && me.cd ? me.cd.labels : CHARS.outfighter.labels;        // 선택한 캐릭터의 기술 이름 (인파이터는 바디/훅/어퍼컷)
+  const items = [['A','D','이동'],['J',lb[0]],['K',lb[1]],['L',lb[2]],['U','카운터 스킬'],['S','가드'],['SPACE','회피']];
+  ctx.font = `500 12px ${FONT}`;
+  let total = 0; const widths = items.map(it => {
+    const caps = it.slice(0,-1); let w = 0;
+    caps.forEach(c => w += Math.max(24, ctx.measureText(c).width + 14) + 4);
+    w += ctx.measureText(it[it.length-1]).width + 6;
+    total += w + 22; return w;
+  });
+  let x = W/2 - (total-22)/2; const y = H - 30;
+  items.forEach((it, i) => {
+    const caps = it.slice(0,-1);
+    caps.forEach(c => {
+      const w = Math.max(24, ctx.measureText(c).width + 14);
+      ctx.strokeStyle = COL.dim; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.roundRect(x, y-11, w, 22, 5); ctx.stroke();
+      txt(c, x + w/2, y+.5, 12, '#c9c9d4', 'center', 600);
+      x += w + 4;
+    });
+    txt(it[it.length-1], x + 2, y+.5, 12, COL.dim, 'left', 500);
+    x += widths[i] - (widths[i] - 0) + ctx.measureText(it[it.length-1]).width + 6 + 22;
+  });
+}
+
+function draw(){
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = COL.bg; ctx.fillRect(0,0,W,H);
+
+  // 월드 (흔들림 + KO 줌)
+  ctx.save();
+  const sx = (Math.random()-.5)*game.shake, sy = (Math.random()-.5)*game.shake;
+  const z = (game.state === 'ko' ? 1 + Math.min(.08, game.koT*.05) : 1) + game.kick;
+  const cx = game.state === 'ko' ? (P.hp <= 0 ? P.x : E.x) : W/2;
+  // 카메라는 쓰러진 쪽으로 쏠리되, 배경 이미지 밖(빈 공간)이 보이지 않도록 좌우 이동 범위를 제한한다 (흔들림 여유 22px 포함)
+  let camX = lerp(W/2, cx, z > 1 ? .6 : 0);
+  if(BG.canvas){
+    const half = BG.canvas.width/2 - 22, lo = W/2 - half + W/(2*z), hi = W/2 + half - W/(2*z);
+    camX = lo > hi ? W/2 : Math.max(lo, Math.min(hi, camX));
+  }
+  ctx.translate(W/2 + sx, GY-120 + sy); ctx.scale(z,z); ctx.translate(-camX, -(GY-120));
+
+  // 배경: 링 이미지 (이미지가 없으면 예전의 단순한 링 선으로 대체)
+  if(BG.canvas){
+    ctx.drawImage(BG.canvas, Math.round(W/2 - BG.canvas.width/2), Math.round(GY - BG.feetY*BG.scale));
+  } else {
+    ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 2;
+    [GY-250, GY-190, GY-130].forEach(y => { ctx.beginPath(); ctx.moveTo(60,y); ctx.lineTo(900,y); ctx.stroke(); });
+    [60,900].forEach(x => { ctx.beginPath(); ctx.moveTo(x,GY-270); ctx.lineTo(x,GY); ctx.stroke(); });
+    ctx.strokeStyle = '#272733'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0,GY+2); ctx.lineTo(W,GY+2); ctx.stroke();
+  }
+
+  if(game.state === 'charsel'){
+    PV.forEach(drawFighter);                               // 캐릭터 선택 화면: 세 캐릭터를 나란히 세워 비교한다
+  } else if(P && E){
+    const order = [P, E].sort((a,b) => (a.state==='ko') - (b.state==='ko'));
+    order.forEach(drawFighter);
+  }
+
+  // 링 이펙트
+  rings.forEach(r => {
+    const u = 1 - r.life/r.max;
+    ctx.globalAlpha = (1-u)*.9; ctx.strokeStyle = r.color; ctx.lineWidth = (r.w || 3)*(1-u)+1;
+    ctx.beginPath(); ctx.arc(r.x, r.y, lerp(r.r, r.R, easeOut(u)), 0, Math.PI*2); ctx.stroke();
+  });
+  // 스파크
+  ctx.lineCap = 'round';
+  parts.forEach(p => {
+    ctx.globalAlpha = Math.max(0, p.life/p.max);
+    if(p.dot){ ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); return; }
+    ctx.strokeStyle = p.color; ctx.lineWidth = p.w || 3;
+    const tk = p.k || .03; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx*tk, p.y - p.vy*tk); ctx.stroke();
+  });
+  // 충격 별(임팩트 프레임)
+  stars.forEach(s => {
+    const u = 1 - s.life/s.max, R = s.r*(.6 + .6*u);
+    ctx.globalAlpha = 1 - u; ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    for(let i=0;i<16;i++){
+      const a = s.rot + i*Math.PI/8, rr = i%2 ? R*.3 : R;
+      ctx[i ? 'lineTo' : 'moveTo'](s.x + Math.cos(a)*rr, s.y + Math.sin(a)*rr);
+    }
+    ctx.closePath(); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  texts.forEach(t => {
+    const u = 1 - t.life/t.max, pop = u < .12 ? 1 + (1 - u/.12)*.5 : 1;
+    ctx.globalAlpha = Math.min(1, t.life/(t.max*.4));
+    txt(t.s, t.x, t.y, t.size*pop, t.color, 'center', 700, 1);
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // 상단 체력바/글자가 조명과 전광판 위에서도 읽히도록 위쪽을 살짝 어둡게
+  if(BG.canvas && game.state !== 'title' && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel'){
+    if(game.state !== 'auth'){
+      const tg = ctx.createLinearGradient(0, 0, 0, 135);
+      tg.addColorStop(0, 'rgba(4,5,12,.72)'); tg.addColorStop(1, 'rgba(4,5,12,0)');
+      ctx.fillStyle = tg; ctx.fillRect(0, 0, W, 135);
+    }
+    {                                      // 전투 중과 로그인 화면에선 가운데 전광판 로고를 어둡게 눌러서 STAGE 표시와 게이지가 겹쳐 보이지 않게 한다
+      ctx.save(); ctx.translate(480, 72); ctx.scale(2.1, .75);          // 가장자리가 부드럽게 사라지는 타원형 어둡힘
+      const rg = ctx.createRadialGradient(0, 0, 0, 0, 0, 110);
+      rg.addColorStop(0, 'rgba(4,5,12,.97)'); rg.addColorStop(.62, 'rgba(4,5,12,.9)'); rg.addColorStop(1, 'rgba(4,5,12,0)');
+      ctx.fillStyle = rg; ctx.fillRect(-120, -120, 240, 240); ctx.restore();
+    }
+  }
+
+  // 충격 플래시
+  if(game.flash > 0){ ctx.fillStyle = `rgba(255,255,255,${Math.min(.35, game.flash)})`; ctx.fillRect(0,0,W,H); }
+
+  // HUD
+  if(game.state !== 'title' && game.state !== 'auth' && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel' && P && E){
+    drawBar(40, 380, 36, 7, P, false);
+    drawBar(W-40-380, 380, 36, 7, E, true);
+    const meE = net.on && net.role === 'guest';                // 멀티플레이에서 손님은 오른쪽(E)을 조종한다
+    if(net.on){
+      txt(net.names[0] + '  ·  ' + P.cd.name + (meE ? '' : '  (YOU)'), 40, 20, 14, COL.fg, 'left', 700, 2);
+      txt(net.names[1] + '  ·  ' + E.cd.name + (meE ? '  (YOU)' : ''), W-40, 20, 14, COL.red, 'right', 700, 2);
+      txt('VS', W/2, 22, 13, COL.dim, 'center', 600, 5);
+    } else {
+      txt((game.user || 'YOU') + '  ·  ' + P.cd.name, 40, 20, 14, COL.fg, 'left', 700, 2);
+      txt('CPU  LV ' + game.level + '  ·  ' + E.cd.name, W-40, 20, 14, COL.red, 'right', 700, 2);
+      txt('STAGE ' + game.level, W/2, 22, 13, COL.dim, 'center', 600, 5);
+    }
+    if(P.cg >= 100) txt('COUNTER READY' + (meE ? '' : ' — U'), 40, 86, 13, Math.sin(game.t*14) > 0 ? '#fff' : COL.gold, 'left', 700, 2);
+    if(E.cg >= 100) txt('COUNTER READY' + (meE ? ' — U' : ''), W-40, 86, 13, COL.red, 'right', 700, 2);
+    if(P.combo >= 2) txt('COMBO x' + P.combo, 40, 108, 16, COL.gold, 'left', 700, 2);
+    if(E.combo >= 2) txt('COMBO x' + E.combo, W-40, 108, 16, COL.red, 'right', 700, 2);
+  }
+
+  // 메인 화면의 버튼/계정 정보는 HTML(#menu)이 그린다. 배경 이미지가 없을 때만 제목을 직접 그린다
+  if(game.state === 'title' && !BG.canvas) txt('BOXING', W/2, 110, 70, COL.fg, 'center', 200, 18);
+  if(game.state === 'intro'){
+    const s = game.introT < .9 ? (net.on ? 'READY' : 'STAGE ' + game.level) : 'FIGHT!';
+    txt(s, W/2, 170, game.introT < .9 ? 54 : 74, game.introT < .9 ? COL.fg : COL.gold, 'center', 300, 12);
+  }
+  if(game.state === 'ko' && game.koT > .15){
+    const u = Math.min(1, (game.koT-.15)/.2);
+    txt('K.O.', W/2, 160, 110*(1.3 - .3*easeOut(u)), COL.fg, 'center', 800, 8);
+    if(game.koT > 1.8 && net.on){
+      const win = (net.role === 'guest' ? P : E).hp <= 0;       // 멀티플레이: 내 상대가 쓰러졌으면 승리
+      txt(win ? '승리' : '패배', W/2, 245, 22, win ? COL.gold : COL.red, 'center', 600, 8);
+      txt(net.vote.me ? '상대의 수락을 기다리는 중…' : net.vote.peer ? 'ENTER — 재대결 (상대가 기다리고 있어요)' : 'ENTER — 재대결', W/2, 280, 14, '#aab0c4', 'center', 500, 4);
+      txt('C — 캐릭터 변경   ·   R — 랭킹   ·   ESC — 메인 화면', W/2, 306, 12, '#8d93a8', 'center', 500, 3);
+      if(net.peer) txt('나 ' + CHARS[game.char].name + '   ·   상대 ' + CHARS[net.peer.ch].name, W/2, 332, 12, '#8d93a8', 'center', 500, 2);
+    }
+    else if(game.koT > 1.8){
+      const win = E.hp <= 0;
+      txt(win ? '승리' : '패배', W/2, 245, 22, win ? COL.gold : COL.red, 'center', 600, 8);
+      let enterY = 280;
+      if(win && game.saveError){            // 기록이 저장되지 않은 경우를 숨기지 않고 알린다
+        txt(game.saveError === 'session' ? '기록 저장 실패 — 다시 로그인해 주세요' : '서버에 연결할 수 없어 기록을 저장하지 못했습니다 (다음 승리 때 함께 저장)', W/2, 276, 13, COL.red, 'center', 700, 1); enterY = 308;
+      } else if(win && game.newBest){
+        txt(game.rank ? `NEW BEST  STAGE ${game.level}   ·   랭킹 #${game.rank}` : `NEW BEST  STAGE ${game.level}`, W/2, 276, 15, COL.gold, 'center', 700, 2); enterY = 308;
+      }
+      txt(win ? 'ENTER — 다음 상대' : 'ENTER — 메인 화면으로', W/2, enterY, 14, '#aab0c4', 'center', 500, 4);
+      if(win) txt('ESC — 메인 화면', W/2, enterY + 26, 12, '#8d93a8', 'center', 500, 3);
+    }
+  }
+  if((game.state === 'fight' || game.state === 'intro') && game.escAt && performance.now() - game.escAt < 2000)
+    txt('ESC 한 번 더 — 메인 화면으로 나가기', W/2, 150, 14, COL.gold, 'center', 700, 2);
+  if(game.state !== 'auth' && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel') drawKeys();
+}
+
+/* ---------- 입력 / 루프 ---------- */
+addEventListener('keydown', e => {
+  if(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  audio();
+  if(game.state === 'auth') return;
+  if(net.panel || net.sub) return;                       // 멀티플레이 창(또는 방 안의 캐릭터/랭킹 창)이 열려 있으면 메인 화면 단축키(Enter/R/ESC)를 막는다 (창의 키는 멀티플레이 모듈이 처리)
+  if(game.state === 'charsel'){                         // 캐릭터 선택: ← → (또는 A D)로 고르고, Enter / ESC / Backspace 로 메인 화면 복귀. 게임 키는 모두 무시
+    if(e.code === 'ArrowLeft' || e.code === 'KeyA'){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 2) % 3]); }
+    else if(e.code === 'ArrowRight' || e.code === 'KeyD'){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 1) % 3]); }
+    else if(e.code === 'Escape' || e.code === 'Enter' || e.code === 'Backspace'){ e.preventDefault(); closeChars(); }
+    return;
+  }
+  if(game.state === 'stagesel'){                         // 스테이지 선택: Enter = 도전 가능한 가장 높은 스테이지 시작, ESC / Backspace = 메인 화면 복귀. 게임 키는 모두 무시
+    if(e.code === 'Escape' || e.code === 'Backspace'){ e.preventDefault(); closeStages(); }
+    else if(e.code === 'Enter' && !(e.target && e.target.tagName === 'BUTTON')){ e.preventDefault(); startStage((game.best || 0) + 1); }
+    return;
+  }
+  if(game.state === 'ranking'){                          // 랭킹 화면: ESC / Enter / Backspace 로 메인 화면 복귀, 게임 키는 모두 무시
+    if(e.code === 'Escape' || e.code === 'Enter' || e.code === 'Backspace'){ e.preventDefault(); closeRank(); }
+    return;
+  }
+  // ESC = 메인 화면으로. 결과 화면(승리/패배)에서는 바로, 전투 중에는 실수로 나가지 않도록 2초 안에 한 번 더 눌러야 한다
+  if(e.code === 'Escape' && (game.state === 'ko' || game.state === 'fight' || game.state === 'intro')){
+    e.preventDefault();
+    if(e.repeat) return;
+    if(game.state === 'ko'){ toTitle(); return; }
+    const now = performance.now();
+    if(game.escAt && now - game.escAt < 2000){ game.escAt = 0; toTitle(); } else game.escAt = now;
+    return;
+  }
+  if(e.code === 'KeyR' && game.state === 'title'){ openRank(); return; }
+  if(e.code === 'Escape' && game.state === 'title'){ logout(); return; }
+  if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code)) e.preventDefault();
+  if(e.repeat) return;
+  keys[e.code] = true;
+  if(game.state === 'fight'){
+    if(ACTION_KEYS[e.code]) pushInput(ACTION_KEYS[e.code]);
+    else if(GUARD_KEYS.includes(e.code)) pushInput('guard');
+  }
+  if(e.code === 'Enter'){
+    if(game.state === 'title') start(1);
+    else if(game.state === 'ko' && game.koT > 1.8){
+      if(net.on) net.rematch();                        // 멀티플레이: 양쪽이 Enter를 누르면 재대결
+      else if(E.hp <= 0) start(game.level + 1);
+      else toTitle();                  // 패배하면 메인 화면으로 (PLAY로 STAGE 1부터 재도전)
+    }
+  }
+});
+
+/* ---------- 계정 (server.ps1 서버의 users.json에 저장 → 어떤 브라우저에서든 같은 계정) ---------- */
+const $ = id => document.getElementById(id);
+let authMode = 'login';
+const API = location.protocol === 'file:' ? 'http://localhost:8123' : '';   // 파일로 직접 열어도 같은 서버를 사용
+async function api(path, body){
+  let res;
+  try{
+    res = await fetch(API + path, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(body) });
+  }catch(e){ throw new Error('server'); }
+  if(!res.ok) throw new Error('server');
+  return res.json();
+}
+const ERR = {
+  invalid_id: '아이디는 3~12자 (한글/영문/숫자/_)만 가능합니다',
+  short_pw: '비밀번호는 4자 이상이어야 합니다',
+  taken: '이미 사용 중인 아이디입니다',
+  bad_credentials: '아이디 또는 비밀번호가 올바르지 않습니다'
+};
+function authMsg(m, ok){ const el = $('authMsg'); el.textContent = m || ''; el.className = 'msg' + (ok ? ' ok' : ''); }
+function setMode(m){
+  authMode = m; authMsg('');
+  document.querySelectorAll('#auth .tab').forEach(t => t.classList.toggle('on', t.dataset.mode === m));
+  $('pw2wrap').style.display = m === 'signup' ? 'block' : 'none';
+  $('authSubmit').textContent = m === 'signup' ? '가입하기' : '로그인';
+  $('authHint').textContent = m === 'signup' ? '아이디 3~12자 (한글/영문/숫자/_), 비밀번호 4자 이상' : '가입한 계정으로 로그인하세요';
+  $('upw').autocomplete = m === 'signup' ? 'new-password' : 'current-password';
+}
+document.querySelectorAll('#auth .tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
+
+function enterGame(u){
+  game.user = u.id; game.token = u.token; game.best = u.best || 0;
+  game.char = CHARS[u.char] ? u.char : 'outfighter';      // 계정에 저장된 캐릭터 (없으면 아웃파이터)
+  $('auth').classList.add('hidden'); $('upw').value = ''; $('upw2').value = '';
+  if(document.activeElement) document.activeElement.blur();
+  toTitle();                           // 로그인(또는 가입) 직후 가장 먼저 메인 화면
+}
+
+/* ---------- 메인 화면 ---------- */
+function showMenu(){
+  $('menuUser').textContent = game.user || '';
+  $('menuChar').textContent = '● ' + CHARS[game.char].name;
+  $('menuBest').textContent = 'BEST  STAGE ' + (game.best || 0);
+  $('menu').classList.remove('hidden');
+  refreshMenuRank();
+}
+// 메인 화면의 내 순위 표시 (서버에서 가져온다. 실패해도 메인 화면은 그대로 쓸 수 있다)
+async function refreshMenuRank(){
+  const who = game.user;
+  try{
+    const r = await api('/api/ranking', { token: game.token, limit: 0 });
+    if(game.state !== 'title' || game.user !== who || !r.me) return;       // 그 사이 화면/계정이 바뀌었으면 무시
+    game.best = Math.max(game.best || 0, r.me.best);
+    $('menuBest').textContent = 'BEST  STAGE ' + r.me.best + (r.me.rank ? '   ·   RANK #' + r.me.rank + ' / ' + r.total : '   ·   UNRANKED');
+  }catch(e){}
+}
+
+/* ---------- 랭킹 화면 ---------- */
+const RANK = { open:false, timer:null, version:null, prev:new Map(), first:true, busy:false };
+function setLive(on){
+  const el = $('rankLive'); el.textContent = on ? 'LIVE' : 'OFFLINE'; el.classList.toggle('on', on);
+}
+function renderRank(r){
+  const ol = $('rankList'), keep = ol.scrollTop, meKey = (game.user || '').toLowerCase(), next = new Map();
+  ol.textContent = '';
+  for(const it of r.list){
+    const li = document.createElement('li'), sig = it.rank + '|' + it.best;
+    next.set(it.id, sig);
+    li.className = (it.rank <= 3 ? 'r' + it.rank : '') + (it.id.toLowerCase() === meKey ? ' me' : '');
+    if(!RANK.first && RANK.prev.get(it.id) !== sig) li.classList.add('flash');   // 새로 들어왔거나 순위/기록이 바뀐 줄만 반짝
+    const no = document.createElement('span'), nm = document.createElement('span'), st = document.createElement('span');
+    no.className = 'no'; no.textContent = it.rank; nm.className = 'nm'; nm.textContent = it.id; st.className = 'st'; st.textContent = 'STAGE ' + it.best;
+    li.append(no, nm, st); ol.append(li);
+  }
+  ol.scrollTop = keep;
+  RANK.prev = next; RANK.first = false;
+  const empty = $('rankEmpty'); empty.hidden = r.list.length > 0; ol.hidden = r.list.length === 0;
+  if(!r.list.length) empty.innerHTML = '아직 랭킹에 오른 사람이 없습니다.<br>스테이지를 클리어하면 가장 먼저 이름을 올릴 수 있어요!';
+  const me = r.me, mine = $('rankMine');
+  mine.textContent = '';
+  if(me && me.rank){
+    const a = document.createElement('div'), b = document.createElement('b');
+    b.textContent = me.id; a.append('내 순위  ', Object.assign(document.createElement('span'), { className:'gold', textContent:'#' + me.rank }), ' / ' + r.total + '명');
+    const c = document.createElement('div'); c.textContent = 'BEST STAGE ' + me.best;
+    mine.append(a, c);
+  } else {
+    mine.textContent = '아직 기록이 없어요. 스테이지 1을 클리어하면 등록됩니다.';
+  }
+}
+async function pollRank(force){
+  if(!RANK.open || RANK.busy || (document.hidden && !force)) return;
+  RANK.busy = true;
+  try{
+    const r = await api('/api/ranking', { token: game.token, limit: 30 });
+    if(!RANK.open) return;                                  // 응답을 기다리는 사이 화면을 닫았다면 버린다
+    setLive(true);
+    if(r.version !== RANK.version){
+      const updated = RANK.version !== null;
+      RANK.version = r.version; renderRank(r);
+      if(updated){ const el = $('rankLive'); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+    }
+  }catch(e){
+    if(!RANK.open) return;
+    setLive(false);
+    if(RANK.version === null){ $('rankEmpty').hidden = false; $('rankList').hidden = true; $('rankEmpty').textContent = '서버에 연결할 수 없습니다. 연결되면 자동으로 다시 불러옵니다.'; }
+  }finally{ RANK.busy = false; }
+}
+function openRank(){
+  if(game.state !== 'title') return;
+  hideMenu(); game.state = 'ranking'; P.x = 150; E.x = 810;     // 가운데 패널이 두 캐릭터를 가리지 않도록 양옆으로 물러선다
+  RANK.open = true; RANK.version = null; RANK.first = true; RANK.prev = new Map();
+  $('rankList').textContent = ''; $('rankList').hidden = true; $('rankEmpty').hidden = false; $('rankEmpty').textContent = '불러오는 중…'; $('rankMine').textContent = '';
+  setLive(false); $('rankLive').textContent = 'CONNECTING';
+  $('rank').classList.remove('hidden');
+  pollRank(true);
+  clearInterval(RANK.timer); RANK.timer = setInterval(() => pollRank(false), 1200);   // 열려 있는 동안 1.2초마다 확인 → 순위가 바뀌면 바로 갱신
+}
+function stopRank(){ RANK.open = false; clearInterval(RANK.timer); RANK.timer = null; $('rank').classList.add('hidden'); }
+function closeRank(){ stopRank(); if(game.state === 'ranking') toTitle(); }
+document.addEventListener('visibilitychange', () => { if(!document.hidden) pollRank(true); });   // 탭으로 돌아오면 즉시 최신화
+function hideMenu(){ $('menu').classList.add('hidden'); }
+function toTitle(){
+  P = mk(250, 1, true, 1, game.char); E = mk(710, -1, false, 1, cpuChar(1));   // 메인 화면에서는 두 캐릭터를 멀찍이 세워 가운데에 PLAY 버튼 자리를 만든다 (왼쪽은 내가 고른 캐릭터)
+  parts.length = rings.length = texts.length = stars.length = 0; buf = [];
+  game.state = 'title'; game.slow = 0; game.freeze = 0; game.flash = 0; game.shake = 0;
+  showMenu();
+}
+$('playBtn').addEventListener('click', () => { audio(); if(game.state === 'title') start(1); });
+$('logoutBtn').addEventListener('click', () => { audio(); if(game.state === 'title') logout(); });
+$('rankBtn').addEventListener('click', () => { audio(); openRank(); });
+$('rankBack').addEventListener('click', () => { audio(); closeRank(); });
+
+/* ---------- 캐릭터 선택 창 ---------- */
+// 능력치 막대는 실제 공격 데이터에서 계산한다: 공격력 = 세 기술 평균 대미지, 속도 = 한 번 치는 데 걸리는 평균 시간의 역수, 사정거리 = 평균 사정거리.
+// 세 캐릭터 중 가장 큰 값을 5칸으로 놓고 나머지는 그 비율로 표시해서, 막대가 곧 밸런스 수치다.
+function charStats(){
+  const raw = {};
+  for(const key of CHAR_KEYS){
+    const a = ATTACK_SLOTS.map(s => CHARS[key].atk[s]);
+    raw[key] = { pow: a.reduce((s, k) => s + k.dmg, 0)/3, spd: 3/a.reduce((s, k) => s + k.windup + k.active + k.recover, 0), rng: a.reduce((s, k) => s + k.reach, 0)/3 };
+  }
+  const mx = { pow:0, spd:0, rng:0 };
+  for(const key of CHAR_KEYS) for(const s in mx) mx[s] = Math.max(mx[s], raw[key][s]);
+  const out = {};
+  for(const key of CHAR_KEYS) out[key] = { pow: raw[key].pow/mx.pow, spd: raw[key].spd/mx.spd, rng: raw[key].rng/mx.rng };
+  return out;
+}
+const CHAR_DESC = {
+  outfighter: ['긴 사정거리로 거리를 재며 싸운다', '회피 — 뒤로 물러난다'],
+  infighter:  ['낮은 자세로 파고들어 짧고 강하게', '회피 — 앞으로 더킹하며 돌진'],
+  slugger:    ['느리지만 한 방이 가장 강하다', '회피 — 제자리에서 숙이기만 한다']
+};
+function buildChars(){
+  const st = charStats();
+  document.querySelectorAll('#chars .card').forEach(card => {
+    const key = card.dataset.ch, c = CHARS[key], s = st[key], bar = (cls, label, v) =>
+      `<div class="stat ${cls}"><span>${label}</span><div class="bar"><i style="width:${Math.round(v*100)}%"></i></div></div>`;
+    card.innerHTML =
+      `<span class="badge">✓ 선택됨</span>` +
+      `<div class="ct"><div class="nm">${c.name}</div><div class="tg">${c.tag}</div><div class="ds">${CHAR_DESC[key][0]}<br>${CHAR_DESC[key][1]}</div></div>` +
+      `<div class="cb">${bar('p','공격력',s.pow)}${bar('s','속도',s.spd)}${bar('r','사정거리',s.rng)}` +
+      `<div class="mv"><b>J</b> ${c.labels[0]} · <b>K</b> ${c.labels[1]} · <b>L</b> ${c.labels[2]}</div></div>`;
+    card.onclick = () => { audio(); pickChar(key); };
+  });
+}
+function refreshCards(){ document.querySelectorAll('#chars .card').forEach(c => c.classList.toggle('on', c.dataset.ch === game.char)); }
+function pickChar(key){
+  if(!CHARS[key] || game.char === key) return;
+  game.char = key; refreshCards();
+  if(game.token) api('/api/char', { token: game.token, char: key }).catch(() => {});     // 계정에 저장 (실패해도 이번 접속에서는 계속 사용)
+}
+function openChars(){
+  if(game.state !== 'title') return;
+  hideMenu(); game.state = 'charsel';
+  PV = CHAR_KEYS.map((k, i) => mk([190, 480, 770][i], 1, true, 1, k));           // 세 캐릭터를 링 위에 나란히 세운다
+  buildChars(); refreshCards();
+  $('chars').classList.remove('hidden');
+}
+function stopChars(){ $('chars').classList.add('hidden'); PV = []; }
+function closeChars(){ stopChars(); if(game.state === 'charsel') toTitle(); }
+/* ---------- 스테이지 선택 창 ----------
+   깬 스테이지(game.best)까지와 바로 다음 스테이지(best+1)의 버튼이 열려 있고, 그 뒤 몇 개는 잠긴 채 보인다. 열린 버튼을 누르면 그 스테이지부터 시작한다.
+   기록(랭킹)은 예전과 똑같이 '지금까지의 최고 기록을 넘긴 스테이지'를 깼을 때만 올라간다. */
+function buildStages(){
+  const best = game.best || 0, next = best + 1, grid = $('stGrid');
+  grid.textContent = '';
+  for(let n = 1; n <= next + 4; n++){
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = n;
+    b.className = 'stb ' + (n <= best ? 'clear' : n === next ? 'next' : 'lock');
+    if(n <= next){ b.title = 'STAGE ' + n + ' 부터 시작'; b.addEventListener('click', () => { audio(); startStage(n); }); }
+    else { b.disabled = true; b.title = '아직 열리지 않았습니다'; }
+    grid.append(b);
+  }
+  $('stSub').textContent = best ? '클리어 ' + best + '  ·  도전 가능 ' + next : '아직 깬 스테이지가 없어요';
+  $('stMine').textContent = '열린 스테이지를 눌러 그 스테이지부터 시작하세요. (Enter: 스테이지 ' + next + ')';
+  const nb = grid.querySelector('.next'); if(nb) nb.scrollIntoView({ block:'center' });
+}
+function openStages(){
+  if(game.state !== 'title') return;
+  hideMenu(); game.state = 'stagesel'; P.x = 150; E.x = 810;       // 가운데 창이 두 캐릭터를 가리지 않도록 양옆으로 물러선다
+  $('stages').classList.remove('hidden'); buildStages();
+}
+function stopStages(){ $('stages').classList.add('hidden'); }
+function closeStages(){ stopStages(); if(game.state === 'stagesel') toTitle(); }
+function startStage(n){
+  if(game.state !== 'stagesel') return;
+  n = Math.max(1, Math.min(n, (game.best || 0) + 1));              // 열려 있는 스테이지까지만
+  stopStages(); start(n);
+}
+$('stageBtn').addEventListener('click', () => { audio(); openStages(); });
+$('stBack').addEventListener('click', () => { audio(); closeStages(); });
+$('charBtn').addEventListener('click', () => { audio(); openChars(); });
+$('charsBack').addEventListener('click', () => { audio(); closeChars(); });
+$('authForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  try{
+    const id = $('uid').value.trim(), pw = $('upw').value;
+    if(!id) return authMsg('아이디를 입력해 주세요');
+    if(authMode === 'signup'){
+      if(!/^[A-Za-z0-9_가-힣]{3,12}$/.test(id)) return authMsg(ERR.invalid_id);
+      if(pw.length < 4) return authMsg(ERR.short_pw);
+      if(pw !== $('upw2').value) return authMsg('비밀번호 확인이 일치하지 않습니다');
+    }
+    const r = await api(authMode === 'signup' ? '/api/signup' : '/api/login', { id, pw });   // 중복 검사·비밀번호 확인은 서버가 처리
+    if(!r.ok) return authMsg(ERR[r.error] || '요청이 거절되었습니다');
+    enterGame(r);   // 가입 직후 바로 로그인
+  }catch(err){
+    authMsg(err && err.message === 'server'
+      ? '서버에 연결할 수 없습니다. start-server.bat 을 실행한 뒤 다시 시도하세요'
+      : '오류가 발생했습니다: ' + (err && err.message ? err.message : err));
+  }
+});
+function logout(){
+  stopRank(); stopChars(); stopStages(); game.user = null; game.token = null; game.char = 'outfighter'; game.state = 'auth'; hideMenu();
+  $('auth').classList.remove('hidden'); setMode('login'); $('uid').focus();
+}
+// 스테이지를 깨면 서버에 기록한다. 서버가 순위를 바로 다시 계산하므로, 랭킹 화면을 열어 둔 다른 사람 화면도 2초 안에 바뀐다
+async function recordWin(){
+  if(!game.token || game.level <= (game.best || 0)) return;
+  game.newBest = true; game.rank = null; game.saveError = null;
+  try{
+    // game.best 는 서버가 확인해 준 기록만 담는다. 이전 스테이지 저장이 (서버 꺼짐 등으로) 실패했더라도,
+    // 서버 규칙(한 번에 +1 스테이지씩만 인정)에 맞게 빠진 스테이지를 순서대로 채워서 보낸다.
+    let last = null;
+    for(let lv = (game.best || 0) + 1; lv <= game.level; lv++){
+      last = await api('/api/best', { token: game.token, level: lv });
+      if(!last.ok) break;
+      game.best = last.best;
+    }
+    if(last && last.ok) game.rank = last.rank || null;
+    else if(last && last.error === 'bad_token') game.saveError = 'session';   // 서버가 이 로그인을 모름 (예: sessions.json 삭제) → 다시 로그인 필요
+    else game.newBest = false;                                                  // 서버가 거절한 기록은 신기록으로 표시하지 않는다
+  }catch(e){ game.saveError = 'network'; }                                       // 서버에 닿지 못함 → 다음 승리 때 함께 저장된다
+  if(game.state === 'title') refreshMenuRank();                                    // 저장이 끝나기 전에 ESC로 메인에 왔다면 내 순위 표시를 새로 고친다
+}
+setMode('login');
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for(const k in keys) keys[k] = false; });
+
+P = mk(250, 1, true); E = mk(710, -1, false, 1);
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(.033, (now - last)/1000); last = now;
+  step(dt); draw();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+window.__boxingReady = true;
+</script>
+<script>
+/* ============================================================================================
+   멀티플레이 모듈 (위 게임 코드는 건드리지 않고, 필요한 함수만 감싸서 끼워 넣는다)
+   - 방 만들기: 랜덤 6자리 코드 = 방 번호. 코드가 곧 PeerJS 접속 ID(fistbox-코드)라서 별도 서버 없이 방이 만들어진다.
+   - 연결: PeerJS 클라우드가 두 PC의 "소개"만 해 주고(WebRTC), 그 뒤 게임 데이터는 두 PC가 직접 주고받는다. 어떤 네트워크든(집/학교/모바일) 코드만 있으면 접속된다.
+   - 대전: 방장(HOST)이 전투를 계산하는 기준이다. 손님(GUEST)은 키 입력을 보내고, 방장이 보내 주는 화면 상태를 그대로 그린다. 방장=왼쪽(파랑), 손님=오른쪽(빨강).
+   - 대전 기록은 랭킹에 반영되지 않는다.
+   ============================================================================================ */
+(function(){
+'use strict';
+const PEER_URLS = ['https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js', 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'];
+const ID_PREFIX = 'fistbox-';
+const ACTS = ['jab', 'straight', 'uppercut', 'skill', 'dodge', 'guard'];
+const FKEYS = ['x','vx','face','state','t','hp','lag','st','gd','gdBroken','gdT','cg','z','vz','squash','hitPow','hitKind','flash','counter','combo','comboT','stun','connected','sw','recoilV','dodgeInv','counterAtk'];
+const rnd = v => typeof v === 'number' ? Math.round(v*100)/100 : v;
+const cleanName = s => String(s == null ? '' : s).replace(/[^\w가-힣 ]/g, '').slice(0, 14) || 'PLAYER';
+
+Object.assign(net, { link:null, peerObj:null, peer:null, ready:false, fx:[], rbuf:[], r:{ move:0, guard:0, at:0 }, rdt:1/60,
+                     lastRx:0, ping:0, code:'', busy:false, sess:0, toastT:0, lastIn:'', lastInAt:0, isBC:false, disp:null });
+
+/* ---------- 연결 도구 ---------- */
+function loadPeer(){
+  if(window.Peer) return Promise.resolve();
+  return new Promise((res, rej) => {
+    let i = 0;
+    const next = () => {
+      if(i >= PEER_URLS.length){ rej(new Error('load')); return; }
+      const s = document.createElement('script'); let done = false;
+      const fail = () => { if(done) return; done = true; s.remove(); next(); };
+      s.src = PEER_URLS[i++]; s.onload = () => { if(done) return; done = true; window.Peer ? res() : next(); }; s.onerror = fail;
+      setTimeout(fail, 10000); document.head.appendChild(s);
+    };
+    next();
+  });
+}
+function wrapConn(conn){
+  const l = { send(o){ try{ if(conn.open) conn.send(o); }catch(e){} }, close(){ try{ conn.close(); }catch(e){} },
+              buffered(){ try{ return conn.dataChannel ? conn.dataChannel.bufferedAmount : 0; }catch(e){ return 0; } } };
+  conn.on('data', d => { if(l.onmessage) l.onmessage(d); });
+  conn.on('close', () => { if(l.onclose) l.onclose(); });
+  conn.on('error', () => { if(l.onclose) l.onclose(); });
+  return l;
+}
+// (개발/테스트용) 같은 브라우저의 두 창을 BroadcastChannel로 잇는다: window.__NET_LOCAL = true 일 때만 사용되고, 평소엔 PeerJS(인터넷)를 쓴다
+function bcLink(ch, me, other){
+  const l = { send(o){ try{ ch.postMessage({ to:other, from:me, d:o }); }catch(e){} }, close(){ try{ ch.postMessage({ to:other, from:me, d:{ k:'__close' } }); ch.close(); }catch(e){} }, buffered(){ return 0; } };
+  ch.onmessage = ev => { const m = ev.data; if(!m || m.to !== me) return; if(m.d && m.d.k === '__close'){ if(l.onclose) l.onclose(); return; } if(l.onmessage) l.onmessage(m.d); };
+  return l;
+}
+
+/* ---------- 화면(창) ---------- */
+const $m = id => document.getElementById(id);
+function setMsg(t, err){ const e = $m('mpMsg'); e.textContent = t || ''; e.className = 'status' + (err ? ' err' : ''); }
+function toast(t){
+  const e = $m('mpToast'); e.textContent = t; e.classList.add('on');
+  clearTimeout(net.toastT); net.toastT = setTimeout(() => e.classList.remove('on'), 4500);
+}
+function showPanel(mode){
+  $m('mp').classList.remove('hidden'); net.panel = true; hideMenu();
+  $m('mpJoin').classList.toggle('hide', mode !== 'join'); $m('mpHost').classList.toggle('hide', mode !== 'host');
+  $m('mpTtl').textContent = mode === 'host' ? 'CREATE ROOM' : 'MULTIPLAYER';
+  $m('mpLive').textContent = ''; setMsg('');
+}
+function hidePanelUI(){ $m('mp').classList.add('hidden'); net.panel = false; }
+function closePanel(){                                   // 창 닫기 = 아직 대전이 시작되지 않았다면 방/연결도 정리
+  if(!net.on){ teardown(true); net.role = ''; }
+  hidePanelUI();
+  if(game.state === 'title') showMenu();
+}
+function openPanel(mode){
+  if(game.state !== 'title' || net.on || net.panel) return;
+  teardown(false); net.role = mode === 'host' ? 'host' : 'guest'; showPanel(mode);
+  if(mode === 'host') hostRoom(); else { $m('mpCode').value = ''; setTimeout(() => $m('mpCode').focus(), 50); }
+}
+
+/* ---------- 연결 정리 ---------- */
+function teardown(sendBye){
+  const L = net.link, PR = net.peerObj;
+  net.sess++;                                            // 진행 중이던 연결 시도의 늦은 콜백은 이 번호가 달라져서 무시된다
+  net.link = null; net.peerObj = null; net.peer = null; net.ready = false; net.busy = false; net.code = '';
+  net.rbuf.length = 0; net.fx.length = 0; net.vote.me = net.vote.peer = false;
+  if(L){ if(sendBye) L.send({ k:'bye' }); L.onmessage = L.onclose = null; setTimeout(() => L.close(), 250); }
+  if(PR){ PR.__bye = true; setTimeout(() => { try{ PR.destroy(); }catch(e){} }, 300); }   // __bye: 일부러 닫는 중 → 자동 재접속 금지 (방 코드가 서버에 남지 않게)
+}
+function leaveMatch(sendBye){
+  net.on = false; net.role = '';
+  teardown(sendBye);
+}
+// 상대가 나갔거나 연결이 끊김
+function peerGone(msg){
+  const inMatch = net.on;
+  if(net.panel && !inMatch){ teardown(false); setMsg(msg, true); return; }
+  leaveMatch(false);
+  if(game.state !== 'title') toTitle();
+  toast(msg);
+}
+
+/* ---------- 방 만들기 (방장) ---------- */
+async function hostRoom(){
+  if(net.busy) return; net.busy = true;
+  const sess = net.sess, stale = () => sess !== net.sess;
+  setMsg('방을 만드는 중…');
+  try{
+    if(window.__NET_LOCAL){ hostBC(); return; }
+    await loadPeer();
+  }catch(e){ if(stale()) return; net.busy = false; setMsg('연결 도구(PeerJS)를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.', true); return; }
+  let tries = 0;
+  const attempt = () => {
+    if(stale() || !net.panel || net.role !== 'host') return;
+    const code = String(100000 + Math.floor(Math.random()*900000));
+    const p = new window.Peer(ID_PREFIX + code, { debug:0 });
+    net.peerObj = p;
+    p.on('open', () => {
+      if(stale()){ p.__bye = true; try{ p.destroy(); }catch(e){} return; }
+      net.code = code; net.busy = false; $m('mpShow').textContent = code; $m('mpLive').textContent = 'WAITING';
+      setMsg('친구가 코드를 입력하기를 기다리는 중…');
+    });
+    p.on('connection', conn => {
+      if(net.link){ try{ conn.on('open', () => { conn.send({ k:'full' }); setTimeout(() => conn.close(), 200); }); }catch(e){} return; }   // 이미 상대가 있으면 거절
+      conn.on('open', () => { if(net.link || stale()){ return; } attach(wrapConn(conn)); });
+    });
+    // 중개 서버와 잠깐 끊겨도 방은 유지. 단, 우리가 방을 닫는 중이면(destroy가 먼저 이 이벤트를 부른다) 다시 붙지 않는다
+    p.on('disconnected', () => { if(p.__bye || stale()) return; setTimeout(() => { if(!p.__bye && !stale() && !p.destroyed){ try{ p.reconnect(); }catch(e){} } }, 1000); });
+    p.on('error', err => {
+      if(stale()) return;
+      if(err && err.type === 'unavailable-id' && tries++ < 6){ p.__bye = true; try{ p.destroy(); }catch(e){} attempt(); return; }   // 코드가 겹치면 새 코드로
+      if(net.on) return;
+      net.busy = false;
+      setMsg(err && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed')
+        ? '연결 중개 서버에 접속할 수 없습니다. 인터넷 연결을 확인해 주세요.' : '방을 만들지 못했습니다. 다시 시도해 주세요.', true);
+    });
+  };
+  attempt();
+}
+function hostBC(){
+  const code = String(100000 + Math.floor(Math.random()*900000));
+  const ch = new BroadcastChannel(ID_PREFIX + code); net.code = code; net.isBC = true; net.busy = false;
+  net.peerObj = { destroy(){ try{ ch.close(); }catch(e){} } };
+  $m('mpShow').textContent = code; $m('mpLive').textContent = 'WAITING'; setMsg('친구가 코드를 입력하기를 기다리는 중…');
+  ch.onmessage = ev => {
+    const m = ev.data;
+    if(!m || m.to !== 'H' || !m.d || m.d.k !== '__join' || net.link) return;
+    ch.postMessage({ to:m.from, from:'H', d:{ k:'__ok' } });
+    attach(bcLink(ch, 'H', m.from));
+  };
+}
+
+/* ---------- 입장 (손님) ---------- */
+async function joinRoom(){
+  if(net.busy) return;
+  const code = $m('mpCode').value.trim();
+  if(!/^\d{6}$/.test(code)){ setMsg('방 코드는 숫자 6자리입니다.', true); return; }
+  net.busy = true; setMsg('방을 찾는 중…'); $m('mpLive').textContent = '';
+  const sess = net.sess, stale = () => sess !== net.sess;
+  try{
+    if(window.__NET_LOCAL){ joinBC(code); return; }
+    await loadPeer();
+  }catch(e){ if(stale()) return; net.busy = false; setMsg('연결 도구(PeerJS)를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.', true); return; }
+  if(stale()) return;
+  const p = new window.Peer({ debug:0 }); net.peerObj = p;
+  let opened = false;
+  const timer = setTimeout(() => { if(!opened && !stale()){ net.busy = false; teardown(false); setMsg('연결 시간이 초과되었습니다. 코드를 확인하고 다시 시도해 주세요.', true); } }, 18000);
+  p.on('open', () => {
+    if(stale()) return;
+    const conn = p.connect(ID_PREFIX + code, { reliable:true, serialization:'json' });
+    conn.on('open', () => { if(stale()){ try{ conn.close(); }catch(e){} return; } opened = true; clearTimeout(timer); net.busy = false; attach(wrapConn(conn)); });
+    conn.on('error', () => { if(!opened && !stale()){ clearTimeout(timer); net.busy = false; teardown(false); setMsg('방에 연결하지 못했습니다.', true); } });
+  });
+  p.on('error', err => {
+    if(opened || stale()) return;
+    clearTimeout(timer); net.busy = false; teardown(false);
+    setMsg(err && err.type === 'peer-unavailable' ? '해당 코드의 방을 찾을 수 없습니다. 코드를 다시 확인해 주세요.'
+         : err && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error') ? '연결 중개 서버에 접속할 수 없습니다. 인터넷 연결을 확인해 주세요.' : '방에 연결하지 못했습니다.', true);
+  });
+}
+function joinBC(code){
+  const ch = new BroadcastChannel(ID_PREFIX + code), me = 'G' + Math.random().toString(36).slice(2, 8); net.isBC = true;
+  net.peerObj = { destroy(){ try{ ch.close(); }catch(e){} } };
+  const timer = setTimeout(() => { if(net.busy){ net.busy = false; teardown(false); setMsg('해당 코드의 방을 찾을 수 없습니다. 코드를 다시 확인해 주세요.', true); } }, 2500);
+  ch.onmessage = ev => {
+    const m = ev.data;
+    if(!m || m.to !== me || !m.d || m.d.k !== '__ok') return;
+    clearTimeout(timer); net.busy = false; attach(bcLink(ch, me, m.from));
+  };
+  ch.postMessage({ to:'H', from:me, d:{ k:'__join' } });
+}
+
+/* ---------- 연결된 뒤: 인사 → (방장) 대전 시작 ---------- */
+function attach(link){
+  net.link = link; net.lastRx = performance.now(); net.ping = 0;
+  link.onmessage = onMsg;
+  link.onclose = () => peerGone('연결이 끊어졌습니다');
+  link.send({ k:'hi', name:cleanName(game.user), ch:game.char, v:1 });
+  $m('mpLive').textContent = 'CONNECTED'; setMsg('연결되었습니다! 잠시 후 시작합니다…');
+}
+function onMsg(m){
+  if(!m || typeof m !== 'object') return;
+  net.lastRx = performance.now();
+  switch(m.k){
+    case 'hi':
+      net.peer = { name:cleanName(m.name), ch:CHARS[m.ch] ? m.ch : 'outfighter' };
+      if(net.role === 'host' && !net.on) startMatch();
+      break;
+    case 'char': if(net.peer && CHARS[m.ch]) net.peer.ch = m.ch; break;                 // 상대가 방 안에서 캐릭터를 바꿈 → 다음 경기부터 반영
+    case 'full': teardown(false); setMsg('이미 다른 사람이 들어와 있는 방입니다.', true); break;
+    case 'start': if(net.role === 'guest') beginGuest(m); break;
+    case 'snap': if(net.role === 'guest' && net.ready) applySnap(m); break;
+    case 'in': if(net.role === 'host' && net.on) applyRemoteIn(m); break;
+    case 'vote': if(net.on){ net.vote.peer = true; if(net.role === 'host' && net.vote.me) startMatch(); } break;
+    case 'ping': if(net.link) net.link.send({ k:'pong', t:m.t }); break;
+    case 'pong': net.ping = Math.round(performance.now() - m.t); break;
+    case 'bye': peerGone('상대가 방을 나갔습니다'); break;
+  }
+}
+function startMatch(){                                   // 방장: 새 경기 (첫 경기 / 재대결)
+  net.vote.me = net.vote.peer = false;
+  net.on = true; net.ready = true; net.role = 'host';
+  closeSub(); hidePanelUI(); start(1);                              // 기존 시작 루틴(상태 초기화)을 쓰고, 파이터만 사람 둘로 바꾼다
+  P = mk(310, 1, true, 1, game.char); E = mk(650, -1, false, 1, net.peer.ch); E.human = true; E.spd = 1;
+  net.names = [cleanName(game.user), net.peer.name];
+  net.fx.length = 0; net.rbuf.length = 0; net.r = { move:0, guard:0, at:performance.now() };
+  net.link.send({ k:'start', hc:game.char, gc:net.peer.ch, hn:net.names[0], gn:net.names[1] });
+  game.state = 'intro';
+}
+function beginGuest(m){                                  // 손님: 방장의 시작 신호를 받아 같은 파이터를 세운다
+  net.vote.me = net.vote.peer = false;
+  net.on = true; net.ready = true; net.role = 'guest';
+  closeSub(); hidePanelUI(); start(1);
+  P = mk(310, 1, true, 1, CHARS[m.hc] ? m.hc : 'outfighter'); E = mk(650, -1, false, 1, CHARS[m.gc] ? m.gc : 'outfighter'); E.human = true; E.spd = 1;
+  net.names = [cleanName(m.hn), cleanName(m.gn)];
+  game.state = 'intro'; net.lastInAt = 0; net.lastIn = '';
+}
+net.rematch = function(){                                // 결과 화면에서 Enter: 양쪽이 모두 누르면 재대결
+  if(!net.on || net.vote.me) return;
+  net.vote.me = true; net.link && net.link.send({ k:'vote' });
+  if(net.role === 'host' && net.vote.peer) startMatch();
+};
+
+/* ---------- 방장: 손님 입력 받기 / 화면 상태 보내기 ---------- */
+function applyRemoteIn(m){
+  const r = net.r; r.at = performance.now();
+  r.move = m.m > 0 ? 1 : m.m < 0 ? -1 : 0; r.guard = !!m.g;
+  if(Array.isArray(m.a)) for(const a of m.a.slice(0, 4)){
+    if(!ACTS.includes(a)) continue;
+    net.rbuf = [{ a, age:0 }];                                                         // 입력 버퍼(1칸, 최신 입력으로 교체) — 방장 쪽 입력과 같은 규칙
+  }
+}
+function takeRemote(f){
+  if(!canAct(f) || !net.rbuf.length) return null;
+  const i = net.rbuf.findIndex(b => !(f.atkCd[b.a] > 0));
+  return i < 0 ? null : net.rbuf.splice(i, 1)[0].a;
+}
+function remoteCtl(f, dt){                               // 손님 파이터(E)를 조종: CPU 두뇌 대신 손님의 입력을 쓴다
+  const r = net.r, c = f.ctrl;
+  if(performance.now() - r.at > 700){ r.move = 0; r.guard = false; }               // 입력이 끊기면(탭 정지 등) 멈춰 세운다
+  c.move = r.move; c.act = null;
+  f.guardForce = Math.max(0, f.guardForce - dt);
+  let a;
+  while((a = takeRemote(f))){ if(a === 'guard') f.guardForce = .18; else { c.act = a; break; } }
+  c.guard = !!r.guard || f.guardForce > 0;
+  for(const b of net.rbuf) b.age += dt;
+  net.rbuf = net.rbuf.filter(b => b.age < bufWindow(b.a) - 1e-6);
+  if(f.state === 'hit' || f.state === 'ko') net.rbuf.length = 0;                   // 맞으면 저장된 입력은 비운다
+}
+function packF(f){
+  const a = FKEYS.map(k => rnd(f[k]));
+  a.push(f.atk ? f.atk.name : '', !!f.ctrl.guard, f.ctrl.move | 0);
+  return a;
+}
+function sendSnap(){
+  if(!net.link || net.link.buffered() > 200000) return;                              // 회선이 밀리면 이번 프레임은 건너뛴다
+  const g = [game.state, rnd(game.introT), rnd(game.koT), rnd(game.flash), rnd(game.shake), rnd(game.slow), rnd(game.freeze), rnd(game.kick)];
+  net.link.send({ k:'snap', g, p:packF(P), e:packF(E), x:net.fx });
+  net.fx = [];
+}
+
+/* ---------- 손님: 화면 상태 받기 / 입력 보내기 ---------- */
+function unpackF(f, a){
+  for(let i = 0; i < FKEYS.length; i++) f[FKEYS[i]] = a[i];
+  const n = FKEYS.length, nm = a[n];
+  f.atk = nm ? (Object.values(f.chATK).find(k => k.name === nm) || null) : null;
+  f.ctrl.guard = !!a[n+1]; f.ctrl.move = a[n+2] | 0;
+}
+const orig = { burst, dust, ring, addText, sfx, starsPush: stars.push };
+function replay(e){
+  switch(e[0]){
+    case 'burst': orig.burst(...e.slice(1)); break;
+    case 'dust': orig.dust(...e.slice(1)); break;
+    case 'ring': orig.ring(...e.slice(1)); break;
+    case 'text': orig.addText(...e.slice(1)); break;
+    case 'sfx': orig.sfx(...e.slice(1)); break;
+    case 'star': orig.starsPush.call(stars, e[1]); break;
+  }
+}
+function applySnap(m){
+  if(!m.g || !m.p || !m.e) return;
+  const g = m.g;
+  game.state = g[0]; game.introT = g[1]; game.koT = g[2]; game.flash = g[3]; game.shake = g[4]; game.slow = g[5]; game.freeze = g[6]; game.kick = g[7];
+  unpackF(P, m.p); unpackF(E, m.e);
+  if(Array.isArray(m.x)) for(const e of m.x) replay(e);
+}
+function guestStep(dt){                                  // 손님 쪽 한 프레임: 전투 계산은 하지 않고 입자/글자 같은 연출만 진행
+  game.t += dt;
+  game.shake *= Math.pow(.0008, dt); game.flash = Math.max(0, game.flash - dt); game.kick = Math.max(0, game.kick - dt*.35);
+  if(game.freeze > 0){ game.freeze -= dt; return; }
+  let ts = 1;
+  if(game.slow > 0){ game.slow -= dt; ts = game.state === 'ko' ? .2 : .3; }
+  dt *= ts;
+  for(const p of parts){ p.life -= dt; p.vy += 1100*dt; p.x += p.vx*dt; p.y += p.vy*dt; }
+  for(const r of rings) r.life -= dt;
+  for(const s of stars) s.life -= dt;
+  for(const t of texts){ t.life -= dt; t.y -= 38*dt; }
+  for(let i = parts.length-1; i >= 0; i--) if(parts[i].life <= 0) parts.splice(i, 1);
+  for(let i = rings.length-1; i >= 0; i--) if(rings[i].life <= 0) rings.splice(i, 1);
+  for(let i = stars.length-1; i >= 0; i--) if(stars[i].life <= 0) stars.splice(i, 1);
+  for(let i = texts.length-1; i >= 0; i--) if(texts[i].life <= 0) texts.splice(i, 1);
+  P.bob += dt*5; E.bob += dt*5; P.t += dt; E.t += dt;
+}
+function sendIn(force){
+  if(!net.link) return;
+  const mv = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), gd = GUARD_KEYS.some(k => keys[k]) ? 1 : 0, s = mv + ':' + gd, now = performance.now();
+  if(!force && s === net.lastIn && now - net.lastInAt < 150) return;                 // 바뀐 때와 0.15초마다(끊김 감지용)만 보낸다
+  net.lastIn = s; net.lastInAt = now; net.link.send({ k:'in', m:mv, g:gd });
+}
+addEventListener('keydown', e => {                       // 손님의 공격/회피/가드 입력은 눌린 순간 바로 방장에게 보낸다 (방장 쪽 버퍼가 처리)
+  if(!net.on || net.role !== 'guest' || game.state !== 'fight' || e.repeat || net.panel) return;
+  const a = ACTION_KEYS[e.code] || (GUARD_KEYS.includes(e.code) ? 'guard' : null);
+  if(!a || !net.link) return;
+  const mv = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), gd = GUARD_KEYS.some(k => keys[k]) ? 1 : 0;
+  net.lastIn = mv + ':' + gd; net.lastInAt = performance.now();
+  net.link.send({ k:'in', m:mv, g:gd, a:[a] });
+});
+
+/* ---------- 방 안에서 캐릭터 변경 / 랭킹 보기 (결과 화면에서 C / R) ----------
+   연결과 방은 그대로 두고, 기존 캐릭터 창(#chars)과 랭킹 창(#rank)을 그 위에 띄운다. 경기 상태(game.state)는 건드리지 않고,
+   그리는 순간에만 메인 화면과 같은 장면(캐릭터 세 명 / 양옆에 선 두 명)으로 바꿔 보여 준다. */
+function openSub(kind){
+  if(!net.on || net.sub || net.panel || game.state !== 'ko' || game.koT < 1.8) return;
+  net.sub = kind;
+  if(kind === 'chars'){
+    PV = CHAR_KEYS.map((k, i) => mk([190, 480, 770][i], 1, true, 1, k));
+    buildChars(); refreshCards(); $m('chars').classList.remove('hidden');
+  } else {
+    net.disp = [mk(150, 1, true, 1, game.char), mk(810, -1, false, 1, net.peer ? net.peer.ch : 'outfighter')];
+    RANK.open = true; RANK.version = null; RANK.first = true; RANK.prev = new Map();
+    $m('rankList').textContent = ''; $m('rankList').hidden = true; $m('rankEmpty').hidden = false; $m('rankEmpty').textContent = '불러오는 중…'; $m('rankMine').textContent = '';
+    setLive(false); $m('rankLive').textContent = 'CONNECTING'; $m('rank').classList.remove('hidden');
+    pollRank(true); clearInterval(RANK.timer); RANK.timer = setInterval(() => pollRank(false), 1200);
+  }
+}
+function closeSub(){
+  if(!net.sub) return;
+  if(net.sub === 'chars') stopChars(); else stopRank();
+  net.sub = ''; net.disp = null;
+}
+const _pickChar = pickChar;
+pickChar = function(key){                                // 방 안에서 캐릭터를 바꾸면 상대에게도 알린다 (다음 경기부터 적용)
+  const before = game.char; _pickChar(key);
+  if(net.on && net.link && game.char !== before) net.link.send({ k:'char', ch:game.char });
+};
+$m('charsBack').addEventListener('click', closeSub);
+$m('rankBack').addEventListener('click', closeSub);
+addEventListener('keydown', e => {
+  if(!net.on || net.panel || e.repeat) return;
+  if(net.sub){
+    if(e.code === 'Escape' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Backspace'){ e.preventDefault(); closeSub(); }
+    else if(net.sub === 'chars' && (e.code === 'ArrowLeft' || e.code === 'KeyA')){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 2) % 3]); }
+    else if(net.sub === 'chars' && (e.code === 'ArrowRight' || e.code === 'KeyD')){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 1) % 3]); }
+    return;
+  }
+  if(game.state === 'ko' && game.koT >= 1.8){
+    if(e.code === 'KeyC'){ e.preventDefault(); audio(); openSub('chars'); }
+    else if(e.code === 'KeyR'){ e.preventDefault(); audio(); openSub('rank'); }
+  }
+});
+
+/* ---------- 기존 함수 감싸기 ---------- */
+const _step = step, _runAI = runAI, _toTitle = toTitle, _draw = draw, _recordWin = recordWin;
+step = function(dt){
+  if(net.sub){ for(const f of net.disp || []) f.bob += dt*5; for(const v of PV) v.bob += dt*5; }
+  if(!net.on || !net.ready) return _step(dt);
+  if(net.role === 'guest'){ guestStep(dt); sendIn(false); return; }
+  net.rdt = dt; _step(dt); sendSnap();
+};
+runAI = function(f, o, dt){
+  if(net.on && net.role === 'host' && f === E){ remoteCtl(E, net.rdt); return; }
+  return _runAI(f, o, dt);
+};
+toTitle = function(){ closeSub(); if(net.on) leaveMatch(true); return _toTitle(); };         // ESC 등으로 메인으로 나가면 상대에게도 알리고 연결을 닫는다
+recordWin = async function(){ if(net.on) return; return _recordWin(); };
+draw = function(){
+  if(net.on && net.sub){                                 // 캐릭터/랭킹 창이 떠 있는 동안: 메인 화면과 같은 장면으로 잠깐 바꿔서 그린다
+    const rp = P, re = E, rs = game.state;
+    if(net.sub === 'rank' && net.disp){ P = net.disp[0]; E = net.disp[1]; game.state = 'ranking'; } else game.state = 'charsel';
+    try{ _draw(); } finally { P = rp; E = re; game.state = rs; }
+    return;
+  }
+  _draw();
+  if(net.on && net.ready){
+    ctx.setTransform(1,0,0,1,0,0);
+    txt((net.role === 'host' ? 'HOST' : 'GUEST') + (net.role === 'guest' ? '  ·  PING ' + net.ping + 'ms' : ''), W/2, 44, 11, COL.dim, 'center', 600, 3);
+  }
+};
+// 방장은 화면에 보이는 모든 연출(입자/글자/소리)을 손님에게도 전달한다
+[['burst', burst], ['dust', dust], ['ring', ring]].forEach(([n, fn]) => { window[n] = function(...a){ if(net.on && net.role === 'host') net.fx.push([n, ...a]); return fn.apply(this, a); }; });
+addText = function(...a){ if(net.on && net.role === 'host') net.fx.push(['text', ...a]); return orig.addText.apply(this, a); };
+sfx = function(...a){ if(net.on && net.role === 'host') net.fx.push(['sfx', ...a]); return orig.sfx.apply(this, a); };
+stars.push = function(...a){ if(net.on && net.role === 'host' && a[0]) net.fx.push(['star', a[0]]); return orig.starsPush.apply(this, a); };
+
+/* ---------- 연결 상태 점검 (핑 / 끊김 감지) ---------- */
+setInterval(() => {
+  if(!net.link) return;
+  net.link.send({ k:'ping', t:performance.now() });
+  if(performance.now() - net.lastRx > 8000) peerGone('상대와의 연결이 끊어졌습니다');
+}, 1000);
+
+/* ---------- 버튼 / 키 ---------- */
+$m('hostBtn').addEventListener('click', () => { audio(); openPanel('host'); });
+$m('joinBtn').addEventListener('click', () => { audio(); openPanel('join'); });
+$m('mpBack').addEventListener('click', () => { audio(); closePanel(); });
+$m('mpGo').addEventListener('click', () => { audio(); joinRoom(); });
+$m('mpCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6); });
+$m('mpCopy').addEventListener('click', async () => {
+  if(!net.code) return;
+  try{ await navigator.clipboard.writeText(net.code); setMsg('코드를 복사했습니다: ' + net.code); }catch(e){ setMsg('코드: ' + net.code + ' (직접 알려 주세요)'); }
+});
+addEventListener('keydown', e => {
+  if(!net.panel) return;
+  if(e.code === 'Escape'){ e.preventDefault(); closePanel(); }
+  else if((e.code === 'Enter' || e.code === 'NumpadEnter') && !$m('mpJoin').classList.contains('hide')){ e.preventDefault(); joinRoom(); }
+});
+})();
+</script>
+</body>
+</html>
