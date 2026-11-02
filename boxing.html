@@ -291,7 +291,8 @@ function canAct(f){
     (f.state === 'attack' && f.connected && f.t >= (f.atk.cxAt !== undefined ? f.atk.cxAt : f.atk.windup));
 }
 const STAM_USE = .82;                                   // 스태미나 소모 배율 (공격·회피·바디 블로우 모두 이전보다 18% 적게 닳는다)
-const DODGE_CANCEL =.12;                              // 회피 시작 후 이 시간(초)부터는 회피 동작을 끊고 바로 공격할 수 있다 (무적은 .26초까지 그대로)
+const DODGE_CANCEL =.12;                              // 회피 시작 후 이 시간(초)부터는 회피 동작을 끊고 바로 공격할 수 있다 (무적은 DODGE_INV 까지 그대로)
+const DODGE_INV = .32;                                // 회피 무적 시간(초). 회피 동작(.34초)의 거의 끝까지 — 예전 .26초는 피하기가 너무 어려웠다
 function takeBuffered(f){                             // 행동 가능할 때(대기 중, 또는 공격이 적중한 직후)만 가장 오래된 입력부터 꺼냄
   if(!canAct(f) || !buf.length) return null;
   const i = buf.findIndex(b => !(f.atkCd[b.a] > 0));   // 재사용 대기 중인 공격 입력은 남겨 두고(시간이 지나면 폐기) 다른 입력을 먼저 처리
@@ -325,8 +326,8 @@ const CHARS = {
     key:'outfighter', name:'아웃파이터', tag:'OUT-FIGHTER', desc:'긴 사정거리로 거리를 재며 싸운다. 회피는 뒤로 물러난다.',
     hp:93, stunMul:.8, mv:{ f:200, b:170 }, dodge:'back', dodgeCd:.75, labels:['잽','스트레이트','어퍼컷'],
     ai:{ retreat:1, strong:.3, upper:0, delay:.3 },
-    look:{ crouch:0, lean:6, shR:13.5, hipR:17, headR:21, armW:11, legW:14, gloveS:1, armTh:70, neck:false,
-           lead:{ x:62, y:-161 }, rear:{ x:25, y:-154 }, guard:{ lean:0, crouch:8, lead:{ x:38, y:-182 }, rear:{ x:24, y:-174 } } },
+    look:{ crouch:0, lean:6, shR:13.5, hipR:17, headR:21, armW:11, legW:14, gloveS:1, armTh:70, neck:false, sprite:'out',     // sprite: 쓰는 캐릭터 그림 (SPR), sprS: 그림 크기 배율
+           lead:{ x:74, y:-155 }, rear:{ x:62, y:-160 }, guard:{ lean:0, crouch:8, lead:{ x:66, y:-184 }, rear:{ x:55, y:-178 } } },   // lead/rear = 그림 속 글러브 위치
     atk:{
       jab:      { windup:.07, active:.09, recover:.16, reach:111, dmg:7, stamina:7, stun:.30, kb:90,  glove:'lead', lean:10, name:'jab',      cg:20, gm:1,   rd:.21 },
       straight: { windup:.16, active:.10, recover:.30, reach:139, dmg:15, stamina:18, stun:.50, kb:260, glove:'rear', lean:24, name:'straight', cg:20, gm:1,   rd:.42 },
@@ -338,8 +339,8 @@ const CHARS = {
     key:'infighter', name:'인파이터', tag:'IN-FIGHTER', desc:'낮은 자세로 파고들어 바디·훅·어퍼를 몰아친다. 회피는 앞으로 더킹하며 돌진한다.',
     hp:97, mv:{ f:215, b:140 }, dodge:'dash', dashV:340, dodgeCd:.85, labels:['바디','훅','어퍼컷'],         // 펀치가 아웃파이터보다 25~30% 강한 대신 체력이 조금 적다 (AI 대 AI 시뮬레이션으로 맞춘 값)
     ai:{ retreat:.15, strong:.5, upper:.25, delay:1 },
-    look:{ crouch:14, lean:16, shR:16.5, hipR:20.5, headR:21, armW:13, legW:15, gloveS:1.04, armTh:46, neck:false,
-           lead:{ x:38, y:-170 }, rear:{ x:24, y:-163 }, guard:{ lean:10, crouch:6, lead:{ x:40, y:-176 }, rear:{ x:26, y:-168 } } },
+    look:{ crouch:14, lean:16, shR:16.5, hipR:20.5, headR:21, armW:13, legW:15, gloveS:1.04, armTh:46, neck:false, sprite:'in',
+           lead:{ x:72, y:-155 }, rear:{ x:25, y:-148 }, guard:{ lean:10, crouch:6, lead:{ x:58, y:-180 }, rear:{ x:44, y:-172 } } },
     atk:{
       jab:      { windup:.08, active:.09, recover:.20, reach:86,  dmg:8,  stamina:8,  stun:.34, kb:80,  glove:'rear', lean:14, name:'body',     cg:20, gm:1.2, rd:.22, style:'body', stDrain:12 },
       straight: { windup:.14, active:.10, recover:.30, reach:104, dmg:17, stamina:19, stun:.52, kb:300, glove:'lead', lean:26, name:'hook',     cg:20, gm:1.2, rd:.42, style:'hook' },
@@ -351,8 +352,8 @@ const CHARS = {
     key:'slugger', name:'슬러거', tag:'SLUGGER', desc:'펀치가 느리고 텀이 길지만 한 방이 가장 강하다. 회피는 제자리에서 숙인다.',
     hp:104, mv:{ f:175, b:135 }, dodge:'duck', dodgeCd:.75, labels:['잽','스트레이트','어퍼컷'],
     ai:{ retreat:.3, strong:.55, upper:.15, delay:1.9 },
-    look:{ crouch:0, lean:8, shR:17.5, hipR:20, headR:22, armW:14, legW:16, gloveS:1.16, armTh:70, neck:true,
-           lead:{ x:60, y:-158 }, rear:{ x:26, y:-152 }, guard:{ lean:2, crouch:8, lead:{ x:38, y:-180 }, rear:{ x:24, y:-172 } } },
+    look:{ crouch:0, lean:8, shR:17.5, hipR:20, headR:22, armW:14, legW:16, gloveS:1.16, armTh:70, neck:true, sprite:'slug', sprS:1.04,   // sprite: 쓰는 캐릭터 그림 (SPR), sprS: 그림 크기 배율
+           lead:{ x:78, y:-167 }, rear:{ x:27, y:-160 }, guard:{ lean:2, crouch:8, lead:{ x:63, y:-194 }, rear:{ x:48, y:-186 } } },
     atk:{
       // 펀치 한 번이 느리고(준비 + 긴 후딜레이) 다음 펀치까지 텀이 길다. 대신 한 방의 대미지가 세 캐릭터 중 가장 크다
       jab:      { windup:.10, active:.10, recover:.30, reach:106, dmg:14, stamina:11, stun:.38, kb:120, glove:'lead', lean:12, name:'jab',      cg:20, gm:1.2, rd:.30, fx:1.15 },
@@ -573,7 +574,7 @@ function start(level){
 function perform(f, act){
   if(act === 'dodge'){
     if(f.dodgeCd > 0 || f.st < 12*STAM_USE) return false;
-    f.st -= 12*STAM_USE; f.dodgeCd = f.cd.dodgeCd; f.dodgeInv = .26; setState(f,'dodge'); sfx('dodge');
+    f.st -= 12*STAM_USE; f.dodgeCd = f.cd.dodgeCd; f.dodgeInv = DODGE_INV; setState(f,'dodge'); sfx('dodge');
     return true;
   }
   const k = (f.player || f.human) ? f.chATK[act] : cpuAtk(f.lvl, f.ch, act);    // CPU는 스테이지 초반일수록 준비/후딜레이가 길다
@@ -674,7 +675,7 @@ function updF(f, o, dt){
 function resolve(a, d, k){
   if(d.state === 'ko') return;
   const dir = a.face, hx = d.x - dir*20;
-  const hy = GY - d.z - (k.style === 'up' ? 192 : k.style === 'body' ? 112 : k.glove === 'lead' ? 168 : 172);   // 맞는 높이: 어퍼컷은 턱, 바디는 복부
+  const hy = GY - d.z - (k.style === 'up' ? 192 : k.style === 'body' ? 112 : k.glove === 'lead' ? 168 : 172)*sprVY(d);   // 맞는 높이(이펙트 위치만): 어퍼컷은 턱, 바디는 복부. 스프라이트 몸 크기에 맞춘다
 
   // 회피 성공 (무적 프레임)
   if(d.dodgeInv > 0){
@@ -1042,6 +1043,43 @@ function step(dt){
    이렇게 하면 좌우 코너 패드가 캐릭터 이동 범위(x 100~860) 끝에 맞닿고, 좌우로 30px씩 여유가 있어 가장 센 화면 흔들림(±21px)에도 가장자리가 비지 않는다. */
 const BG = { scale: .72, feetY: 808, canvas: null };
 const TB = { img: null };                                  // 메인 화면 배경 (title-bg.jpg, 16:9 전체 화면 그림)
+
+/* ---------- 캐릭터 스프라이트 ----------
+   몸 그림(spr-*.png)은 원본 그림에서 팔·글러브만 지운 것이고(원본의 절반 크기로 저장), 팔과 글러브는 코드가 그려서 펀치 동작을 만든다.
+   좌표는 모두 '원본 그림 픽셀' 기준: ax = 두 발 사이 가운데 x, gy = 발바닥 y, mirror = 그림이 왼쪽을 보고 있음 (게임 안에서는 앞쪽이 항상 +x).
+   shF = 앞팔 어깨(몸 앞에 보이는 쪽), shB = 뒷팔 어깨(몸 뒤에 가려지는 쪽), upper/fore = 위팔·팔뚝 길이, armW = 팔 굵기 배율.
+   idle / guard = 평소 / 가드(S) 자세의 글러브 위치. 이 값으로 각 캐릭터의 look.lead/rear/guard 를 정한다 (그림 전용, 판정과 무관).
+   인파이터 = 원본 그림 그대로의 자세 / 아웃파이터 = 마르고 긴 몸에 앞손을 살짝 굽혀 내민 자세 / 슬러거 = 어깨를 끌어올린 두꺼운 몸
+   tall = 그림을 세로로 늘인 배율 (펀치 높이를 그만큼 맞춘다) */
+const SPR = {
+  out:  { w:768, h:866, ax:392, gy:832, mirror:false, shF:{ x:415, y:235 }, shB:{ x:392, y:210 }, upper:140, fore:196, armW:.74, tall:1.14,  // 오른쪽을 봄. 몸을 가로 .82배·세로 1.14배로 늘인 날렵한 체형, 가늘고 긴 팔 (얼굴은 인파이터와 같은 맨머리)
+          idle:{ lead:{ x:666, y:265 }, rear:{ x:616, y:247 } }, guard:{ lead:{ x:638, y:177 }, rear:{ x:616, y:215 } }, img:{} },   // 앞손을 앞으로 내밀되 팔꿈치는 살짝 굽힌 자세
+  in:   { w:760, h:773, ax:378, gy:748, mirror:true,  shF:{ x:392, y:228 }, shB:{ x:428, y:206 }, upper:110, fore:150, armW:1.18,  // 맨머리, 왼쪽을 봄. 짧고 굵은 팔
+          idle:{ lead:{ x:190, y:215 }, rear:{ x:262, y:222 } }, guard:{ lead:{ x:196, y:160 }, rear:{ x:254, y:176 } }, img:{} },   // 피커부: 두 글러브를 양 볼에 붙이고 눈만 내놓는다 (가드 때는 얼굴을 다 가림)
+  slug: { w:760, h:773, ax:378, gy:748, mirror:true,  shF:{ x:348, y:262 }, shB:{ x:440, y:196 }, upper:140, fore:186, armW:1.3,   // 인파이터 그림 + 끌어올린 어깨, 머리를 어깨 사이에 묻음
+          idle:{ lead:{ x:132, y:252 }, rear:{ x:236, y:262 } }, guard:{ lead:{ x:166, y:178 }, rear:{ x:216, y:212 } }, img:{} }
+};
+const SPR_SC = .245;                                       // 원본 그림 1px = 게임 0.245px (키 약 177px — 판정 거리에 맞춘 크기)
+const SPR_VY = SPR_SC/.3;                                  // 펀치 경로·타격 이펙트의 '높이'를 몸 크기에 맞춰 줄이는 배율 (가로 위치 = 판정은 그대로)
+const GLV = { img:{}, size:160, base:-.71 };               // 글러브 그림(원본 크기, 160x160, 가운데가 글러브 중심). base: 그림 속 팔뚝 방향(앞을 보게 뒤집은 뒤)
+const SPR_COL = {                                          // 코드로 그리는 팔 색 (몸 그림과 같은 색)
+  blue: { body:'#376cfd', shade:'#2245c4', wrap:'#0a1036', ol:'#050a20', glow:'rgba(40,100,255,.85)', stripe:'#4f84ff' },
+  red:  { body:'#fc3252', shade:'#c01c3c', wrap:'#1c0712', ol:'#12030a', glow:'rgba(255,40,80,.85)', stripe:'#ff5a6e' }
+};
+(function(){
+  const load = src => { const i = new Image(); i.src = src; return i; };
+  for(const k in SPR) for(const c of ['blue', 'red']) SPR[k].img[c] = load(`spr-${k}-${c}.png`);   // 진영 색: 플레이어 파랑 / 상대 빨강
+  for(const c of ['blue', 'red']) GLV.img[c] = load(`glove-${c}.png`);
+  // 각 캐릭터의 평소/가드 글러브 위치(look)를 그림 좌표에서 게임 좌표로 옮겨 둔다 (공격 준비 동작이 이 위치에서 시작한다)
+  for(const key of CHAR_KEYS){
+    const L = CHARS[key].look, S = SPR[L.sprite], sc = SPR_SC*(L.sprS || 1);
+    const loc = p => ({ x:Math.round((S.mirror ? S.ax - p.x : p.x - S.ax)*sc), y:Math.round((p.y - S.gy)*sc) });
+    L.lead = loc(S.idle.lead); L.rear = loc(S.idle.rear); L.guard.lead = loc(S.guard.lead); L.guard.rear = loc(S.guard.rear);
+  }
+})();
+const imgReady = i => i && i.complete && i.naturalWidth > 0;
+const sprOn = f => { const S = SPR[f.cd.look.sprite]; return !!S && imgReady(S.img[f.player ? 'blue' : 'red']) && imgReady(GLV.img[f.player ? 'blue' : 'red']); };
+const sprVY = f => sprOn(f) ? SPR_VY*(f.cd.look.sprS || 1)*(SPR[f.cd.look.sprite].tall || 1) : 1;   // 스프라이트 키에 맞춘 높이 배율 (그림 전용)
 (function(){
   const t = new Image();
   t.onload = () => { TB.img = t; };
@@ -1093,6 +1131,99 @@ function drawGlove(x, y, ang, th, flash, back, sMul){
   ctx.beginPath(); ctx.moveTo(-6, 1); ctx.lineTo(-2, -6); ctx.lineTo(2, -6); ctx.lineTo(-2, 1); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(1, 4); ctx.lineTo(5, -3); ctx.lineTo(9, -3); ctx.lineTo(5, 4); ctx.closePath(); ctx.fill();
   ctx.restore();
+}
+
+/* ---------- 스프라이트 캐릭터 그리기 ----------
+   P: drawFighter 가 계산한 자세 값 (lean/crouch/headSnap/bob, 글러브 위치 lead/rear). 그림이 아직 안 불러와졌으면 false (예전 도형 그리기로 대신)
+   - 몸: 기울기(lean)는 발을 땅에 붙인 채 위쪽만 앞뒤로 미는 기울임, 웅크림(crouch)은 위아래로 살짝 눌림. 평소 자세(look.lean/crouch)일 때 원본 그림 그대로
+   - 팔: 어깨 → 팔꿈치(아래로 굽음) → 손목. 위팔은 몸 색, 팔뚝은 원본처럼 검은 손목 밴드, 끝에 글러브 그림
+     뒷팔은 몸 뒤쪽 어깨(shB)에서 나와 몸에 가려지고, 앞팔만 몸 앞쪽 어깨(shF)에서 몸 위로 그려진다 (두 팔이 한 어깨에 붙어 보이지 않게)
+   - 펀치 중인 글러브는 판정과 같은 가로 위치(punchGeom 경로)에 그대로 그린다. 나머지 글러브는 몸을 따라 움직인다 */
+function drawSpriteFighter(f, P){
+  if(!sprOn(f)){
+    // 아직 불러오는 중이면 잠깐 그리지 않는다 (느린 접속에서 예전 도형 캐릭터가 번쩍 보이지 않게). 불러오기에 실패했을 때만 예전 도형으로 대신
+    const S = SPR[f.cd.look.sprite], side = f.player ? 'blue' : 'red', bad = i => !i || (i.complete && i.naturalWidth === 0);
+    return !(S && !bad(S.img[side]) && !bad(GLV.img[side]));
+  }
+  const L = f.cd.look, S = SPR[L.sprite], side = f.player ? 'blue' : 'red';
+  const img = S.img[side], gimg = GLV.img[side], C = SPR_COL[side];
+  const sc = SPR_SC*(L.sprS || 1), m = sc/.3, flash = f.flash > 0, FLASH = 'brightness(2.2) saturate(0)';
+  const c = Math.max(-4, P.crouch - L.crouch);
+  // 몸 기울기: 공격 중에는 더 크게 (준비 때 뒤로 젖혔다가 칠 때 앞으로 크게 내딛는 느낌) — 그림만 바뀐다
+  const k = (P.lean - L.lean)*(f.state === 'attack' ? .014 : .009) + P.headSnap*.004;
+  const sx = 1 + c*.002, sy = (1 - c*.0045)*(1 + P.bob*.004);
+  const T = p => ({ x:p.x*sx - k*p.y*sy, y:p.y*sy });
+  const loc = p => ({ x:(S.mirror ? S.ax - p.x : p.x - S.ax)*sc, y:(p.y - S.gy)*sc });
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+
+  // 글러브 위치: 펀치 중인 손은 계산된 경로 그대로, 그 밖에는 상태별 자세를 몸의 움직임에 맞춰 옮긴다
+  let gl = { x:P.lead.x, y:P.lead.y }, gr = { x:P.rear.x, y:P.rear.y };
+  if(f.state === 'hit'){ gl = { x:L.lead.x - 14*m, y:L.lead.y + 12*m }; gr = { x:L.rear.x - 12*m, y:L.rear.y + 14*m }; }      // 맞으면 가드가 흐트러진다
+  else if(f.state === 'ko'){ gl = { x:L.lead.x - 24*m, y:L.lead.y + 32*m }; gr = { x:L.rear.x - 20*m, y:L.rear.y + 34*m }; }   // 팔이 풀린다
+  else if(f.state === 'dodge'){ gl = { x:L.guard.lead.x, y:L.guard.lead.y }; gr = { x:L.guard.rear.x, y:L.guard.rear.y }; }   // 피할 때는 얼굴을 가린다
+  const punch = f.state === 'attack' ? f.atk.glove : null;
+  if(punch !== 'lead') gl = T(gl);
+  if(punch !== 'rear') gr = T(gr);
+  const shF = T(loc(S.shF)), shB = T(loc(S.shB));
+
+  const line = (a, b) => { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); };
+  // 펀치를 뻗는 동안(active)의 글러브 크기 강조: 가운데에서 최대 1.22배
+  const atkK = f.state === 'attack' ? f.atk : null, actU = atkK ? (f.t - atkK.windup)/atkK.active : -1;
+  const pop = actU >= 0 && actU <= 1.4 ? 1 + .22*Math.sin(Math.PI*Math.min(1, actU/1.4)) : 1;
+  let pg = null;
+  const arm = (g, back) => {
+    const a = back ? shB : shF, l1 = S.upper*sc, l2 = S.fore*sc;
+    // 2관절 IK: 팔꿈치는 어깨-글러브를 잇는 선의 아래쪽으로 굽는다 (팔을 다 뻗으면 일직선)
+    const dx = g.x - a.x, dy = g.y - a.y, d = Math.hypot(dx, dy) || 1, ux = dx/d, uy = dy/d;
+    let e;
+    if(d >= l1 + l2) e = { x:a.x + dx*l1/(l1 + l2), y:a.y + dy*l1/(l1 + l2) };
+    else { const t = (l1*l1 - l2*l2 + d*d)/(2*d), h = Math.sqrt(Math.max(0, l1*l1 - t*t)); e = { x:a.x + ux*t - uy*h, y:a.y + uy*t + ux*h }; }
+    const fx = g.x - e.x, fy = g.y - e.y, fl = Math.hypot(fx, fy) || 1, ang = Math.atan2(fy, fx);
+    const wb = Math.min(50*sc*L.gloveS, fl*.8), w = { x:g.x - fx/fl*wb, y:g.y - fy/fl*wb };
+    const uw = 52*sc*S.armW, fw = 44*sc*S.armW, ow = 4.2;
+    const seg = (p, q, wid, col, gloss) => {           // 외곽선(+네온 빛) → 색 → 광택 한 마디
+      ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      if(!flash){ ctx.shadowColor = C.glow; ctx.shadowBlur = 9; }
+      ctx.strokeStyle = C.ol; ctx.lineWidth = wid + ow; line(p, q);
+      ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+      ctx.strokeStyle = flash ? '#fff' : col; ctx.lineWidth = wid; line(p, q);
+      if(gloss && !flash){ ctx.strokeStyle = 'rgba(255,255,255,.32)'; ctx.lineWidth = wid*.22; line({ x:p.x, y:p.y - wid*.26 }, { x:q.x, y:q.y - wid*.26 }); }
+      ctx.restore();
+    };
+    return {
+      upper: () => seg(a, e, uw, back ? C.shade : C.body, !back),       // 위팔 (뒷팔은 그늘이라 어둡게)
+      fore: () => {                                                      // 팔뚝: 검은 손목 밴드 + 팀 색 줄
+        seg(e, w, fw, C.wrap, false);
+        if(flash) return;
+        const mm = { x:lerp(e.x, w.x, .6), y:lerp(e.y, w.y, .6) }, nx = -fy/fl*fw*.5, ny = fx/fl*fw*.5;
+        ctx.save(); ctx.strokeStyle = C.stripe; ctx.lineWidth = 1.8; line({ x:mm.x - nx, y:mm.y - ny }, { x:mm.x + nx, y:mm.y + ny }); ctx.restore();
+      },
+      glove: () => {                                                     // 글러브 그림: 원본은 왼쪽을 보고 있으므로 뒤집은 뒤, 팔뚝 방향에 맞춰 돌린다
+        ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(ang - GLV.base); ctx.scale(-1, 1);
+        if(flash) ctx.filter = FLASH; else { if(back) ctx.filter = 'brightness(.82)'; ctx.shadowColor = C.glow; ctx.shadowBlur = 10; }
+        const gs = GLV.size*sc*L.gloveS*(g === pg ? pop : 1);   // 뻗는 순간의 글러브는 살짝 커진다 (타격 순간 강조)
+        ctx.drawImage(gimg, -gs/2, -gs/2, gs, gs);
+        ctx.restore();
+      }
+    };
+  };
+
+  // 뒷팔: 뒤쪽 어깨에서 나와 몸통에 가려진다. 뒷손으로 펀치를 내는 동안에만 팔뚝을 몸 앞으로 꺼내 글러브와 이어 보이게 한다
+  pg = punch === 'lead' ? gl : punch === 'rear' ? gr : null;
+  const R = arm(gr, true), F = arm(gl, false), rearOut = punch === 'rear';
+  R.upper(); if(!rearOut) R.fore();                    // 1) 뒷팔 (몸 뒤)
+
+  ctx.save();                                          // 2) 몸
+  ctx.transform(1, 0, -k, 1, 0, 0); ctx.scale(sx, sy);
+  if(S.mirror) ctx.scale(-1, 1);
+  if(flash) ctx.filter = FLASH;
+  ctx.drawImage(img, -S.ax*sc, -S.gy*sc, S.w*sc, S.h*sc);
+  ctx.restore();
+
+  if(rearOut) R.fore();                                // 3) 뒷손 글러브는 원본 그림처럼 몸 앞에
+  R.glove();
+  F.upper(); F.fore(); F.glove();                      // 4) 앞팔 + 앞손 글러브: 몸 앞
+  return true;
 }
 
 /* ---------- 펀치 궤적 ----------
@@ -1170,7 +1301,7 @@ function drawFighter(f){
   // 그림자
   ctx.fillStyle = 'rgba(0,0,0,.4)';
   const sh0 = Math.max(.4, 1 - f.z/260);
-  ctx.beginPath(); ctx.ellipse(-3, 2, 62*sh0, 8*sh0, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-3, 2, 78*sh0, 7*sh0, 0, 0, Math.PI*2); ctx.fill();    // 스프라이트의 넓은 보폭에 맞춘 폭
 
   // 배경이 밝은 링/조명 위에서도 캐릭터 윤곽이 묻히지 않도록 은은한 어두운 테두리 그림자
   ctx.shadowColor = 'rgba(0,0,10,.6)'; ctx.shadowBlur = 9;
@@ -1193,18 +1324,24 @@ function drawFighter(f){
     const idle = k.glove === 'lead' ? lead : rear;
     const up = k.style === 'up', sk = k.style === 'skill', hk = k.style === 'hook', bd = k.style === 'body';
     // 어퍼컷은 아래에서 위로 쓸어올리고, 훅은 옆에서 휘둘러 호를 그리고, 바디는 낮게 복부로 찌르고, 스킬은 크게 뒤로 당겼다가 내지른다
-    const { pull, ext } = punchGeom(k);
-    const wl = k.windLean !== undefined ? k.windLean : (sk ? -16 : hk ? -12 : -6);        // 준비 동작에서 몸을 뒤로 젖히는 정도
+    // 스프라이트일 때는 몸이 작아진 만큼 경로의 '높이'만 줄인다. 가로 위치는 판정(gloveTouches)과 같은 값 그대로
+    const pg = punchGeom(k), vy = sprVY(f);
+    const pull = { x:pg.pull.x, y:pg.pull.y*vy }, ext = { x:pg.ext.x, y:pg.ext.y*vy };
+    const wl = 1.5*(k.windLean !== undefined ? k.windLean : (sk ? -16 : hk ? -12 : -6));  // 준비 동작에서 몸을 뒤로 젖히는 정도 (펀치가 잘 보이도록 크게)
     let g, cr = 2;
     if(f.t < w){
-      const u = easeIn(f.t/w); g = { x:lerp(idle.x,pull.x,u), y:lerp(idle.y,pull.y,u) };
+      // 준비 동작: 주먹을 출발점(pull)보다 한 번 더 깊이 뒤로 당겼다가(deep) 출발점으로 — 펀치가 나온다는 신호를 크게 보여준다.
+      // 그리는 위치만 바뀌고, 준비가 끝나는 순간에는 정확히 pull 에 있으므로 판정 경로(pull → ext)는 그대로
+      const t0 = f.t/w, u = easeIn(t0), deep = { x:pull.x - 24, y:pull.y + 12*vy };
+      g = t0 < .7 ? { x:lerp(idle.x, deep.x, easeOut(t0/.7)), y:lerp(idle.y, deep.y, easeOut(t0/.7)) }
+                  : { x:lerp(deep.x, pull.x, (t0 - .7)/.3), y:lerp(deep.y, pull.y, (t0 - .7)/.3) };
       lean = L.lean*(1-u) + wl*u; cr = up ? 2 + 18*u : sk ? 2 + 8*u : bd ? 2 + 16*u : hk ? 2 + 5*u : 2;
       if(sk){ ctx.strokeStyle = COL.gold; ctx.globalAlpha = .5*u; ctx.lineWidth = 3;   // 기 모으는 오라
-        ctx.beginPath(); ctx.arc(0, -110, 40 + 60*(1-u), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1; }
+        ctx.beginPath(); ctx.arc(0, -110*vy, 40 + 60*(1-u), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1; }
     }
     else if(f.t < e){
       const u = easeOut((f.t-w)/k.active); g = { x:lerp(pull.x,ext.x,u), y:lerp(pull.y,ext.y,u) };
-      if(hk) g.y -= 24*Math.sin(Math.PI*u);                                              // 훅: 가운데에서 가장 높이 올라갔다 내려오는 호
+      if(hk) g.y -= 24*vy*Math.sin(Math.PI*u);                                              // 훅: 가운데에서 가장 높이 올라갔다 내려오는 호
       lean = lerp(wl, k.lean, u); cr = up ? lerp(20, -8, u) : bd ? lerp(18, 6, u) : hk ? lerp(7, 0, u) : 2;
       // 궤적 종류: 스킬 > (카운터 기회를 잡고 낸 공격) > 공격 종류. 이 구간의 글러브 위치를 기록해 둔다
       trail = { g, style: sk ? 'skill' : f.counterAtk ? 'counter' : up ? 'uppercut' : k.name };
@@ -1237,6 +1374,9 @@ function drawFighter(f){
   if(f.state !== 'ko' && f.state !== 'hit') crouch += L.crouch;       // 인파이터의 낮은 자세 (피격·KO 연출은 건드리지 않는다)
 
   if(trail) pushTrail(f, f.x + f.face*trail.g.x, GY - f.z + trail.g.y, trail.style);   // 글러브의 월드 좌표를 기록 (이펙트가 글러브에 그대로 연결된다)
+
+  // 캐릭터 스프라이트 (그림을 불러오기 전에는 아래의 도형 그리기를 쓴다)
+  if(drawSpriteFighter(f, { lean, crouch, headSnap, bob, lead, rear })){ drawTrail(f); ctx.restore(); return; }
 
   // 참고 이미지 실측 비율(0.88배): 어깨 y≈-153, 골반 y≈-96, 머리 중심 (몸통보다 +13 앞, y≈-191), 머리 반지름 21
   const hip = { x:0, y:-96 + crouch*.4 }, sh = { x:lean*.7 - 7, y:-153 + crouch + bob*.4 }, head = { x:lean + 8 + headSnap, y:-191 + crouch + bob*.6 };
@@ -1368,6 +1508,7 @@ function draw(){
     sg.addColorStop(0, '#060818'); sg.addColorStop(.88, '#060818'); sg.addColorStop(1, 'rgba(6,8,24,0)');
     ctx.fillStyle = sg; ctx.fillRect(0, 0, 372, H);
     if(game.state === 'title'){ ctx.fillStyle = '#080b1f'; ctx.beginPath(); ctx.roundRect(806, 10, 150, 46, 16); ctx.fill(); }   // 오른쪽 위 아이디 칩
+    else { ctx.save(); ctx.filter = 'blur(7px)'; ctx.fillStyle = '#0a0c22'; ctx.beginPath(); ctx.roundRect(800, 6, 162, 54, 20); ctx.fill(); ctx.restore(); }   // 로그인 화면: 그림 속 예시 아이디 칩을 배경색으로 부드럽게 지운다
   } else if(BG.canvas){
     ctx.drawImage(BG.canvas, Math.round(W/2 - BG.canvas.width/2), Math.round(GY - BG.feetY*BG.scale));
   } else {
@@ -1383,7 +1524,9 @@ function draw(){
   } else if(game.state === 'charsel'){
     PV.forEach(drawFighter);                            // 캐릭터 선택 화면: 세 캐릭터를 나란히 세워 비교한다
   } else if(P && E){
-    const order = [P, E].sort((a,b) => (a.state==='ko') - (b.state==='ko'));
+    // 그리는 순서: 쓰러진 쪽 → 서 있는 쪽 → 펀치를 내는 쪽 (주먹이 상대 몸에 가려지지 않게 공격하는 캐릭터를 맨 위에)
+    const layer = f => f.state === 'ko' ? 0 : f.state === 'attack' ? 2 : 1;
+    const order = [P, E].sort((a,b) => layer(a) - layer(b));
     order.forEach(drawFighter);
   }
 
