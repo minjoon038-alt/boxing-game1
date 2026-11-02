@@ -10,18 +10,28 @@
   :root{--cw:min(100vw,calc(100vh*16/9));--u:calc(var(--cw)/960)}   /* --u: 캔버스 폭 1/960 (메인 화면 글자/버튼을 화면 크기에 맞춰 키우고 줄이는 단위) */
   #wrap{position:relative;width:var(--cw);aspect-ratio:16/9;background:#0e0e13}
   canvas{width:100%;height:100%;display:block}
-  #menu{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .45s ease both}
+  #menu{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .9s ease .3s both}
   #menu.hidden{display:none}
   #menu>*{pointer-events:auto}
   @keyframes menuIn{from{opacity:0;transform:translateY(calc(var(--u)*10))}to{opacity:1;transform:none}}
-  #menu .who{position:absolute;left:0;right:0;top:calc(var(--u)*134);text-align:center;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.85)}
-  #menu .who .id{font-size:calc(var(--u)*20);font-weight:700;letter-spacing:calc(var(--u)*2)}
-  #menu .who .best{margin-top:calc(var(--u)*6);font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*3);color:#ffd166}
-  #menu .play{position:absolute;left:50%;top:calc(var(--u)*296);transform:translate(-50%,-50%);width:calc(var(--u)*232);height:calc(var(--u)*66);border:0;border-radius:calc(var(--u)*33);background:#f2f2f2;color:#0e0e13;font-family:inherit;font-size:calc(var(--u)*24);font-weight:800;letter-spacing:calc(var(--u)*10);padding-left:calc(var(--u)*10);cursor:pointer;box-shadow:0 0 calc(var(--u)*28) rgba(255,255,255,.28),0 calc(var(--u)*8) calc(var(--u)*20) rgba(0,0,0,.45);transition:transform .15s,box-shadow .15s,background .15s}
-  #menu .play:hover,#menu .play:focus-visible{background:#fff;transform:translate(-50%,-50%) scale(1.06);box-shadow:0 0 calc(var(--u)*40) rgba(255,255,255,.5),0 calc(var(--u)*10) calc(var(--u)*24) rgba(0,0,0,.5);outline:none}
-  #menu .play:active{transform:translate(-50%,-50%) scale(.98)}
-  #menu .enter{position:absolute;left:0;right:0;top:calc(var(--u)*342);text-align:center;font-size:calc(var(--u)*11);letter-spacing:calc(var(--u)*3);color:#aab0c4;pointer-events:none;text-shadow:0 0 calc(var(--u)*6) rgba(0,0,10,.9)}
-  #menu .sub{position:absolute;left:0;right:0;top:calc(var(--u)*378);display:flex;justify-content:center;gap:calc(var(--u)*12)}
+  /* 메인 화면: 배경은 캔버스에 그린 title-bg.jpg. 왼쪽 열(제목/계정/버튼)은 HTML이 그리고, 그림에 박혀 있는 기본 글자/버튼/아이디는 캔버스에서 어두운 막으로 덮는다 (draw 의 titleArt) */
+  #menu .chip{position:absolute;right:calc(var(--u)*14);top:calc(var(--u)*14);width:calc(var(--u)*136);height:calc(var(--u)*36);line-height:calc(var(--u)*36);box-sizing:border-box;padding:0 calc(var(--u)*14);text-align:center;font-size:calc(var(--u)*11);font-weight:700;letter-spacing:calc(var(--u)*1);color:#e6e9f5;border:1px solid rgba(255,255,255,.22);border-radius:calc(var(--u)*14);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #menu .col{position:absolute;left:calc(var(--u)*48);top:0;bottom:0;width:calc(var(--u)*252);pointer-events:none}
+  #menu .col>*{pointer-events:auto}
+  #menu .logo{position:absolute;left:0;right:0;top:calc(var(--u)*58);text-align:center;pointer-events:none;border-top:1px solid rgba(255,255,255,.22);border-bottom:1px solid rgba(255,255,255,.22);padding:calc(var(--u)*16) 0 calc(var(--u)*14)}
+  #menu .logo b{display:block;font-size:calc(var(--u)*42);font-weight:200;letter-spacing:calc(var(--u)*9);padding-left:calc(var(--u)*9);white-space:nowrap;line-height:1;text-shadow:0 0 calc(var(--u)*18) rgba(120,150,255,.45)}
+  #menu .logo i{display:block;margin-top:calc(var(--u)*10);font-style:normal;font-size:calc(var(--u)*9.5);letter-spacing:calc(var(--u)*5);color:#7e86a8}
+  #menu .who{position:absolute;left:0;right:0;top:calc(var(--u)*158);text-align:center;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.85)}
+  #menu .who .id{font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #menu .who .best{margin-top:calc(var(--u)*6);font-size:calc(var(--u)*11);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;white-space:nowrap}
+  #menu .play{position:absolute;left:0;top:calc(var(--u)*236);width:100%;height:calc(var(--u)*62);border:2px solid transparent;border-radius:calc(var(--u)*4);transform:skewX(-14deg);background:linear-gradient(#0b0f2c,#0b0f2c) padding-box,linear-gradient(90deg,#4f7dff,#ff4d6a) border-box;color:#f2f2f2;font-family:inherit;font-size:calc(var(--u)*24);font-weight:800;font-style:italic;letter-spacing:calc(var(--u)*8);cursor:pointer;box-shadow:0 0 calc(var(--u)*22) rgba(90,110,255,.35);transition:transform .15s,box-shadow .15s,filter .15s}
+  #menu .play span{display:inline-block;transform:skewX(14deg)}
+  #menu .play:hover,#menu .play:focus-visible{filter:brightness(1.35);transform:skewX(-14deg) scale(1.04);box-shadow:0 0 calc(var(--u)*34) rgba(140,120,255,.65);outline:none}
+  #menu .play:active{transform:skewX(-14deg) scale(.98)}
+  #menu .enter{position:absolute;left:0;right:0;top:calc(var(--u)*304);text-align:center;font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*3);color:#8d93a8;pointer-events:none}
+  #menu .sub{position:absolute;left:0;right:0;top:calc(var(--u)*338);display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*8)}
+  #menu .sub .ghost{padding:calc(var(--u)*9) 0;border-radius:calc(var(--u)*8);letter-spacing:calc(var(--u)*1);white-space:nowrap;text-align:center}
+  #menu .tag{position:absolute;left:0;right:0;bottom:calc(var(--u)*24);text-align:center;font-size:calc(var(--u)*9.5);letter-spacing:calc(var(--u)*3);white-space:nowrap;color:#6d7490;pointer-events:none;border-top:1px solid rgba(255,255,255,.14);padding-top:calc(var(--u)*10)}
   .ghost{background:rgba(8,10,22,.6);border:1px solid rgba(255,255,255,.2);border-radius:calc(var(--u)*16);padding:calc(var(--u)*7) calc(var(--u)*20);color:#c4c9da;font-family:inherit;font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*2);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
   .ghost:hover,.ghost:focus-visible{color:#fff;border-color:rgba(255,255,255,.55);background:rgba(20,24,44,.75);outline:none}
   .ghost.gold{color:#ffd166;border-color:rgba(255,209,102,.45)}
@@ -106,8 +116,7 @@
   #stages .foot .ghost{flex:none;white-space:nowrap}
   #stages .mine{font-size:calc(var(--u)*11.5);color:#9aa0b4;line-height:1.5;min-width:0;flex:1}
   /* ----- 멀티플레이 창 / 안내 문구 ----- */
-  #menu .sub2{top:calc(var(--u)*416)}
-  #menu .toast{position:absolute;left:0;right:0;top:calc(var(--u)*458);text-align:center;font-size:calc(var(--u)*13);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;opacity:0;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.9);transition:opacity .4s}
+  #menu .toast{position:absolute;left:0;right:0;top:calc(var(--u)*430);text-align:center;font-size:calc(var(--u)*13);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;opacity:0;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.9);transition:opacity .4s}
   #menu .toast.on{opacity:1}
   #mp{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .4s ease both}
   #mp.hidden{display:none}
@@ -126,8 +135,9 @@
   #mp .status{min-height:calc(var(--u)*34);margin-top:calc(var(--u)*14);text-align:center;font-size:calc(var(--u)*12.5);line-height:1.5;color:#c4c9da}
   #mp .status.err{color:#ff7b80}
   #mp .foot{display:flex;justify-content:center;margin-top:calc(var(--u)*6);padding-top:calc(var(--u)*12);border-top:1px solid rgba(255,255,255,.12)}
-  #auth{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(11,11,15,.82);font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2}
+  #auth{position:fixed;inset:0;display:flex;align-items:center;justify-content:flex-start;padding-left:calc(50vw - var(--cw)/2 + var(--u)*44);box-sizing:border-box;transition:opacity .45s ease;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2}
   #auth.hidden{display:none}
+  #auth.fade{opacity:0;pointer-events:none}
   #auth .box{width:300px;max-width:86vw}
   #auth h1{margin:0 0 28px;text-align:center;font-weight:200;font-size:44px;letter-spacing:14px;padding-left:14px}
   #auth .tabs{display:flex;margin-bottom:18px;border-bottom:1px solid #2a2a35}
@@ -148,20 +158,23 @@
   <canvas id="c" width="960" height="540"></canvas>
   <!-- 메인 화면: 로그인 후 가장 먼저 보이고, PLAY를 누르면 게임이 시작된다 -->
   <div id="menu" class="hidden">
-    <div class="who"><div class="id" id="menuUser"></div><div class="best" id="menuBest"></div><div class="chr" id="menuChar"></div></div>
-    <button class="play" id="playBtn" type="button">PLAY</button>
-    <div class="enter">또는 ENTER</div>
-    <div class="sub">
-      <button class="ghost" id="stageBtn" type="button">스테이지</button>
-      <button class="ghost" id="charBtn" type="button">캐릭터</button>
-      <button class="ghost gold" id="rankBtn" type="button">랭킹</button>
-      <button class="ghost" id="logoutBtn" type="button">로그아웃</button>
+    <div class="chip" id="menuChip"></div>
+    <div class="col">
+      <div class="logo"><b>BOXING</b></div>
+      <div class="who"><div class="id" id="menuUser"></div><div class="best" id="menuBest"></div><div class="chr" id="menuChar"></div></div>
+      <button class="play" id="playBtn" type="button"><span>▶ PLAY</span></button>
+      <div class="enter">또는 ENTER</div>
+      <div class="sub">
+        <button class="ghost" id="stageBtn" type="button">스테이지</button>
+        <button class="ghost" id="charBtn" type="button">캐릭터</button>
+        <button class="ghost gold" id="rankBtn" type="button">랭킹</button>
+        <button class="ghost" id="hostBtn" type="button">방 만들기</button>
+        <button class="ghost" id="joinBtn" type="button">멀티플레이</button>
+        <button class="ghost" id="logoutBtn" type="button">로그아웃</button>
+      </div>
+      <div class="toast" id="mpToast"></div>
+      <div class="tag">FIGHT. CLIMB. BE THE BEST.</div>
     </div>
-    <div class="sub sub2">
-      <button class="ghost" id="hostBtn" type="button">방 만들기</button>
-      <button class="ghost" id="joinBtn" type="button">멀티플레이</button>
-    </div>
-    <div class="toast" id="mpToast"></div>
   </div>
   <!-- 멀티플레이 창: 방 만들기(6자리 코드 생성) / 멀티플레이(친구의 6자리 코드 입력). 두 PC가 인터넷으로 직접 연결된다 -->
   <div id="mp" class="hidden">
@@ -1028,7 +1041,11 @@ function step(dt){
    이미지는 0.72배로 줄여 가로 중앙에 두고, 링 매트의 한가운데(원본 y=808)가 캐릭터 발 위치(GY)에 오도록 세로 위치를 맞춘다.
    이렇게 하면 좌우 코너 패드가 캐릭터 이동 범위(x 100~860) 끝에 맞닿고, 좌우로 30px씩 여유가 있어 가장 센 화면 흔들림(±21px)에도 가장자리가 비지 않는다. */
 const BG = { scale: .72, feetY: 808, canvas: null };
+const TB = { img: null };                                  // 메인 화면 배경 (title-bg.jpg, 16:9 전체 화면 그림)
 (function(){
+  const t = new Image();
+  t.onload = () => { TB.img = t; };
+  t.src = 'title-bg.jpg';
   const img = new Image();
   img.onload = () => {
     const c = document.createElement('canvas');
@@ -1344,7 +1361,14 @@ function draw(){
   ctx.translate(W/2 + sx, GY-120 + sy); ctx.scale(z,z); ctx.translate(-camX, -(GY-120));
 
   // 배경: 링 이미지 (이미지가 없으면 예전의 단순한 링 선으로 대체)
-  if(BG.canvas){
+  const titleArt = (game.state === 'title' || game.state === 'auth') && TB.img;       // 메인 화면은 그림 안에 두 선수가 이미 있으므로 캐릭터를 따로 그리지 않는다
+  if(titleArt){
+    ctx.drawImage(TB.img, 0, 0, W, H);
+    const sg = ctx.createLinearGradient(0, 0, 372, 0);      // 왼쪽 열: 그림 속 글자/버튼을 지우고 HTML 메뉴가 올라갈 자리
+    sg.addColorStop(0, '#060818'); sg.addColorStop(.88, '#060818'); sg.addColorStop(1, 'rgba(6,8,24,0)');
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, 372, H);
+    if(game.state === 'title'){ ctx.fillStyle = '#080b1f'; ctx.beginPath(); ctx.roundRect(806, 10, 150, 46, 16); ctx.fill(); }   // 오른쪽 위 아이디 칩
+  } else if(BG.canvas){
     ctx.drawImage(BG.canvas, Math.round(W/2 - BG.canvas.width/2), Math.round(GY - BG.feetY*BG.scale));
   } else {
     ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 2;
@@ -1354,8 +1378,10 @@ function draw(){
     ctx.beginPath(); ctx.moveTo(0,GY+2); ctx.lineTo(W,GY+2); ctx.stroke();
   }
 
-  if(game.state === 'charsel'){
-    PV.forEach(drawFighter);                               // 캐릭터 선택 화면: 세 캐릭터를 나란히 세워 비교한다
+  if(titleArt){
+    // (메인 화면: 그림만)
+  } else if(game.state === 'charsel'){
+    PV.forEach(drawFighter);                            // 캐릭터 선택 화면: 세 캐릭터를 나란히 세워 비교한다
   } else if(P && E){
     const order = [P, E].sort((a,b) => (a.state==='ko') - (b.state==='ko'));
     order.forEach(drawFighter);
@@ -1396,7 +1422,7 @@ function draw(){
   ctx.restore();
 
   // 상단 체력바/글자가 조명과 전광판 위에서도 읽히도록 위쪽을 살짝 어둡게
-  if(BG.canvas && game.state !== 'title' && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel'){
+  if(BG.canvas && !titleArt && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel'){
     if(game.state !== 'auth'){
       const tg = ctx.createLinearGradient(0, 0, 0, 135);
       tg.addColorStop(0, 'rgba(4,5,12,.72)'); tg.addColorStop(1, 'rgba(4,5,12,0)');
@@ -1464,7 +1490,7 @@ function draw(){
   }
   if((game.state === 'fight' || game.state === 'intro') && game.escAt && performance.now() - game.escAt < 2000)
     txt('ESC 한 번 더 — 메인 화면으로 나가기', W/2, 150, 14, COL.gold, 'center', 700, 2);
-  if(game.state !== 'auth' && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel') drawKeys();
+  if(game.state !== 'auth' && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel' && !titleArt) drawKeys();
 }
 
 /* ---------- 입력 / 루프 ---------- */
@@ -1548,7 +1574,8 @@ document.querySelectorAll('#auth .tab').forEach(t => t.addEventListener('click',
 function enterGame(u){
   game.user = u.id; game.token = u.token; game.best = u.best || 0;
   game.char = CHARS[u.char] ? u.char : 'outfighter';      // 계정에 저장된 캐릭터 (없으면 아웃파이터)
-  $('auth').classList.add('hidden'); $('upw').value = ''; $('upw2').value = '';
+  $('auth').classList.add('fade'); setTimeout(() => { if(game.user) $('auth').classList.add('hidden'); $('auth').classList.remove('fade'); }, 480);
+  $('upw').value = ''; $('upw2').value = '';
   if(document.activeElement) document.activeElement.blur();
   toTitle();                           // 로그인(또는 가입) 직후 가장 먼저 메인 화면
 }
@@ -1557,7 +1584,8 @@ function enterGame(u){
 function showMenu(){
   $('menuUser').textContent = game.user || '';
   $('menuChar').textContent = '● ' + CHARS[game.char].name;
-  $('menuBest').textContent = 'BEST  STAGE ' + (game.best || 0);
+  $('menuBest').textContent = 'BEST STAGE ' + (game.best || 0);
+  $('menuChip').textContent = '👤 ' + (game.user || '');
   $('menu').classList.remove('hidden');
   refreshMenuRank();
 }
@@ -1568,7 +1596,7 @@ async function refreshMenuRank(){
     const r = await api('/api/ranking', { token: game.token, limit: 0 });
     if(game.state !== 'title' || game.user !== who || !r.me) return;       // 그 사이 화면/계정이 바뀌었으면 무시
     game.best = Math.max(game.best || 0, r.me.best);
-    $('menuBest').textContent = 'BEST  STAGE ' + r.me.best + (r.me.rank ? '   ·   RANK #' + r.me.rank + ' / ' + r.total : '   ·   UNRANKED');
+    $('menuBest').textContent = 'BEST STAGE ' + r.me.best + (r.me.rank ? ' · RANK #' + r.me.rank + '/' + r.total : ' · UNRANKED');
   }catch(e){}
 }
 
@@ -1750,7 +1778,7 @@ $('authForm').addEventListener('submit', async ev => {
 });
 function logout(){
   stopRank(); stopChars(); stopStages(); game.user = null; game.token = null; game.char = 'outfighter'; game.state = 'auth'; hideMenu();
-  $('auth').classList.remove('hidden'); setMode('login'); $('uid').focus();
+  $('auth').classList.remove('hidden', 'fade'); setMode('login'); $('uid').focus();
 }
 // 스테이지를 깨면 서버에 기록한다. 서버가 순위를 바로 다시 계산하므로, 랭킹 화면을 열어 둔 다른 사람 화면도 2초 안에 바뀐다
 async function recordWin(){
