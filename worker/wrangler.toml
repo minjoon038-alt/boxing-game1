@@ -5,4 +5,4 @@ compatibility_date = "2025-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "boxing"
-database_id = "00000000-0000-0000-0000-000000000000"   # replaced by the real id after `wrangler d1 create boxing`
+database_id = "130aca5a-19e4-41d5-91c9-37d2d01080af"

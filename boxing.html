@@ -1753,7 +1753,7 @@ addEventListener('keydown', e => {
 const $ = id => document.getElementById(id);
 let authMode = 'login';
 // 계정/랭킹 서버 주소. 순서: window.BOXING_API(시험용 덮어쓰기) → 파일로 직접 연 경우 내 PC 서버 → GitHub Pages 에서는 Cloudflare 서버 → 그 밖에는 같은 주소(server.ps1)
-const API_CLOUD = '';                                                           // 배포 후 채운다: https://boxing-api.<계정>.workers.dev
+const API_CLOUD = 'https://boxing-api.boxing-api.workers.dev';                // Cloudflare Workers 계정/랭킹 서버 (worker/ 폴더)
 const API = window.BOXING_API || (location.protocol === 'file:' ? 'http://localhost:8123' : /\.github\.io$/.test(location.hostname) && API_CLOUD ? API_CLOUD : '');
 async function api(path, body){
   let res;
