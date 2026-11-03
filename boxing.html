@@ -1752,7 +1752,9 @@ addEventListener('keydown', e => {
 /* ---------- 계정 (server.ps1 서버의 users.json에 저장 → 어떤 브라우저에서든 같은 계정) ---------- */
 const $ = id => document.getElementById(id);
 let authMode = 'login';
-const API = location.protocol === 'file:' ? 'http://localhost:8123' : '';   // 파일로 직접 열어도 같은 서버를 사용
+// 계정/랭킹 서버 주소. 순서: window.BOXING_API(시험용 덮어쓰기) → 파일로 직접 연 경우 내 PC 서버 → GitHub Pages 에서는 Cloudflare 서버 → 그 밖에는 같은 주소(server.ps1)
+const API_CLOUD = '';                                                           // 배포 후 채운다: https://boxing-api.<계정>.workers.dev
+const API = window.BOXING_API || (location.protocol === 'file:' ? 'http://localhost:8123' : /\.github\.io$/.test(location.hostname) && API_CLOUD ? API_CLOUD : '');
 async function api(path, body){
   let res;
   try{
@@ -1765,7 +1767,8 @@ const ERR = {
   invalid_id: '아이디는 3~12자 (한글/영문/숫자/_)만 가능합니다',
   short_pw: '비밀번호는 4자 이상이어야 합니다',
   taken: '이미 사용 중인 아이디입니다',
-  bad_credentials: '아이디 또는 비밀번호가 올바르지 않습니다'
+  bad_credentials: '아이디 또는 비밀번호가 올바르지 않습니다',
+  too_many: '시도가 너무 많습니다. 잠시 후 다시 해 주세요'
 };
 function authMsg(m, ok){ const el = $('authMsg'); el.textContent = m || ''; el.className = 'msg' + (ok ? ' ok' : ''); }
 function setMode(m){

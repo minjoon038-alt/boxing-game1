@@ -1,0 +1,15 @@
+{
+  "name": "boxing-api",
+  "private": true,
+  "version": "1.0.0",
+  "description": "BOXING accounts + ranking API (Cloudflare Workers + D1). Same API as server.ps1.",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787",
+    "db:local": "wrangler d1 execute boxing --local --file=schema.sql",
+    "db:remote": "wrangler d1 execute boxing --remote --file=schema.sql",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}
