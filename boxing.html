@@ -262,7 +262,7 @@ const COL = { bg:'#0e0e13', fg:'#f2f2f2', dim:'#5f5f6e', red:'#ff5a5f', gold:'#f
 const FONT = "system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
 
 /* ---------- 조작키 ----------
-   A / D (← →) 이동 · J 잽 · K 스트레이트 · S (↓) 가드(누르는 동안) · SPACE 회피
+   A / D (← →) 이동 · J 잽 · K 스트레이트 · S (↓) 가드(누르는 동안) · SPACE 회피 · 코너에서 필드 쪽 방향키 + SPACE = 피벗(코너 탈출)
 */
 const ACTION_KEYS = { KeyJ:'jab', KeyK:'straight', KeyL:'uppercut', KeyU:'skill', Space:'dodge' };
 const GUARD_KEYS = ['KeyS', 'ArrowDown'];
@@ -293,6 +293,31 @@ function canAct(f){
 const STAM_USE = .82;                                   // 스태미나 소모 배율 (공격·회피·바디 블로우 모두 이전보다 18% 적게 닳는다)
 const DODGE_CANCEL =.12;                              // 회피 시작 후 이 시간(초)부터는 회피 동작을 끊고 바로 공격할 수 있다 (무적은 DODGE_INV 까지 그대로)
 const DODGE_INV = .32;                                // 회피 무적 시간(초). 회피 동작(.34초)의 거의 끝까지 — 예전 .26초는 피하기가 너무 어려웠다
+/* ---------- 코너 탈출 (피벗) ----------
+   링 양끝(x 100~860)에서 zone(px) 안쪽 '코너 구역'에 몰려 있고 상대의 펀치가 닿는 거리 안일 때,
+   필드 쪽 방향키(왼쪽 코너면 D/→, 오른쪽 코너면 A/←) + SPACE 를 누르면 상대를 돌아 지나 서로 자리가 바뀐다.
+   - 돌아 나오는 동안(t초)은 회피처럼 무적이다. 끝나면 상대의 가장 긴 기본 펀치 사정거리(캐릭터마다 다름) + gap 만큼 떨어진 반대편에 선다
+   - 스태미나 st 를 쓰고, cd(초) 동안은 다시 쓸 수 없다. 조건이 안 맞으면 SPACE 는 예전처럼 평범한 회피
+   - 사람(플레이어/멀티플레이 상대)은 항상, CPU는 cpuLevel 스테이지부터 쓴다 (코너에 몰려 있는 채로 잠깐 뜸을 들인 뒤 사용) */
+const PIVOT = { zone:90, t:.5, cd:3.5, st:16, margin:14, gap:8, cpuLevel:25 };   // cd: 다시 쓰기까지 걸리는 시간(초) / cpuLevel: CPU는 이 스테이지부터 피벗을 쓴다
+const cornerSide = f => f.x <= 100 + PIVOT.zone ? 1 : f.x >= 860 - PIVOT.zone ? -1 : 0;        // 1: 왼쪽 코너(열린 쪽 +x) / -1: 오른쪽 코너 / 0: 코너 아님
+const maxReach = f => Math.max(...ATTACK_SLOTS.map(s => f.chATK[s].reach));                    // 상대의 가장 긴 기본 펀치(잽/스트레이트/어퍼 슬롯) 사정거리
+const pivotHuman = f => (f.player && !game.autoP) || !!f.human || (!f.player && !game.autoP && f.lvl >= PIVOT.cpuLevel);   // (이름은 human 이지만 높은 스테이지의 CPU도 포함)
+function pivotDir(f, o){                              // 코너에서 펀치가 닿는 거리에 몰려 있으면 빠져나갈 방향(+1/-1), 아니면 0
+  const side = cornerSide(f);
+  if(!side || !o || o.state === 'ko' || f.state === 'ko') return 0;
+  if((o.x - f.x)*side <= 0) return 0;                 // 상대가 나보다 코너 쪽에 있으면 내가 몰린 게 아니다
+  if(Math.abs(o.x - f.x) > maxReach(o) + PIVOT.margin) return 0;
+  return side;
+}
+const pivotReady = (f, o) => pivotHuman(f) && (f.pivotCd || 0) <= 0 && f.st >= PIVOT.st*STAM_USE;
+function startPivot(f, o, dir){
+  f.st -= PIVOT.st*STAM_USE; f.pivotCd = PIVOT.cd; f.dodgeCd = Math.max(f.dodgeCd, f.cd.dodgeCd);
+  f.dodgeInv = PIVOT.t - .04; f.vx = 0; f.recoilV = 0;
+  f.pv = { x0:f.x, dir, face0:f.face };
+  setState(f, 'pivot');
+  sfx('dodge'); dust(f.x, 7, dir); addText(f.x, GY-235, 'PIVOT!', COL.gold, 18);
+}
 function takeBuffered(f){                             // 행동 가능할 때(대기 중, 또는 공격이 적중한 직후)만 가장 오래된 입력부터 꺼냄
   if(!canAct(f) || !buf.length) return null;
   const i = buf.findIndex(b => !(f.atkCd[b.a] > 0));   // 재사용 대기 중인 공격 입력은 남겨 두고(시간이 지나면 폐기) 다른 입력을 먼저 처리
@@ -550,7 +575,7 @@ function mk(x, face, player, lvl, ch){
     hp:CHARS[ch].hp, maxhp:CHARS[ch].hp, lag:CHARS[ch].hp, st:100,
     gd:100, gdBroken:false, gdT:0, spd:1, cg:0, guardForce:0, z:0, vz:0, squash:0, hitPow:.5, recoilV:0, trail:[], counterAtk:false,
     state:'idle', t:0, atk:null, hitDone:false, connected:false, sw:false, stun:0,
-    dodgeCd:0, atkCd:{ jab:0, straight:0, uppercut:0 }, flash:0, counter:0, combo:0, comboT:0, bob:Math.random()*6,
+    dodgeCd:0, pivotCd:0, pv:null, atkCd:{ jab:0, straight:0, uppercut:0 }, flash:0, counter:0, combo:0, comboT:0, bob:Math.random()*6,
     ctrl:{ move:0, guard:false, act:null },
     ai:{ think:0, react:0, reacting:false, did:false, hold:0, move:0, choice:0,
          t:0, pg:false, pgStart:0, holds:[], punishT:-1, punishWait:0, fired:false, willReact:true } };
@@ -573,6 +598,10 @@ function start(level){
 
 function perform(f, act){
   if(act === 'dodge'){
+    if(f.ctrl.move){                                   // 코너 탈출: 필드 쪽 방향키를 누른 채 회피 → 피벗 (조건이 안 맞으면 아래의 평범한 회피)
+      const o = f === P ? E : P, dir = pivotDir(f, o);
+      if(dir && f.ctrl.move === dir && pivotReady(f, o)){ startPivot(f, o, dir); return true; }
+    }
     if(f.dodgeCd > 0 || f.st < 12*STAM_USE) return false;
     f.st -= 12*STAM_USE; f.dodgeCd = f.cd.dodgeCd; f.dodgeInv = DODGE_INV; setState(f,'dodge'); sfx('dodge');
     return true;
@@ -610,7 +639,7 @@ function gloveTouches(k, t, dist){
 }
 
 function updF(f, o, dt){
-  f.t += dt; f.dodgeInv = Math.max(0, (f.dodgeInv||0) - dt); f.flash = Math.max(0, f.flash-dt); f.dodgeCd = Math.max(0, f.dodgeCd-dt); for(const a in f.atkCd) f.atkCd[a] = Math.max(0, f.atkCd[a]-dt);
+  f.t += dt; f.dodgeInv = Math.max(0, (f.dodgeInv||0) - dt); f.pivotCd = Math.max(0, (f.pivotCd||0) - dt); f.flash = Math.max(0, f.flash-dt); f.dodgeCd = Math.max(0, f.dodgeCd-dt); for(const a in f.atkCd) f.atkCd[a] = Math.max(0, f.atkCd[a]-dt);
   f.counter = Math.max(0, f.counter-dt); f.comboT -= dt; if(f.comboT <= 0) f.combo = 0;
   f.bob += dt*5;
   f.squash = Math.max(0, f.squash - dt*6);
@@ -659,6 +688,14 @@ function updF(f, o, dt){
     f.vx = dk === 'back' ? -f.face*420*fade : dk === 'dash' ? f.face*f.cd.dashV*fade : 0;
     if(f.t >= DODGE_CANCEL && c.act && c.act !== 'dodge'){ const next = c.act; f.vx = 0; setState(f,'idle'); perform(f, next); }   // 피한 직후 곧바로 반격
     else if(f.t >= .34) setState(f,'idle');
+  }
+  else if(f.state === 'pivot'){
+    // 코너 탈출: 상대를 돌아 지나 반대편으로. 도착점은 매 프레임 '상대의 현재 위치 + 사정거리 바깥'으로 다시 계산해서 상대가 움직여도 항상 펀치가 닿지 않는 곳에 선다
+    const pv = f.pv, u = Math.min(1, f.t/PIVOT.t), s = u*u*(3 - 2*u);          // 부드럽게 출발해 부드럽게 멈춘다
+    const x1 = Math.max(100, Math.min(860, o.x + pv.dir*(maxReach(o) + PIVOT.gap)));
+    f.x = pv.x0 + (x1 - pv.x0)*s; f.vx = 0;
+    f.face = u < .5 ? pv.face0 : -pv.face0;                                      // 몸을 돌리는 한가운데(상대와 겹치는 순간)에 방향이 바뀐다
+    if(u >= 1){ f.pv = null; setState(f, 'idle'); dust(f.x, 5, -pv.dir); }
   }
   else if(f.state === 'ko'){
     f.vx -= f.vx*Math.min(1, dt*3);
@@ -972,6 +1009,14 @@ function runAI(f, o, dt){
     if(s[1] <= 0) A.seq.shift();
     if(f.state !== 'idle') A.seq.length = 0;
   } else c.move = A.move * f.face;
+  // 코너 탈출(피벗): 높은 스테이지(PIVOT.cpuLevel~)의 CPU는 코너에서 펀치가 닿는 거리에 몰려 있으면, 반응 시간(.35~.8초)만큼 뜸을 들인 뒤 피벗으로 빠져나온다
+  if(!f.player && !f.human && lv >= PIVOT.cpuLevel && !game.autoP){
+    const pd = f.state === 'idle' ? pivotDir(f, o) : 0;
+    if(pd && pivotReady(f, o)){
+      A.cornerT = (A.cornerT || 0) + dt; if(!A.cornerWait) A.cornerWait = .35 + Math.random()*.45;
+      if(A.cornerT >= A.cornerWait){ c.move = pd; c.act = 'dodge'; A.cornerT = 0; A.cornerWait = 0; A.seq.length = 0; }
+    } else { A.cornerT = 0; A.cornerWait = 0; }
+  }
 }
 
 /* ---------- 업데이트 ---------- */
@@ -1031,7 +1076,7 @@ function step(dt){
   updF(P, E, dt); updF(E, P, dt);
 
   const dx = E.x - P.x, minD = 66;
-  if(Math.abs(dx) < minD){
+  if(Math.abs(dx) < minD && P.state !== 'pivot' && E.state !== 'pivot'){            // (피벗으로 돌아 지나가는 동안은 서로를 밀어내지 않는다)
     const push = (minD - Math.abs(dx))/2, s = dx >= 0 ? 1 : -1;
     E.x += s*push; P.x -= s*push;
     P.x = Math.max(100, Math.min(860, P.x)); E.x = Math.max(100, Math.min(860, E.x));
@@ -1160,7 +1205,7 @@ function drawSpriteFighter(f, P){
   let gl = { x:P.lead.x, y:P.lead.y }, gr = { x:P.rear.x, y:P.rear.y };
   if(f.state === 'hit'){ gl = { x:L.lead.x - 14*m, y:L.lead.y + 12*m }; gr = { x:L.rear.x - 12*m, y:L.rear.y + 14*m }; }      // 맞으면 가드가 흐트러진다
   else if(f.state === 'ko'){ gl = { x:L.lead.x - 24*m, y:L.lead.y + 32*m }; gr = { x:L.rear.x - 20*m, y:L.rear.y + 34*m }; }   // 팔이 풀린다
-  else if(f.state === 'dodge'){ gl = { x:L.guard.lead.x, y:L.guard.lead.y }; gr = { x:L.guard.rear.x, y:L.guard.rear.y }; }   // 피할 때는 얼굴을 가린다
+  else if(f.state === 'dodge' || f.state === 'pivot'){ gl = { x:L.guard.lead.x, y:L.guard.lead.y }; gr = { x:L.guard.rear.x, y:L.guard.rear.y }; }   // 피할 때(피벗 포함)는 얼굴을 가린다
   const punch = f.state === 'attack' ? f.atk.glove : null;
   if(punch !== 'lead') gl = T(gl);
   if(punch !== 'rear') gr = T(gr);
@@ -1306,6 +1351,12 @@ function drawFighter(f){
   // 배경이 밝은 링/조명 위에서도 캐릭터 윤곽이 묻히지 않도록 은은한 어두운 테두리 그림자
   ctx.shadowColor = 'rgba(0,0,10,.6)'; ctx.shadowBlur = 9;
 
+  // 코너 탈출(피벗): 몸을 팽이처럼 돌려 세운다 (가운데에서 가장 얇게 — 이때 방향이 바뀐다). 살짝 떠올랐다 내려앉는다
+  if(f.state === 'pivot'){
+    const pu = Math.min(1, f.t/PIVOT.t);
+    ctx.scale(Math.max(.24, Math.abs(Math.cos(Math.PI*pu))), 1);
+    ctx.translate(0, -9*Math.sin(Math.PI*pu));
+  }
   // 공중에 뜬 높이 / 피격 찌그러짐 / 히트스톱 중 떨림
   ctx.translate(0, -f.z);
   if(f.squash > 0){ ctx.scale(1 - .14*f.squash, 1 + .1*f.squash); }
@@ -1358,6 +1409,10 @@ function drawFighter(f){
     if(dk === 'back'){ lean = -40*u; crouch = 18*u; lead = { x:30 - 12*u, y:-170 }; rear = { x:16, y:-160 }; }        // 아웃파이터: 몸을 뒤로 젖히며 물러남
     else if(dk === 'dash'){ lean = L.lean + 22*u; crouch = 34*u; lead = { x:42, y:-150 + 8*u }; rear = { x:28, y:-146 + 8*u }; headSnap = 8*u; }   // 인파이터: 머리를 숙이고 앞으로 파고듦
     else { lean = L.lean - 6*u; crouch = 40*u; lead = { x:30, y:-168 + 22*u }; rear = { x:18, y:-160 + 22*u }; }       // 슬러거: 제자리에서 그냥 숙임
+  }
+  if(f.state === 'pivot'){                                           // 가드를 올린 채 낮게 웅크려 돌아 나온다
+    const pu = Math.sin(Math.PI*Math.min(1, f.t/PIVOT.t));
+    lean = L.lean + 8*pu; crouch = 22*pu; lead = { x:L.guard.lead.x, y:L.guard.lead.y }; rear = { x:L.guard.rear.x, y:L.guard.rear.y };
   }
   if(f.state === 'hit'){
     // 맞은 세기(hitPow)에 따라 몸이 젖혀지는 정도가 다르고, 맞은 직후 0.12초 동안 고개가 한 번 더 꺾였다가 돌아온다. 바디 블로우는 몸이 앞으로 접힌다
@@ -1460,7 +1515,7 @@ function drawBar(x, w, y, h, f, right){
 function drawKeys(){
   const me = net.on && net.role === 'guest' ? E : P;
   const lb = me && me.cd ? me.cd.labels : CHARS.outfighter.labels;        // 선택한 캐릭터의 기술 이름 (인파이터는 바디/훅/어퍼컷)
-  const items = [['A','D','이동'],['J',lb[0]],['K',lb[1]],['L',lb[2]],['U','카운터 스킬'],['S','가드'],['SPACE','회피']];
+  const items = [['A','D','이동'],['J',lb[0]],['K',lb[1]],['L',lb[2]],['U','카운터 스킬'],['S','가드'],['SPACE','회피'],['A/D','SPACE','코너 피벗']];
   ctx.font = `500 12px ${FONT}`;
   let total = 0; const widths = items.map(it => {
     const caps = it.slice(0,-1); let w = 0;
@@ -1525,11 +1580,20 @@ function draw(){
     PV.forEach(drawFighter);                            // 캐릭터 선택 화면: 세 캐릭터를 나란히 세워 비교한다
   } else if(P && E){
     // 그리는 순서: 쓰러진 쪽 → 서 있는 쪽 → 펀치를 내는 쪽 (주먹이 상대 몸에 가려지지 않게 공격하는 캐릭터를 맨 위에)
-    const layer = f => f.state === 'ko' ? 0 : f.state === 'attack' ? 2 : 1;
+    const layer = f => f.state === 'ko' ? 0 : (f.state === 'attack' || f.state === 'pivot') ? 2 : 1;     // 피벗으로 돌아 지나가는 쪽도 앞에 보이게
     const order = [P, E].sort((a,b) => layer(a) - layer(b));
     order.forEach(drawFighter);
   }
 
+  // 코너 탈출 안내: 내가 코너에서 펀치가 닿는 거리에 몰려 있고 피벗을 쓸 수 있을 때만 머리 위에 깜빡이는 키 안내를 띄운다
+  if(game.state === 'fight' && P && E){
+    const me = net.on && net.role === 'guest' ? E : P, op = me === P ? E : P, pd = me.state === 'idle' ? pivotDir(me, op) : 0;
+    if(pd && pivotReady(me, op)){
+      ctx.globalAlpha = .8 + .2*Math.sin(game.t*9);
+      txt((pd > 0 ? 'D ▶' : '◀ A') + '  +  SPACE   피벗', me.x, GY - 222, 14, '#ffe08a', 'center', 800, 2);
+      ctx.globalAlpha = 1;
+    }
+  }
   // 링 이펙트
   rings.forEach(r => {
     const u = 1 - r.life/r.max;
@@ -1969,7 +2033,7 @@ window.__boxingReady = true;
 const PEER_URLS = ['https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js', 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'];
 const ID_PREFIX = 'fistbox-';
 const ACTS = ['jab', 'straight', 'uppercut', 'skill', 'dodge', 'guard'];
-const FKEYS = ['x','vx','face','state','t','hp','lag','st','gd','gdBroken','gdT','cg','z','vz','squash','hitPow','hitKind','flash','counter','combo','comboT','stun','connected','sw','recoilV','dodgeInv','counterAtk'];
+const FKEYS = ['x','vx','face','state','t','hp','lag','st','gd','gdBroken','gdT','cg','z','vz','squash','hitPow','hitKind','flash','counter','combo','comboT','stun','connected','sw','recoilV','dodgeInv','counterAtk','pivotCd'];
 const rnd = v => typeof v === 'number' ? Math.round(v*100)/100 : v;
 const cleanName = s => String(s == null ? '' : s).replace(/[^\w가-힣 ]/g, '').slice(0, 14) || 'PLAYER';
 
