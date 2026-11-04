@@ -21,16 +21,22 @@
   #menu .logo{position:absolute;left:0;right:0;top:calc(var(--u)*58);text-align:center;pointer-events:none;border-top:1px solid rgba(255,255,255,.22);border-bottom:1px solid rgba(255,255,255,.22);padding:calc(var(--u)*16) 0 calc(var(--u)*14)}
   #menu .logo b{display:block;font-size:calc(var(--u)*42);font-weight:200;letter-spacing:calc(var(--u)*9);padding-left:calc(var(--u)*9);white-space:nowrap;line-height:1;text-shadow:0 0 calc(var(--u)*18) rgba(120,150,255,.45)}
   #menu .logo i{display:block;margin-top:calc(var(--u)*10);font-style:normal;font-size:calc(var(--u)*9.5);letter-spacing:calc(var(--u)*5);color:#7e86a8}
-  #menu .who{position:absolute;left:0;right:0;top:calc(var(--u)*158);text-align:center;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.85)}
+  #menu .who{position:absolute;left:0;right:0;top:calc(var(--u)*148);text-align:center;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.85)}
   #menu .who .id{font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #menu .who .best{margin-top:calc(var(--u)*6);font-size:calc(var(--u)*11);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;white-space:nowrap}
+  #menu .who .xp{display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*7);margin-top:calc(var(--u)*7);font-size:calc(var(--u)*10.5);font-weight:700;letter-spacing:calc(var(--u)*1);color:#8fd6ff;white-space:nowrap}
+  #menu .who .xp .bar{width:calc(var(--u)*104);height:calc(var(--u)*6);border-radius:calc(var(--u)*3);background:rgba(255,255,255,.16);overflow:hidden}
+  #menu .who .xp .bar i{display:block;height:100%;width:0;border-radius:calc(var(--u)*3);background:linear-gradient(90deg,#3d8bff,#8ff0ff)}
+  #menu .who .xp .num{color:#9fb0d0;font-weight:600}
   #menu .play{position:absolute;left:0;top:calc(var(--u)*236);width:100%;height:calc(var(--u)*62);border:2px solid transparent;border-radius:calc(var(--u)*4);transform:skewX(-14deg);background:linear-gradient(#0b0f2c,#0b0f2c) padding-box,linear-gradient(90deg,#4f7dff,#ff4d6a) border-box;color:#f2f2f2;font-family:inherit;font-size:calc(var(--u)*24);font-weight:800;font-style:italic;letter-spacing:calc(var(--u)*8);cursor:pointer;box-shadow:0 0 calc(var(--u)*22) rgba(90,110,255,.35);transition:transform .15s,box-shadow .15s,filter .15s}
   #menu .play span{display:inline-block;transform:skewX(14deg)}
   #menu .play:hover,#menu .play:focus-visible{filter:brightness(1.35);transform:skewX(-14deg) scale(1.04);box-shadow:0 0 calc(var(--u)*34) rgba(140,120,255,.65);outline:none}
   #menu .play:active{transform:skewX(-14deg) scale(.98)}
   #menu .enter{position:absolute;left:0;right:0;top:calc(var(--u)*304);text-align:center;font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*3);color:#8d93a8;pointer-events:none}
-  #menu .sub{position:absolute;left:0;right:0;top:calc(var(--u)*338);display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*8)}
-  #menu .sub #matchBtn{grid-column:1/-1}
+  #menu .sub{position:absolute;left:0;right:0;top:calc(var(--u)*338);display:grid;grid-template-columns:repeat(6,1fr);gap:calc(var(--u)*8)}
+  #menu .sub .ghost{grid-column:span 2}
+  #menu .sub #normalBtn,#menu .sub #rankedBtn{grid-column:span 3}
+  #menu .sub #rankedBtn.lock{color:#8d93a8;border-color:rgba(255,255,255,.14)}
   #menu .sub .ghost{padding:calc(var(--u)*9) 0;border-radius:calc(var(--u)*8);letter-spacing:calc(var(--u)*1);white-space:nowrap;text-align:center}
   #menu .tag{position:absolute;left:0;right:0;bottom:calc(var(--u)*24);text-align:center;font-size:calc(var(--u)*9.5);letter-spacing:calc(var(--u)*3);white-space:nowrap;color:#6d7490;pointer-events:none;border-top:1px solid rgba(255,255,255,.14);padding-top:calc(var(--u)*10)}
   .ghost{background:rgba(8,10,22,.6);border:1px solid rgba(255,255,255,.2);border-radius:calc(var(--u)*16);padding:calc(var(--u)*7) calc(var(--u)*20);color:#c4c9da;font-family:inherit;font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*2);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
@@ -49,8 +55,12 @@
   #rank .live.on{color:#7dffa6}
   #rank .live.on::before{background:#35e07a;animation:livePulse 1.6s ease-in-out infinite}
   #rank .live.bump{animation:liveBump .8s ease}
-  #rank .cols{display:grid;grid-template-columns:calc(var(--u)*46) 1fr calc(var(--u)*96);margin-top:calc(var(--u)*12);padding:0 calc(var(--u)*6) calc(var(--u)*6);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a;border-bottom:1px solid rgba(255,255,255,.12)}
+  #rank .cols{display:grid;grid-template-columns:calc(var(--u)*46) 1fr calc(var(--u)*96);margin-top:calc(var(--u)*8);padding:0 calc(var(--u)*6) calc(var(--u)*6);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a;border-bottom:1px solid rgba(255,255,255,.12)}
   #rank .cols span:last-child{text-align:right}
+  #rank .tabs{display:flex;gap:calc(var(--u)*6);margin-top:calc(var(--u)*10)}
+  #rank .tabs .ghost{flex:1;padding:calc(var(--u)*5) 0;font-size:calc(var(--u)*11);letter-spacing:calc(var(--u)*1);border-radius:calc(var(--u)*8);text-align:center}
+  #rank .tabs .ghost.on{color:#fff;border-color:#7da2ff;background:rgba(81,133,255,.22)}
+  #rank.pvp .cols,#rank.pvp li{grid-template-columns:calc(var(--u)*46) 1fr calc(var(--u)*168)}
   #rank ol{list-style:none;margin:0;padding:0;flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
   #rank li{display:grid;grid-template-columns:calc(var(--u)*46) 1fr calc(var(--u)*96);align-items:center;height:calc(var(--u)*28);padding:0 calc(var(--u)*6);font-size:calc(var(--u)*14);border-bottom:1px solid rgba(255,255,255,.05);border-left:calc(var(--u)*3) solid transparent}
   #rank li .no{display:inline-flex;align-items:center;justify-content:center;width:calc(var(--u)*22);height:calc(var(--u)*22);border-radius:50%;font-size:calc(var(--u)*12);font-weight:700;color:#aab0c4}
@@ -117,7 +127,8 @@
   #stages .foot .ghost{flex:none;white-space:nowrap}
   #stages .mine{font-size:calc(var(--u)*11.5);color:#9aa0b4;line-height:1.5;min-width:0;flex:1}
   /* ----- 멀티플레이 창 / 안내 문구 ----- */
-  #menu .toast{position:absolute;left:0;right:0;top:calc(var(--u)*430);text-align:center;font-size:calc(var(--u)*13);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;opacity:0;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.9);transition:opacity .4s}
+  /* 안내 문구는 버튼 위가 아니라 화면 위쪽 배경에 띄운다 (메인 화면 왼쪽 열을 벗어나 화면 전체 폭의 가운데) */
+  #menu .toast{position:absolute;left:calc(var(--u)*-48);width:calc(var(--u)*960);top:calc(var(--u)*22);text-align:center;font-size:calc(var(--u)*14);font-weight:700;letter-spacing:calc(var(--u)*1);color:#ffd166;opacity:0;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.9);transition:opacity .4s}
   #menu .toast.on{opacity:1}
   #mp{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .4s ease both}
   #mp.hidden{display:none}
@@ -159,7 +170,7 @@
   #profile.hidden{display:none}
   #profile .panel{position:absolute;left:50%;top:calc(var(--u)*52);transform:translateX(-50%);width:calc(var(--u)*400);box-sizing:border-box;padding:calc(var(--u)*16) calc(var(--u)*22) calc(var(--u)*14);background:rgba(6,8,20,.92);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55)}
   #profile .ttl{display:flex;align-items:center;justify-content:space-between;font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*8);padding-left:calc(var(--u)*2);padding-bottom:calc(var(--u)*12);border-bottom:1px solid rgba(255,255,255,.12)}
-  #profile .row{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*12);min-height:calc(var(--u)*37);border-bottom:1px solid rgba(255,255,255,.07)}
+  #profile .row{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*12);min-height:calc(var(--u)*32);border-bottom:1px solid rgba(255,255,255,.07)}
   #profile .k{flex:none;width:calc(var(--u)*92);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a}
   #profile .v{flex:1;min-width:0;font-size:calc(var(--u)*15);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #profile .v.pw{font-family:Consolas,'Courier New',monospace;letter-spacing:calc(var(--u)*2)}
@@ -197,11 +208,12 @@
     <button class="chip" id="menuChip" type="button" title="내 프로필"></button>
     <div class="col">
       <div class="logo"><b>BOXING</b></div>
-      <div class="who"><div class="id" id="menuUser"></div><div class="best" id="menuBest"></div><div class="chr" id="menuChar"></div></div>
+      <div class="who"><div class="id" id="menuUser"></div><div class="best" id="menuBest"></div><div class="chr" id="menuChar"></div><div class="xp"><span id="menuLv"></span><span class="bar"><i id="menuXpFill"></i></span><span class="num" id="menuXpNum"></span></div></div>
       <button class="play" id="playBtn" type="button"><span>▶ PLAY</span></button>
       <div class="enter">또는 ENTER</div>
       <div class="sub">
-        <button class="ghost gold" id="matchBtn" type="button">랜덤 매칭</button>
+        <button class="ghost" id="normalBtn" type="button">일반전</button>
+        <button class="ghost gold" id="rankedBtn" type="button">랭크전</button>
         <button class="ghost" id="stageBtn" type="button">스테이지</button>
         <button class="ghost" id="charBtn" type="button">캐릭터</button>
         <button class="ghost gold" id="rankBtn" type="button">랭킹</button>
@@ -224,6 +236,9 @@
         <div class="row"><span class="k">BEST STAGE</span><span class="v gold" id="pfBest"></span></div>
         <div class="row"><span class="k">RANK</span><span class="v" id="pfRank"></span></div>
         <div class="row"><span class="k">RECORD</span><span class="v" id="pfRecord"></span></div>
+        <div class="row"><span class="k">LEVEL</span><span class="v" id="pfLevel"></span></div>
+        <div class="row"><span class="k">RANKED</span><span class="v" id="pfPvp"></span></div>
+        <div class="row"><span class="k">NORMAL</span><span class="v" id="pfNormal"></span></div>
         <div class="row"><span class="k">JOINED</span><span class="v" id="pfJoined"></span></div>
         <div class="pfmsg" id="pfMsg"></div>
         <div class="foot">
@@ -268,7 +283,8 @@
   <div id="rank" class="hidden">
     <div class="panel">
       <div class="head"><span class="ttl">RANKING</span><span class="live" id="rankLive">CONNECTING</span></div>
-      <div class="cols"><span>순위</span><span>아이디</span><span>베스트 스테이지</span></div>
+      <div class="tabs"><button class="ghost on" id="rankTabStage" type="button">스테이지</button><button class="ghost" id="rankTabPvp" type="button">랭크전 (ELO)</button></div>
+      <div class="cols"><span>순위</span><span>아이디</span><span id="rankColLast">베스트 스테이지</span></div>
       <ol id="rankList"></ol>
       <div class="empty" id="rankEmpty">불러오는 중…</div>
       <div class="foot">
@@ -660,7 +676,7 @@ function stageTicket(level){
 }
 function start(level){
   hideMenu(); stageTicket(level);
-  game.level = level; game.newBest = false; game.rank = null; game.saveError = null; game.escAt = 0;
+  game.level = level; game.newBest = false; game.rank = null; game.saveError = null; game.escAt = 0; game.xpGain = 0; game.lvUp = false; game.xpNone = false; game.xpErr = false; game.xpWait = 0;
   P = mk(310, 1, true, 1, game.char);
   E = mk(650, -1, false, level, cpuChar(level));
   // 스테이지가 올라가도 CPU의 체력·공격력·이동속도는 그대로(그 캐릭터의 기본값). 달라지는 건 AI의 '실력'뿐이다 (aiProfile 참고)
@@ -876,7 +892,7 @@ function resolve(a, d, k){
 function koCheck(a, d, dir){
   if(d.hp > 0 || d.state === 'ko') return;
   d.hp = 0; setState(d,'ko'); d.vx = dir*420; if(d.player) buf.length = 0;
-  if(!net.on){ if(d.player) reportResult(false); else { recordWin(); reportResult(true); } }
+  if(!net.on && !net.solo){ if(d.player) reportResult(false); else { recordWin(); reportResult(true); } }
   game.state = 'ko'; game.koT = 0; game.slow = 1.5; game.freeze = .22; game.shake = 24; game.flash = .5;
   sfx('ko');
 }
@@ -1099,7 +1115,7 @@ function runAI(f, o, dt){
 function step(dt){
   game.t += dt;
   if(game.state === 'ko') game.koT += dt;
-  if(game.state === 'ko' && P.hp <= 0 && game.koT > 3.6 && !net.on){ toTitle(); return; }   // 패배하면 잠시 결과를 보여준 뒤 자동으로 메인 화면으로 (Enter로 바로 넘어갈 수도 있음)
+  if(game.state === 'ko' && P.hp <= 0 && game.koT > 4.8 && !net.on && !net.solo){ toTitle(); return; }   // 패배하면 잠시 결과를 보여준 뒤 자동으로 메인 화면으로 (Enter로 바로 넘어갈 수도 있음)
   game.shake *= Math.pow(.0008, dt);
   game.flash = Math.max(0, game.flash - dt);
 
@@ -1789,6 +1805,26 @@ function drawFighter(f){
   ctx.restore();
 }
 
+// 경험치 막대: 결과 화면이 뜨면 경기 전 수치에서 새 수치까지 차오른다 (레벨이 오르면 끝까지 찼다가 다음 레벨로 넘어간다)
+function xpBarTick(){
+  const now = performance.now(), dt = Math.min(.1, (now - (game.xpT || now))/1000); game.xpT = now;
+  if(typeof game.xp !== 'number') return;
+  if(typeof game.xpShow !== 'number' || game.state !== 'ko') game.xpShow = game.xp;           // 결과 화면이 아닐 때는 늘 실제 값
+  else if(game.koT > 2.0){
+    const diff = game.xp - game.xpShow;
+    game.xpShow = Math.abs(diff) < .05 ? game.xp : game.xpShow + Math.sign(diff) * Math.min(Math.abs(diff), Math.max(45, Math.abs(diff)*2.2) * dt);
+  }
+}
+function drawXpBar(cx, y, gain, note, up){
+  const w = 300, h = 10, L = levelOf(game.xpShow), done = Math.abs(game.xp - game.xpShow) < .5, x0 = cx - w/2;
+  txt('LV ' + L.level, x0, y, 13, '#ffffff', 'left', 700, 1);
+  txt((note || ('+' + gain + ' XP')) + (up && done ? '   LEVEL UP!' : ''), cx, y, 13, up && done ? COL.gold : '#8fd6ff', 'center', 700, 2);
+  txt(Math.floor(L.into) + ' / ' + L.need + ' XP', x0 + w, y, 11, '#9fb0d0', 'right', 600, 1);
+  ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.fillRect(x0, y + 12, w, h);
+  const g = ctx.createLinearGradient(x0, 0, x0 + w, 0); g.addColorStop(0, '#3d8bff'); g.addColorStop(1, '#8ff0ff');
+  ctx.fillStyle = g; ctx.fillRect(x0, y + 12, w * L.into / L.need, h);
+  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1; ctx.strokeRect(x0 + .5, y + 12.5, w - 1, h - 1);
+}
 function txt(s, x, y, size, color, align='left', weight=400, spacing=0){
   ctx.font = `${weight} ${size}px ${FONT}`; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'middle';
   if('letterSpacing' in ctx) ctx.letterSpacing = spacing + 'px';
@@ -1848,6 +1884,7 @@ function drawKeys(){
 }
 
 function draw(){
+  xpBarTick();
   ctx.setTransform(1,0,0,1,0,0);
   ctx.fillStyle = COL.bg; ctx.fillRect(0,0,W,H);
 
@@ -1984,12 +2021,27 @@ function draw(){
   if(game.state === 'ko' && game.koT > .15){
     const u = Math.min(1, (game.koT-.15)/.2);
     txt('K.O.', W/2, 160, 110*(1.3 - .3*easeOut(u)), COL.fg, 'center', 800, 8);
-    if(game.koT > 1.8 && net.on){
-      const win = (net.role === 'guest' ? P : E).hp <= 0;       // 멀티플레이: 내 상대가 쓰러졌으면 승리
+    if(game.koT > 1.8 && (net.on || net.solo)){
+      const win = net.solo ? E.hp <= 0 : (net.role === 'guest' ? P : E).hp <= 0;       // 멀티플레이: 내 상대가 쓰러졌으면 승리 (상대가 나가서 혼자 AI 와 싸운 경기는 내가 왼쪽)
       txt(win ? '승리' : '패배', W/2, 245, 22, win ? COL.gold : COL.red, 'center', 600, 8);
-      txt(net.vote.me ? '상대의 수락을 기다리는 중…' : net.vote.peer ? 'ENTER — 재대결 (상대가 기다리고 있어요)' : 'ENTER — 재대결', W/2, 280, 14, '#aab0c4', 'center', 500, 4);
-      txt('C — 캐릭터 변경   ·   R — 랭킹   ·   ESC — 메인 화면', W/2, 306, 12, '#8d93a8', 'center', 500, 3);
-      if(net.peer) txt('나 ' + CHARS[game.char].name + '   ·   상대 ' + CHARS[net.peer.ch].name, W/2, 332, 12, '#8d93a8', 'center', 500, 2);
+      const oy = net.rep ? (net.left || net.solo ? 70 : 56) : 0;
+      if(net.rep){                                           // 랜덤 매칭: 점수·경험치 반영 결과 (서버가 알려 준다)
+        const rt = net.rated;
+        if(!rt) txt(game.koT > 12 ? '상대의 결과를 확인하지 못해 반영되지 않았습니다' : '결과 반영 중…', W/2, 266, 12, '#8d93a8', 'center', 500, 2);
+        else if(rt.status === 'rated'){
+          if(rt.mode === 'ranked'){
+            const T = tierOf(rt.elo), up = rt.tierMove;
+            txt('RATING ' + rt.elo + '   ' + (rt.delta >= 0 ? '+' : '') + rt.delta + '   ' + T.name + (up > 0 ? '  승급!' : up < 0 ? '  강등' : ''), W/2, 266, 14, rt.delta >= 0 ? COL.gold : COL.red, 'center', 700, 3);
+          } else txt('일반전', W/2, 270, 13, '#aab0c4', 'center', 600, 3);
+          drawXpBar(W/2, 292, rt.gain, '+' + rt.gain + ' XP' + (rt.pct < 100 ? '  (같은 상대 반복 · ' + rt.pct + '%)' : ''), rt.lvUp);
+        }
+        else txt(RATED_NOTE[rt.status], W/2, 266, 12, '#aab0c4', 'center', 500, 1);
+        if(rt && rt.left) txt(win ? '상대가 나가서 AI 가 대신했고, 이겼습니다' : '나가서 AI 가 대신했습니다', W/2, 332, 11, '#8d93a8', 'center', 500, 1);
+      }
+      if(net.solo || net.left) txt('ENTER — 메인 화면', W/2, 280 + oy, 14, '#aab0c4', 'center', 500, 4);
+      else txt(net.vote.me ? '상대의 수락을 기다리는 중…' : net.vote.peer ? 'ENTER — 재대결 (상대가 기다리고 있어요)' : 'ENTER — 재대결', W/2, 280 + oy, 14, '#aab0c4', 'center', 500, 4);
+      txt((net.solo || net.left ? 'ESC — 메인 화면' : 'C — 캐릭터 변경   ·   R — 랭킹   ·   ESC — 메인 화면'), W/2, 306 + oy, 12, '#8d93a8', 'center', 500, 3);
+      if(net.peer && !net.solo) txt('나 ' + CHARS[game.char].name + '   ·   상대 ' + CHARS[net.peer.ch].name, W/2, 332 + oy, 12, '#8d93a8', 'center', 500, 2);
     }
     else if(game.koT > 1.8){
       const win = E.hp <= 0;
@@ -2002,6 +2054,15 @@ function draw(){
       }
       txt(win ? 'ENTER — 다음 상대' : 'ENTER — 메인 화면으로', W/2, enterY, 14, '#aab0c4', 'center', 500, 4);
       if(win) txt('ESC — 메인 화면', W/2, enterY + 26, 12, '#8d93a8', 'center', 500, 3);
+      if(game.token){                                        // 스테이지 결과: 이기든 지든 경험치를 받는다 (이긴 쪽이 더 많이)
+        xpBarTick();
+        const by = enterY + (win ? 84 : 56);
+        if(game.xpNone) txt('경험치를 받지 못했습니다 — 이 서버는 아직 경험치를 지원하지 않습니다', W/2, by + 8, 12, COL.red, 'center', 600, 1);
+        else if(typeof game.xp !== 'number') txt('경험치 정보를 불러오는 중…', W/2, by + 8, 12, '#8d93a8', 'center', 500, 1);
+        else if(game.xpWait > 0 && !game.xpGain) { drawXpBar(W/2, by, 0, '경험치 확인 중…'); }
+        else if(game.xpErr && !game.xpGain) txt('서버에 연결할 수 없어 경험치를 받지 못했습니다', W/2, by + 8, 12, COL.red, 'center', 600, 1);
+        else drawXpBar(W/2, by, game.xpGain, '', game.lvUp);
+      }
     }
   }
   if((game.state === 'fight' || game.state === 'intro') && game.escAt && performance.now() - game.escAt < 2000)
@@ -2033,6 +2094,7 @@ addEventListener('keydown', e => {
   }
   if(game.state === 'ranking'){                          // 랭킹 화면: ESC / Enter / Backspace 로 메인 화면 복귀, 게임 키는 모두 무시
     if(e.code === 'Escape' || e.code === 'Enter' || e.code === 'Backspace'){ e.preventDefault(); closeRank(); }
+    else if(e.code === 'ArrowLeft' || e.code === 'ArrowRight'){ e.preventDefault(); setRankMode(RANK.mode === 'pvp' ? 'stage' : 'pvp'); }
     return;
   }
   // ESC = 메인 화면으로. 결과 화면(승리/패배)에서는 바로, 전투 중에는 실수로 나가지 않도록 2초 안에 한 번 더 눌러야 한다
@@ -2056,7 +2118,8 @@ addEventListener('keydown', e => {
   if(e.code === 'Enter'){
     if(game.state === 'title') start(1);
     else if(game.state === 'ko' && game.koT > 1.8){
-      if(net.on) net.rematch();                        // 멀티플레이: 양쪽이 Enter를 누르면 재대결
+      if(net.solo || net.left) toTitle();               // 상대가 나가서 AI 와 싸운 경기는 재대결 없이 메인 화면으로
+      else if(net.on) net.rematch();                   // 멀티플레이: 양쪽이 Enter를 누르면 재대결
       else if(E.hp <= 0) start(game.level + 1);
       else toTitle();                  // 패배하면 메인 화면으로 (PLAY로 STAGE 1부터 재도전)
     }
@@ -2100,7 +2163,7 @@ function setMode(m){
 document.querySelectorAll('#auth .tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
 
 function enterGame(u){
-  game.user = u.id; game.token = u.token; game.best = u.best || 0; game.admin = !!u.admin;     // admin: 서버가 알려 준 값 (화면에 관리자 버튼을 보일지만 정한다. 실제 권한은 서버가 매 요청마다 검사한다)
+  game.user = u.id; game.token = u.token; game.best = u.best || 0; game.xp = u.xp | 0; game.admin = !!u.admin;     // admin: 서버가 알려 준 값 (화면에 관리자 버튼을 보일지만 정한다. 실제 권한은 서버가 매 요청마다 검사한다)
   game.char = CHARS[u.char] ? u.char : 'outfighter';      // 계정에 저장된 캐릭터 (없으면 아웃파이터)
   $('auth').classList.add('fade'); setTimeout(() => { if(game.user) $('auth').classList.add('hidden'); $('auth').classList.remove('fade'); }, 480);
   $('upw').value = ''; $('upw2').value = ''; game.profile = null;
@@ -2108,10 +2171,42 @@ function enterGame(u){
   toTitle();                           // 로그인(또는 가입) 직후 가장 먼저 메인 화면
 }
 
+/* ---------- 레벨 / 경험치 / 티어 ----------
+   경험치는 한 판마다(스테이지·일반전·랭크전) 서버가 계산해서 준다. 레벨 L → L+1 에는 100 + 20×(L-1) 경험치가 필요하다. 랭크전은 레벨 5부터.
+   티어는 PvP 레이팅(ELO)으로 정한다 (랭크전만 레이팅이 바뀐다). 서버(worker/src/rating.js)와 같은 식을 쓴다. */
+const RANKED_MIN_LEVEL = 5;
+const levelNeed = L => 100 + 20*(L - 1);
+function levelOf(xp){ let level = 1, rest = Math.max(0, xp | 0); while(level < 100 && rest >= levelNeed(level)){ rest -= levelNeed(level); level++; } return { level, into:rest, need:levelNeed(level) }; }
+const TIERS = [
+  { min:0,    name:'브론즈', color:'#d9955f' },
+  { min:1500, name:'실버',   color:'#c9ccd6' },
+  { min:2000, name:'골드',   color:'#ffd166' },
+  { min:2500, name:'프로',   color:'#6fe3ff' },
+  { min:3000, name:'챔피언', color:'#ff7ad9', sub:'랭커' },
+];
+const tierIdx = elo => { let i = 0; for(let k = 0; k < TIERS.length; k++) if(elo >= TIERS[k].min) i = k; return i; };
+const tierOf = elo => TIERS[tierIdx(elo)];
+// 서버가 알려 준 경험치 총량을 받아 둔다. gain: 이번에 새로 받은 양 (결과 화면에 표시)
+function setXp(total, gain){
+  if(typeof total !== 'number'){ game.xpNone = true; return; }               // 서버가 경험치를 모른다 (서버 업데이트 전) → 결과 화면에 그대로 알린다
+  const before = levelOf(game.xp || 0).level;
+  game.xp = total; game.xpGain = (game.xpGain || 0) + (gain | 0);
+  if(levelOf(total).level > before && gain > 0) game.lvUp = true;
+  if(game.profile && !game.profile.failed) game.profile.xp = total;
+  if(game.state === 'title') updateMenuLevel();
+}
+
 /* ---------- 메인 화면 ---------- */
+function updateMenuLevel(){
+  const lv = levelOf(game.xp || 0).level;
+  $('menuChar').textContent = '● ' + CHARS[game.char].name;
+  const L = levelOf(game.xp || 0);
+  $('menuLv').textContent = 'LV ' + L.level; $('menuXpFill').style.width = Math.round(L.into * 100 / L.need) + '%'; $('menuXpNum').textContent = L.into + ' / ' + L.need + ' XP';
+  const rb = $('rankedBtn'); rb.textContent = lv >= RANKED_MIN_LEVEL ? '랭크전' : '랭크전  (LV ' + RANKED_MIN_LEVEL + ')'; rb.classList.toggle('lock', lv < RANKED_MIN_LEVEL);
+}
 function showMenu(){
   $('menuUser').textContent = game.user || '';
-  $('menuChar').textContent = '● ' + CHARS[game.char].name;
+  updateMenuLevel();
   $('menuBest').textContent = 'BEST STAGE ' + (game.best || 0);
   $('menuChip').textContent = '👤 ' + (game.user || '');
   $('menu').classList.remove('hidden');
@@ -2146,12 +2241,20 @@ function renderProfile(){
   $('pfRank').textContent = game.myRank || '불러오는 중…';
   $('pfAdmin').hidden = !game.admin;
   const p = game.profile, rec = $('pfRecord'), jn = $('pfJoined');
-  if(!p){ rec.textContent = jn.textContent = '불러오는 중…'; return; }
-  if(p.failed){ rec.textContent = jn.textContent = '확인할 수 없음 (서버 업데이트 필요)'; rec.classList.add('dim'); jn.classList.add('dim'); return; }
+  if(!p){ rec.textContent = jn.textContent = $('pfPvp').textContent = $('pfLevel').textContent = $('pfNormal').textContent = '불러오는 중…'; return; }
+  if(p.failed){ rec.textContent = jn.textContent = $('pfPvp').textContent = $('pfLevel').textContent = $('pfNormal').textContent = '확인할 수 없음 (서버 업데이트 필요)'; rec.classList.add('dim'); jn.classList.add('dim'); return; }
   rec.classList.remove('dim'); jn.classList.remove('dim');
   const n = (p.wins || 0) + (p.losses || 0);
   rec.textContent = n ? p.wins + '승 ' + p.losses + '패 · 승률 ' + Math.round(p.wins*100/n) + '%' : '아직 경기 기록이 없습니다';
   jn.textContent = p.created ? pfDate(p.created) : '-';
+  const pv = $('pfPvp'), pn = (p.pvp_w || 0) + (p.pvp_l || 0), lv = $('pfLevel'), nm = $('pfNormal');       // 랭크전(ELO 레이팅·티어)과 일반전 전적은 스테이지 랭킹과 별개
+  pv.classList.remove('dim'); lv.classList.remove('dim'); nm.classList.remove('dim'); pv.style.color = '';
+  if(typeof p.elo !== 'number' || typeof p.xp !== 'number'){ pv.textContent = lv.textContent = nm.textContent = '확인할 수 없음 (서버 업데이트 필요)'; pv.classList.add('dim'); lv.classList.add('dim'); nm.classList.add('dim'); return; }
+  const L = levelOf(p.xp), T = tierOf(p.elo);
+  lv.textContent = 'LV ' + L.level + '  ·  ' + L.into + ' / ' + L.need + ' XP';
+  pv.style.color = T.color;
+  pv.textContent = T.name + (T.sub ? '(' + T.sub + ')' : '') + '  ' + p.elo + (pn ? '  ·  ' + (p.pvp_rank ? '#' + p.pvp_rank + '  ·  ' : '') + p.pvp_w + '승 ' + p.pvp_l + '패' : L.level >= RANKED_MIN_LEVEL ? '  ·  아직 기록 없음' : '  ·  LV ' + RANKED_MIN_LEVEL + '부터');
+  nm.textContent = (p.n_w || 0) + (p.n_l || 0) ? p.n_w + '승 ' + p.n_l + '패' : '아직 기록이 없습니다';
 }
 function pfMode(m){                                      // 'view' 기본 화면 / 'pw' 비밀번호 변경 / 'del' 계정 삭제
   PF.mode = m;
@@ -2166,7 +2269,7 @@ async function loadProfile(){                            // 가입일·전적·�
     const r = await api('/api/profile', { token: game.token });
     if(game.user !== who) return;
     if(!r.ok){ game.profile = { failed:true }; if(!$('profile').classList.contains('hidden')) renderProfile(); return; }     // 이 서버가 프로필 기능을 모른다 (아직 업데이트 전)
-    game.profile = r; game.best = Math.max(game.best || 0, r.best || 0); game.admin = !!r.admin;
+    game.profile = r; game.best = Math.max(game.best || 0, r.best || 0); game.admin = !!r.admin; if(typeof r.xp === 'number'){ game.xp = r.xp; if(game.state === 'title') updateMenuLevel(); }
     game.myRank = r.rank ? '#' + r.rank + ' / ' + r.total : 'UNRANKED';
     if(!$('profile').classList.contains('hidden')) renderProfile();
   }catch(e){ if(game.user === who){ game.profile = { failed:true }; if(!$('profile').classList.contains('hidden')) renderProfile(); } }
@@ -2219,43 +2322,59 @@ $('profile').addEventListener('click', e => { if(e.target === $('profile')) clos
 
 /* ---------- 랭킹 화면 ---------- */
 const RANK_POLL_MS = 3000;                              // 랭킹 화면이 열려 있는 동안 순위가 바뀌었는지 확인하는 간격 (서버 무료 한도를 아끼려고 3초)
-const RANK = { open:false, timer:null, version:null, prev:new Map(), first:true, busy:false };
+const RANK = { open:false, timer:null, version:null, prev:new Map(), first:true, busy:false, mode:'stage' };      // mode: 'stage' 스테이지 랭킹 / 'pvp' PvP 레이팅(ELO)
+function resetRankView(){                               // 랭킹 창을 처음 상태로 (열 때, 탭을 바꿀 때)
+  const pvp = RANK.mode === 'pvp';
+  RANK.version = null; RANK.first = true; RANK.prev = new Map();
+  $('rank').classList.toggle('pvp', pvp);
+  $('rankTabStage').classList.toggle('on', !pvp); $('rankTabPvp').classList.toggle('on', pvp);
+  $('rankColLast').textContent = pvp ? '레이팅 · 전적' : '베스트 스테이지';
+  $('rankList').textContent = ''; $('rankList').hidden = true; $('rankEmpty').hidden = false; $('rankEmpty').textContent = '불러오는 중…'; $('rankMine').textContent = '';
+}
+function setRankMode(m){
+  if(RANK.mode === m || !RANK.open) return;
+  RANK.mode = m; resetRankView(); pollRank(true);
+}
 function setLive(on){
   const el = $('rankLive'); el.textContent = on ? 'LIVE' : 'OFFLINE'; el.classList.toggle('on', on);
 }
 function renderRank(r){
-  const ol = $('rankList'), keep = ol.scrollTop, meKey = (game.user || '').toLowerCase(), next = new Map();
+  const ol = $('rankList'), keep = ol.scrollTop, meKey = (game.user || '').toLowerCase(), next = new Map(), pvp = RANK.mode === 'pvp';
   ol.textContent = '';
   for(const it of r.list){
-    const li = document.createElement('li'), sig = it.rank + '|' + it.best;
+    const li = document.createElement('li'), sig = it.rank + '|' + (pvp ? it.elo + '|' + it.w + '|' + it.l : it.best);
     next.set(it.id, sig);
     li.className = (it.rank <= 3 ? 'r' + it.rank : '') + (it.id.toLowerCase() === meKey ? ' me' : '');
     if(!RANK.first && RANK.prev.get(it.id) !== sig) li.classList.add('flash');   // 새로 들어왔거나 순위/기록이 바뀐 줄만 반짝
     const no = document.createElement('span'), nm = document.createElement('span'), st = document.createElement('span');
-    no.className = 'no'; no.textContent = it.rank; nm.className = 'nm'; nm.textContent = it.id; st.className = 'st'; st.textContent = 'STAGE ' + it.best;
+    no.className = 'no'; no.textContent = it.rank; nm.className = 'nm'; nm.textContent = it.id; st.className = 'st'; if(pvp){ const T = tierOf(it.elo); st.textContent = T.name + ' ' + it.elo + '  ' + it.w + 'W ' + it.l + 'L'; st.style.color = T.color; } else st.textContent = 'STAGE ' + it.best;
     li.append(no, nm, st); ol.append(li);
   }
   ol.scrollTop = keep;
   RANK.prev = next; RANK.first = false;
   const empty = $('rankEmpty'); empty.hidden = r.list.length > 0; ol.hidden = r.list.length === 0;
-  if(!r.list.length) empty.innerHTML = '아직 랭킹에 오른 사람이 없습니다.<br>스테이지를 클리어하면 가장 먼저 이름을 올릴 수 있어요!';
+  if(!r.list.length) empty.innerHTML = pvp ? '아직 랭크전 기록이 없습니다.<br>레벨 5가 되면 랭크전에서 가장 먼저 이름을 올릴 수 있어요!' : '아직 랭킹에 오른 사람이 없습니다.<br>스테이지를 클리어하면 가장 먼저 이름을 올릴 수 있어요!';
   const me = r.me, mine = $('rankMine');
   mine.textContent = '';
   if(me && me.rank){
     const a = document.createElement('div'), b = document.createElement('b');
     b.textContent = me.id; a.append('내 순위  ', Object.assign(document.createElement('span'), { className:'gold', textContent:'#' + me.rank }), ' / ' + r.total + '명');
-    const c = document.createElement('div'); c.textContent = 'BEST STAGE ' + me.best;
+    const c = document.createElement('div'); c.textContent = pvp ? tierOf(me.elo).name + ' · RATING ' + me.elo + '  ·  ' + me.w + '승 ' + me.l + '패' : 'BEST STAGE ' + me.best;
     mine.append(a, c);
+  } else if(pvp && me){
+    mine.textContent = '내 레이팅 ' + me.elo + ' (' + tierOf(me.elo).name + ') — 랭크전을 한 판 치르면 순위에 오릅니다.';
   } else {
-    mine.textContent = '아직 기록이 없어요. 스테이지 1을 클리어하면 등록됩니다.';
+    mine.textContent = pvp ? '로그인하면 내 PvP 순위가 보여요.' : '아직 기록이 없어요. 스테이지 1을 클리어하면 등록됩니다.';
   }
 }
 async function pollRank(force){
   if(!RANK.open || RANK.busy || (document.hidden && !force)) return;
   RANK.busy = true;
   try{
-    const r = await api('/api/ranking', { token: game.token, limit: 30, since: RANK.version });      // since: 이미 가진 버전 — 바뀐 게 없으면 서버가 목록을 다시 만들지 않고 same 만 답한다 (무료 서버 한도 절약)
-    if(!RANK.open) return;                                  // 응답을 기다리는 사이 화면을 닫았다면 버린다
+    const mode = RANK.mode;
+    const r = await api(mode === 'pvp' ? '/api/pvp' : '/api/ranking', { token: game.token, limit: 30, since: RANK.version });      // since: 이미 가진 버전 — 바뀐 게 없으면 서버가 목록을 다시 만들지 않고 same 만 답한다 (무료 서버 한도 절약)
+    if(!RANK.open || mode !== RANK.mode) return;            // 응답을 기다리는 사이 화면을 닫았거나 탭을 바꿨다면 버린다
+    if(mode === 'pvp' && !r.ok){ setLive(true); RANK.version = null; $('rankList').hidden = true; $('rankEmpty').hidden = false; $('rankEmpty').textContent = '이 서버는 아직 PvP 랭킹을 지원하지 않습니다.'; return; }
     setLive(true);
     if(r.same && RANK.version !== null) return;           // 순위가 바뀌지 않았다
     if(r.version !== RANK.version){
@@ -2272,8 +2391,7 @@ async function pollRank(force){
 function openRank(){
   if(game.state !== 'title') return;
   hideMenu(); game.state = 'ranking'; P.x = 150; E.x = 810;     // 가운데 패널이 두 캐릭터를 가리지 않도록 양옆으로 물러선다
-  RANK.open = true; RANK.version = null; RANK.first = true; RANK.prev = new Map();
-  $('rankList').textContent = ''; $('rankList').hidden = true; $('rankEmpty').hidden = false; $('rankEmpty').textContent = '불러오는 중…'; $('rankMine').textContent = '';
+  RANK.open = true; RANK.mode = 'stage'; resetRankView();
   setLive(false); $('rankLive').textContent = 'CONNECTING';
   $('rank').classList.remove('hidden');
   pollRank(true);
@@ -2292,6 +2410,8 @@ function toTitle(){
 $('playBtn').addEventListener('click', () => { audio(); if(game.state === 'title') start(1); });
 $('logoutBtn').addEventListener('click', () => { audio(); if(game.state === 'title') logout(); });
 $('rankBtn').addEventListener('click', () => { audio(); openRank(); });
+$('rankTabStage').addEventListener('click', () => { audio(); setRankMode('stage'); });
+$('rankTabPvp').addEventListener('click', () => { audio(); setRankMode('pvp'); });
 $('rankBack').addEventListener('click', () => { audio(); closeRank(); });
 
 /* ---------- 캐릭터 선택 창 ---------- */
@@ -2403,7 +2523,7 @@ function logout(){
 // 스테이지를 깨면 서버에 기록한다. 서버가 순위를 바로 다시 계산하므로, 랭킹 화면을 열어 둔 다른 사람 화면도 2초 안에 바뀐다
 async function recordWin(){
   if(!game.token || game.level <= (game.best || 0)) return;
-  game.newBest = true; game.rank = null; game.saveError = null;
+  game.newBest = true; game.rank = null; game.saveError = null; game.xpWait = (game.xpWait | 0) + 1;
   try{
     // game.best 는 서버가 확인해 준 기록만 담는다. 이전 스테이지 저장이 (서버 꺼짐 등으로) 실패했더라도,
     // 서버 규칙(한 번에 +1 스테이지씩만 인정)에 맞게 빠진 스테이지를 순서대로 채워서 보낸다.
@@ -2411,18 +2531,20 @@ async function recordWin(){
     for(let lv = (game.best || 0) + 1; lv <= game.level; lv++){
       last = await api('/api/best', { token: game.token, level: lv });
       if(!last.ok) break;
-      game.best = last.best;
+      game.best = last.best; setXp(last.xp, last.gain);
     }
     if(last && last.ok) game.rank = last.rank || null;
     else if(last && last.error === 'bad_token') game.saveError = 'session';   // 서버가 이 로그인을 모름 (예: sessions.json 삭제) → 다시 로그인 필요
     else game.newBest = false;                                                  // 서버가 거절한 기록은 신기록으로 표시하지 않는다
-  }catch(e){ game.saveError = 'network'; }                                       // 서버에 닿지 못함 → 다음 승리 때 함께 저장된다
+  }catch(e){ game.saveError = 'network'; game.xpErr = true; }                    // 서버에 닿지 못함 → 다음 승리 때 함께 저장된다
+  finally{ game.xpWait = Math.max(0, (game.xpWait | 0) - 1); }
   if(game.state === 'title') refreshMenuRank();                                    // 저장이 끝나기 전에 ESC로 메인에 왔다면 내 순위 표시를 새로 고친다
 }
 // 한 판이 끝나면 승/패를 서버에 알린다 (프로필의 전적에만 쓰이고 랭킹과는 무관). 멀티플레이 대전은 세지 않는다
 function reportResult(won){
   if(net.on || !game.token || game.autoP) return;
-  api('/api/result', { token: game.token, won }).then(r => { if(r.ok && game.profile) game.profile[won ? 'wins' : 'losses']++; }).catch(() => {});
+  game.xpWait = (game.xpWait | 0) + 1;
+  api('/api/result', { token: game.token, won }).then(r => { if(r.ok){ if(game.profile) game.profile[won ? 'wins' : 'losses']++; setXp(r.xp, r.gain); } else game.xpErr = true; }).catch(() => { game.xpErr = true; }).finally(() => { game.xpWait = Math.max(0, (game.xpWait | 0) - 1); });
 }
 setMode('login');
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -2524,7 +2646,7 @@ function toast(t){
 function showPanel(mode){
   $m('mp').classList.remove('hidden'); net.panel = true; hideMenu();
   $m('mpJoin').classList.toggle('hide', mode !== 'join'); $m('mpHost').classList.toggle('hide', mode !== 'host');
-  $m('mpTtl').textContent = mode === 'host' ? 'CREATE ROOM' : mode === 'match' ? 'RANDOM MATCH' : 'MULTIPLAYER';
+  $m('mpTtl').textContent = mode === 'host' ? 'CREATE ROOM' : mode === 'normal' ? 'NORMAL MATCH' : mode === 'ranked' ? 'RANKED MATCH' : 'MULTIPLAYER';
   $m('mpLive').textContent = ''; setMsg('');
 }
 function hidePanelUI(){ $m('mp').classList.add('hidden'); net.panel = false; }
@@ -2535,26 +2657,53 @@ function closePanel(){                                   // 창 닫기 = 아직 
 }
 function openPanel(mode){
   if(game.state !== 'title' || net.on || net.panel) return;
-  teardown(false); net.role = mode === 'host' ? 'host' : mode === 'match' ? '' : 'guest'; showPanel(mode);
-  if(mode === 'host') hostRoom(); else if(mode === 'match') startRandom(); else { $m('mpCode').value = ''; setTimeout(() => $m('mpCode').focus(), 50); }
+  const rnd = mode === 'normal' || mode === 'ranked';
+  teardown(false); net.role = mode === 'host' ? 'host' : rnd ? '' : 'guest'; showPanel(mode);
+  if(mode === 'host') hostRoom(); else if(rnd) startRandom(mode); else { $m('mpCode').value = ''; setTimeout(() => $m('mpCode').focus(), 50); }
 }
 
 /* ---------- 연결 정리 ---------- */
 function teardown(sendBye){
   const L = net.link, PR = net.peerObj;
   net.sess++;                                            // 진행 중이던 연결 시도의 늦은 콜백은 이 번호가 달라져서 무시된다
-  net.link = null; net.peerObj = null; net.peer = null; net.ready = false; net.busy = false; net.code = ''; net.rep = null; net.mode = '';
+  net.link = null; net.peerObj = null; net.peer = null; net.ready = false; net.busy = false; net.code = ''; net.rep = null; net.mode = ''; net.rated = null;
   net.rbuf.length = 0; net.fx.length = 0; net.vote.me = net.vote.peer = false;
   if(L){ if(sendBye) L.send({ k:'bye' }); L.onmessage = L.onclose = null; setTimeout(() => L.close(), 250); }
   if(PR){ PR.__bye = true; setTimeout(() => { try{ PR.destroy(); }catch(e){} }, 300); }   // __bye: 일부러 닫는 중 → 자동 재접속 금지 (방 코드가 서버에 남지 않게)
 }
 function leaveMatch(sendBye){
-  net.on = false; net.role = '';
+  net.on = false; net.solo = false; net.left = false; net.role = '';
   teardown(sendBye);
+}
+// 상대가 나갔다 (랜덤 매칭만): 상대 자리를 '스테이지 1 수준의 AI' 가 이어받아 경기를 끝낸다.
+//  · 손님이 나가면 방장(여기)의 시뮬레이션이 그대로 이어지고 손님 파이터만 AI 가 조종한다.
+//  · 방장이 나가면 전투를 계산하던 사람이 없어지므로, 손님(여기)이 마지막 상태를 이어받아 '나 vs AI' 로 직접 계산한다 (왼쪽에 내가 서도록 좌우를 뒤집는다).
+//  AI 를 이기면 나간 사람이 진 것으로, AI 가 이기면 무효로 서버가 처리한다 (나간 쪽이 이득을 보지 못한다).
+function aiTakeover(){
+  const link = net.link;
+  net.left = true;
+  net.link = null;
+  if(link){ link.onmessage = link.onclose = null; if(net.mode === 'p2p'){ try{ link.close(); }catch(e){} } }         // 서버 중계에서는 이 연결이 서버와의 유일한 통로라서 닫지 않는다
+  if(net.role === 'host'){
+    E.human = false; E.lvl = 1; E.ai = { think:0, react:0, reacting:false, did:false, hold:0, move:0, choice:0, t:0, pg:false, pgStart:0, holds:[], punishT:-1, punishWait:0, fired:false, willReact:true };
+    E.ctrl.move = 0; E.ctrl.guard = false; E.ctrl.act = null; net.rbuf.length = 0;
+  } else {
+    const me = E, op = P, keep = (f, g) => { for(const k of ['hp', 'maxhp', 'lag', 'st', 'gd', 'gdBroken', 'cg']) if(f[k] !== undefined) g[k] = f[k]; };
+    const nm = mk(960 - me.x, 1, true, 1, game.char), no = mk(960 - op.x, -1, false, 1, net.peer ? net.peer.ch : 'outfighter');
+    keep(me, nm); keep(op, no); no.spd = 1; no.lvl = 1;
+    P = nm; E = no; buf = [];
+    net.names = [net.names[1], net.names[0]];
+    net.solo = true; net.on = false; net.ready = false;
+  }
 }
 // 상대가 나갔거나 연결이 끊김
 function peerGone(msg){
+  if(net.left || net.solo) return;                       // 이미 AI 가 대신하는 중이면 (같은 상대의 끊김 알림이 한 번 더 오는 경우) 무시
   const inMatch = net.on;
+  if(inMatch && net.rep && !net.left){                   // 랜덤 매칭 중 상대가 나갔다: 나간 사람이 지는 것을 피하지 못하도록, 못하는 AI 가 그 자리를 대신한다
+    if(game.state === 'fight' || game.state === 'intro'){ aiTakeover(); return; }
+    if(game.state === 'ko' && net.repR === net.round && !net.rated) net.rep({ k:'left', r:net.round });        // 결과는 이미 보냈고 상대의 보고만 없다 → 서버에 알린다 (서버가 상대의 연결이 끊긴 것을 직접 확인한다)
+  }
   if(net.panel && !inMatch){ teardown(false); setMsg(msg, true); return; }
   leaveMatch(false);
   if(game.state !== 'title') toTitle();
@@ -2575,12 +2724,13 @@ function wsLink(ws){                                       // 서버 중계 모�
   ws.onmessage = ev => {
     let d; try{ d = JSON.parse(ev.data); }catch(e){ return; }
     if(d && d.k === 'rtt'){ net.srv = Math.round(performance.now() - d.t); return; }                // 서버까지의 왕복 시간
+    if(d && d.k === 'rated'){ gotRated(d); return; }                                                  // 서버가 알려 주는 점수 반영 결과 (상대가 보낼 수 있는 메시지가 아니다)
     if(l.onmessage) l.onmessage(d);
   };
   ws.onclose = ws.onerror = () => { if(l.onclose) l.onclose(); };
   return l;
 }
-function startRandom(){
+function startRandom(kind){
   if(net.busy) return;
   if(!game.token){ setMsg('로그인이 필요합니다.', true); return; }
   net.busy = true; net.srv = 0; net.mode = ''; setMsg('서버에 연결하는 중…'); $m('mpLive').textContent = 'CONNECTING';
@@ -2598,15 +2748,15 @@ function startRandom(){
     if(stale()) return;
     const m = json(ev); if(!m) return;
     if(m.k === 'ready'){
-      lobby.send(JSON.stringify({ k:'queue', ch:game.char }));
+      lobby.send(JSON.stringify({ k:'queue', ch:game.char, mode:kind }));
       const t0 = performance.now(); $m('mpLive').textContent = 'SEARCHING'; setMsg('상대를 찾는 중… 0초');
       tick = setInterval(() => {
         const sec = Math.floor((performance.now() - t0)/1000);
         if(sec >= 60){ try{ lobby.send(JSON.stringify({ k:'cancel' })); }catch(e){} fail('상대를 찾지 못했습니다. 잠시 후 다시 시도하거나, 방 코드로 친구와 대전해 보세요.'); }
-        else setMsg('상대를 찾는 중… ' + sec + '초  (ESC 로 취소)');
+        else setMsg('상대를 찾는 중… ' + sec + '초  (비슷한 ' + (kind === 'ranked' ? '레이팅' : '레벨') + '부터 찾아요 · ESC 로 취소)');
       }, 1000);
     }
-    else if(m.k === 'err') fail(m.error === 'bad_token' ? '로그인이 만료되었습니다. 다시 로그인해 주세요.' : m.error === 'replaced' ? '다른 창에서 매칭을 시작해서 이 창의 매칭은 취소되었습니다.' : '매칭 서버가 바쁩니다. 잠시 후 다시 시도해 주세요.');
+    else if(m.k === 'err') fail(m.error === 'low_level' ? '랭크전은 레벨 ' + RANKED_MIN_LEVEL + '부터 할 수 있어요. 스테이지나 일반전으로 경험치를 쌓아 보세요!' : m.error === 'bad_token' ? '로그인이 만료되었습니다. 다시 로그인해 주세요.' : m.error === 'replaced' ? '다른 창에서 매칭을 시작해서 이 창의 매칭은 취소되었습니다.' : '매칭 서버가 바쁩니다. 잠시 후 다시 시도해 주세요.');
     else if(m.k === 'matched') enterRoom(m);
   };
 
@@ -2658,6 +2808,7 @@ function startRandom(){
       else if(d.k === 'rdy'){ if(net.role === 'guest' && !mode && !window.__NET_NO_P2P) guestP2P(); }
       else if(d.k === 'relay') useRelay();
       else if(d.k === 'rtt') net.srv = Math.round(performance.now() - d.t);
+      else if(d.k === 'rated') gotRated(d);
       else if(d.k === 'bye'){ if(mode === 'p2p') peerGone('상대가 방을 나갔습니다'); else if(!mode) fail('상대가 방을 나갔습니다.'); }
       else if(d.k === 'err') fail('이 방에 들어갈 수 없습니다.');
     };
@@ -2782,7 +2933,7 @@ function onMsg(m){
   }
 }
 function startMatch(){                                   // 방장: 새 경기 (첫 경기 / 재대결)
-  net.vote.me = net.vote.peer = false;
+  net.vote.me = net.vote.peer = false; net.rated = null; net.left = false;
   net.on = true; net.ready = true; net.role = 'host';
   closeSub(); hidePanelUI(); start(1);                              // 기존 시작 루틴(상태 초기화)을 쓰고, 파이터만 사람 둘로 바꾼다
   P = mk(310, 1, true, 1, game.char); E = mk(650, -1, false, 1, net.peer.ch); E.human = true; E.spd = 1;
@@ -2793,7 +2944,7 @@ function startMatch(){                                   // 방장: 새 경기 (
   game.state = 'intro';
 }
 function beginGuest(m){                                  // 손님: 방장의 시작 신호를 받아 같은 파이터를 세운다
-  net.vote.me = net.vote.peer = false;
+  net.vote.me = net.vote.peer = false; net.rated = null; net.left = false;
   net.on = true; net.ready = true; net.role = 'guest';
   closeSub(); hidePanelUI(); start(1);
   P = mk(310, 1, true, 1, CHARS[m.hc] ? m.hc : 'outfighter'); E = mk(650, -1, false, 1, CHARS[m.gc] ? m.gc : 'outfighter'); E.human = true; E.spd = 1;
@@ -2917,8 +3068,7 @@ function openSub(kind){
     buildChars(); refreshCards(); $m('chars').classList.remove('hidden');
   } else {
     net.disp = [mk(150, 1, true, 1, game.char), mk(810, -1, false, 1, net.peer ? net.peer.ch : 'outfighter')];
-    RANK.open = true; RANK.version = null; RANK.first = true; RANK.prev = new Map();
-    $m('rankList').textContent = ''; $m('rankList').hidden = true; $m('rankEmpty').hidden = false; $m('rankEmpty').textContent = '불러오는 중…'; $m('rankMine').textContent = '';
+    RANK.open = true; RANK.mode = 'pvp'; resetRankView();            // 대전 결과 화면에서 열면 PvP 레이팅부터 보여 준다
     setLive(false); $m('rankLive').textContent = 'CONNECTING'; $m('rank').classList.remove('hidden');
     pollRank(true); clearInterval(RANK.timer); RANK.timer = setInterval(() => pollRank(false), RANK_POLL_MS);
   }
@@ -2939,6 +3089,7 @@ addEventListener('keydown', e => {
   if(!net.on || net.panel || e.repeat) return;
   if(net.sub){
     if(e.code === 'Escape' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Backspace'){ e.preventDefault(); closeSub(); }
+    else if(net.sub === 'rank' && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')){ e.preventDefault(); setRankMode(RANK.mode === 'pvp' ? 'stage' : 'pvp'); }
     else if(net.sub === 'chars' && (e.code === 'ArrowLeft' || e.code === 'KeyA')){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 2) % 3]); }
     else if(net.sub === 'chars' && (e.code === 'ArrowRight' || e.code === 'KeyD')){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 1) % 3]); }
     return;
@@ -2952,24 +3103,43 @@ addEventListener('keydown', e => {
 /* ---------- 기존 함수 감싸기 ---------- */
 const _step = step, _runAI = runAI, _toTitle = toTitle, _draw = draw, _recordWin = recordWin;
 step = function(dt){
+  if(net.solo){ _step(dt); matchResult(); return; }               // 방장이 나가서 내가 AI 와 직접 싸우는 중
   if(net.sub){ for(const f of net.disp || []) f.bob += dt*5; for(const v of PV) v.bob += dt*5; }
   if(!net.on || !net.ready) return _step(dt);
   if(net.role === 'guest'){ guestStep(dt); sendIn(false); matchResult(); return; }
   net.rdt = dt; _step(dt);
-  if(!net.link || !net.link.half || (net.tick = !net.tick)) sendSnap();               // 서버 연결이면 2프레임에 한 번 (무료 한도 절약), 방 코드(P2P)는 매 프레임
+  if(!net.left && (!net.link || !net.link.half || (net.tick = !net.tick))) sendSnap();               // 서버 연결이면 2프레임에 한 번 (무료 한도 절약), 방 코드(P2P)는 매 프레임
   matchResult();
 };
+// 서버가 이번 경기를 PvP 레이팅에 어떻게 반영했는지 알려 온다 (결과 화면에 표시)
+function gotRated(d){
+  if((!net.on && !net.solo) || d.r !== net.round) return;
+  const status = ['rated', 'fast', 'limit', 'disputed', 'void'].includes(d.status) ? d.status : 'void';
+  const ranked = d.mode === 'ranked', gain = d.gain | 0, delta = d.delta | 0, elo = d.elo | 0, xp = d.xp | 0;
+  net.rated = { status, mode:ranked ? 'ranked' : 'normal', pct:d.pct | 0, left:!!d.left, delta, gain, elo, xp, lvUp:false, tierMove:0 };
+  if(status !== 'rated') return;
+  net.rated.lvUp = levelOf(xp).level > levelOf(xp - gain).level;
+  if(ranked) net.rated.tierMove = tierIdx(elo) - tierIdx(elo - delta);
+  const p = game.profile, win = net.solo ? E.hp <= 0 : (net.role === 'guest' ? P : E).hp <= 0;
+  if(p && !p.failed){
+    const key = ranked ? (win ? 'pvp_w' : 'pvp_l') : (win ? 'n_w' : 'n_l');
+    p[key] = (p[key] | 0) + 1; if(ranked) p.elo = elo;
+  }
+  game.xp = xp; if(p && !p.failed) p.xp = xp;
+}
+const RATED_NOTE = { fast:'경기 시간이 너무 짧아 보상이 없습니다', limit:'같은 상대와 여러 번 대전해서 이번 경기는 점수·경험치가 없습니다', disputed:'두 사람의 결과가 달라 반영되지 않았습니다', void:'이번 경기는 반영되지 않았습니다' };
 // 경기가 끝나면 두 사람이 각자 승자를 서버에 알린다. 서버는 둘이 일치할 때만 대전 기록으로 남긴다 (랜덤 매칭일 때만)
 function matchResult(){
   if(!net.rep || game.state !== 'ko' || net.repR === net.round) return;
   net.repR = net.round;
-  net.rep({ k:'result', r:net.round, w: P.hp <= 0 ? 'guest' : 'host' });       // P = 방장(왼쪽), E = 손님(오른쪽)
+  net.rep({ k:'result', r:net.round, w: net.solo ? (P.hp <= 0 ? 'host' : 'guest') : (P.hp <= 0 ? 'guest' : 'host') });       // P = 방장(왼쪽), E = 손님(오른쪽) — 내가 AI 와 직접 싸우는 중이면 내가 왼쪽이고 손님이다
+  if(net.left) net.rep({ k:'left', r:net.round });                                  // 상대가 나가서 AI 와 싸운 경기: 서버가 상대의 연결을 확인하고 결과를 인정한다
 }
 runAI = function(f, o, dt){
-  if(net.on && net.role === 'host' && f === E){ remoteCtl(E, net.rdt); return; }
+  if(net.on && net.role === 'host' && f === E && !net.left){ remoteCtl(E, net.rdt); return; }
   return _runAI(f, o, dt);
 };
-toTitle = function(){ closeSub(); if(net.on) leaveMatch(true); return _toTitle(); };         // ESC 등으로 메인으로 나가면 상대에게도 알리고 연결을 닫는다
+toTitle = function(){ closeSub(); if(net.on || net.solo) leaveMatch(true); return _toTitle(); };         // ESC 등으로 메인으로 나가면 상대에게도 알리고 연결을 닫는다
 recordWin = async function(){ if(net.on) return; return _recordWin(); };
 draw = function(){
   if(net.on && net.sub){                                 // 캐릭터/랭킹 창이 떠 있는 동안: 메인 화면과 같은 장면으로 잠깐 바꿔서 그린다
@@ -2979,6 +3149,10 @@ draw = function(){
     return;
   }
   _draw();
+  if((net.left || net.solo) && (game.state === 'fight' || game.state === 'intro')){
+    ctx.setTransform(1,0,0,1,0,0);
+    txt('상대가 나가서 AI 가 대신 싸웁니다', W/2, 104, 13, COL.gold, 'center', 700, 3);
+  }
   if(net.on && net.ready){
     ctx.setTransform(1,0,0,1,0,0);
     txt((net.role === 'host' ? 'HOST' : 'GUEST') + (net.role === 'guest' ? '  ·  PING ' + net.ping + 'ms' : '') + (net.mode === 'p2p' ? '  ·  P2P' : net.mode === 'relay' ? '  ·  RELAY' + (net.srv ? ' ' + net.srv + 'ms' : '') : ''), W/2, 44, 11, COL.dim, 'center', 600, 3);
@@ -2995,11 +3169,17 @@ setInterval(() => {
   if(!net.link) return;
   net.link.send({ k:'ping', t:performance.now() });
   if(net.rep && net.mode === 'relay' && (net.rttTick = !net.rttTick)) net.rep({ k:'rtt', t:performance.now() });     // 서버 중계일 때만, 2초마다 서버까지의 왕복 시간 측정
-  if(performance.now() - net.lastRx > 8000) peerGone('상대와의 연결이 끊어졌습니다');
+  if(!net.left && performance.now() - net.lastRx > 8000) peerGone('상대와의 연결이 끊어졌습니다');
 }, 1000);
 
 /* ---------- 버튼 / 키 ---------- */
-$m('matchBtn').addEventListener('click', () => { audio(); openPanel('match'); });
+$m('normalBtn').addEventListener('click', () => { audio(); openPanel('normal'); });
+$m('rankedBtn').addEventListener('click', () => {
+  audio();
+  const lv = levelOf(game.xp || 0).level;
+  if(lv < RANKED_MIN_LEVEL){ toast('랭크전은 레벨 ' + RANKED_MIN_LEVEL + '부터 가능해요 (지금 LV ' + lv + ')'); return; }
+  openPanel('ranked');
+});
 $m('hostBtn').addEventListener('click', () => { audio(); openPanel('host'); });
 $m('joinBtn').addEventListener('click', () => { audio(); openPanel('join'); });
 $m('mpBack').addEventListener('click', () => { audio(); closePanel(); });

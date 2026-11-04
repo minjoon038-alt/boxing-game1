@@ -1,8 +1,9 @@
 // BOXING accounts + ranking API for Cloudflare Workers + D1.
 // Same endpoints and JSON shapes as server.ps1 (the local server), so boxing.html works with either:
-//   POST /api/signup  /api/login  /api/char  /api/stage  /api/best  /api/ranking  /api/profile  /api/result  /api/password  /api/delete     (GET /api/health for a quick check)
-//   POST /api/admin/*  (stats, users, user, ban, setbest, setrecord, resetpw, delete, log) - only for accounts whose role is 'admin' in the database
+//   POST /api/signup  /api/login  /api/char  /api/stage  /api/best  /api/ranking  /api/pvp  /api/profile  /api/result  /api/password  /api/delete     (GET /api/health for a quick check)
+//   POST /api/admin/*  (stats, users, user, ban, setbest, setrecord, setelo, resetpw, delete, matches, voidmatch, log) - only for accounts whose role is 'admin' in the database
 
+import { MIN_ELO, stageFirstXp, STAGE_REPLAY_XP, STAGE_LOSS_XP } from './rating.js';
 export { Lobby, Room } from './online.js';      // Durable Objects: random matchmaking + match rooms (WebSocket)
 
 const CHARS = ['outfighter', 'infighter', 'slugger'];
@@ -95,6 +96,13 @@ async function rankOf(db, u) {
   ).bind(u.best, u.best_at, u.key).first();
   return r.c + 1;
 }
+// PvP rating ranking: highest rating first (only accounts with at least one rated fight); same rating -> alphabetical
+async function pvpRankOf(db, u) {
+  if (!u || u.pvp_w + u.pvp_l < 1) return 0;
+  const r = await db.prepare('SELECT COUNT(*) AS c FROM users WHERE pvp_w + pvp_l >= 1 AND banned = 0 AND (elo > ?1 OR (elo = ?1 AND key < ?2))').bind(u.elo, u.key).first();
+  return r.c + 1;
+}
+const pvpVersion = async db => (await db.prepare("SELECT v FROM meta WHERE k = 'pvp_version'").first())?.v ?? 1;
 // current-password check for the sensitive endpoints (change password / delete account). Wrong guesses count against the same
 // per-(ip, account) limit as logins, so these endpoints cannot be used to brute-force a password around the login limit
 async function checkPassword(db, u, pw, ip, now) {
@@ -113,26 +121,29 @@ async function handleAdmin(act, data, env) {
   if (!admin) return { ok: false, error: 'forbidden' };
   const log = (action, target, detail) => db.prepare('INSERT INTO audit (at, admin, action, target, detail) VALUES (?, ?, ?, ?, ?)').bind(now, admin.id, action, target, detail ? JSON.stringify(detail) : '');
   const bump = () => db.prepare("UPDATE meta SET v = v + 1 WHERE k = 'rank_version'");
+  const pvpBump = () => db.prepare("UPDATE meta SET v = v + 1 WHERE k = 'pvp_version'");
   const num = (name, max) => { const v = parseInt(field(data, name), 10); return Number.isFinite(v) && v >= 0 && v <= max ? v : null; };
   const page = (maxLimit) => { const l = num('limit', maxLimit) || 20, o = num('offset', 1e9) || 0; return [l, o]; };
   const tid = field(data, 'target');
-  const NO_TARGET = ['stats', 'users', 'log', 'matches'];
+  const NO_TARGET = ['stats', 'users', 'log', 'matches', 'voidmatch'];
   const target = NO_TARGET.includes(act) ? null : (ID_RE.test(tid) ? await db.prepare('SELECT * FROM users WHERE key = ?').bind(tid.toLowerCase()).first() : null);
   if (!NO_TARGET.includes(act)) {
     if (!target) return { ok: false, error: 'no_such_user' };
     if (target.role === 'admin' && act !== 'user') return { ok: false, error: 'protected' };     // admin accounts cannot be changed through the API
   }
-  const pub = u => ({ id: u.id, char: u.char, best: u.best, wins: u.wins, losses: u.losses, created: u.created, banned: !!u.banned, admin: u.role === 'admin' });
+  const pub = u => ({ id: u.id, char: u.char, best: u.best, wins: u.wins, losses: u.losses, elo: u.elo, pvp_w: u.pvp_w, pvp_l: u.pvp_l, n_w: u.n_w, n_l: u.n_l, xp: u.xp, created: u.created, banned: !!u.banned, admin: u.role === 'admin' });
 
   switch (act) {
     case 'stats': {
       const r = await db.prepare('SELECT COUNT(*) AS users, SUM(best >= 1 AND banned = 0) AS ranked, SUM(banned) AS banned, SUM(created > ?) AS new24h, SUM(wins) AS wins, SUM(losses) AS losses FROM users').bind(now - 24 * 3600 * 1000).first();
-      return { ok: true, users: r.users, ranked: r.ranked || 0, banned: r.banned || 0, new24h: r.new24h || 0, wins: r.wins || 0, losses: r.losses || 0, version: await rankVersion(db) };
+      const m = await db.prepare("SELECT COUNT(*) AS total, SUM(status = 'rated') AS rated, SUM(status = 'disputed') AS disputed, SUM(at > ?) AS day FROM matches").bind(now - 24 * 3600 * 1000).first();
+      return { ok: true, users: r.users, ranked: r.ranked || 0, banned: r.banned || 0, new24h: r.new24h || 0, wins: r.wins || 0, losses: r.losses || 0, version: await rankVersion(db),
+               pvp: { total: m.total || 0, rated: m.rated || 0, disputed: m.disputed || 0, day: m.day || 0 } };
     }
     case 'users': {
       const [limit, offset] = page(50);
       const q = field(data, 'q').toLowerCase().replace(/[\\%_]/g, c => '\\' + c).slice(0, 20);
-      const order = { best: 'best DESC, best_at ASC, key ASC', wins: 'wins DESC, key ASC', name: 'key ASC' }[field(data, 'sort')] || 'created DESC, key ASC';
+      const order = { best: 'best DESC, best_at ASC, key ASC', elo: 'elo DESC, key ASC', wins: 'wins DESC, key ASC', name: 'key ASC' }[field(data, 'sort')] || 'created DESC, key ASC';
       const [rows, total] = await Promise.all([
         db.prepare(`SELECT * FROM users WHERE key LIKE ?1 ESCAPE '\\' ORDER BY ${order} LIMIT ?2 OFFSET ?3`).bind('%' + q + '%', limit, offset).all(),
         db.prepare("SELECT COUNT(*) AS c FROM users WHERE key LIKE ?1 ESCAPE '\\'").bind('%' + q + '%').first(),
@@ -141,7 +152,7 @@ async function handleAdmin(act, data, env) {
     }
     case 'user': {
       const sess = await db.prepare('SELECT COUNT(*) AS c FROM sessions WHERE key = ? AND created > ?').bind(target.key, now - SESSION_MS).first();
-      return { ok: true, user: { ...pub(target), rank: target.banned ? 0 : await rankOf(db, target), sessions: sess.c, stage_lv: target.stage_lv, stage_at: target.stage_at } };
+      return { ok: true, user: { ...pub(target), rank: target.banned ? 0 : await rankOf(db, target), pvp_rank: target.banned ? 0 : await pvpRankOf(db, target), sessions: sess.c, stage_lv: target.stage_lv, stage_at: target.stage_at } };
     }
     case 'ban': {
       const on = data.banned === true || data.banned === 'true';
@@ -149,6 +160,7 @@ async function handleAdmin(act, data, env) {
       const stmts = [db.prepare('UPDATE users SET banned = ? WHERE key = ?').bind(on ? 1 : 0, target.key), log(on ? 'ban' : 'unban', target.id, reason ? { reason } : null)];
       if (on) stmts.push(db.prepare('DELETE FROM sessions WHERE key = ?').bind(target.key));      // logged out everywhere right away
       if (target.best >= 1) stmts.push(bump());                                                  // banned players leave the ranking (and come back when unbanned)
+      if (target.pvp_w + target.pvp_l >= 1) stmts.push(pvpBump());
       await db.batch(stmts);
       return { ok: true };
     }
@@ -164,6 +176,12 @@ async function handleAdmin(act, data, env) {
       await db.batch([db.prepare('UPDATE users SET wins = ?, losses = ? WHERE key = ?').bind(w, l, target.key), log('setrecord', target.id, { from: [target.wins, target.losses], to: [w, l] })]);
       return { ok: true };
     }
+    case 'setelo': {
+      const e = num('elo', 5000), w = num('pvp_w', 1e6), l = num('pvp_l', 1e6), xpIn = field(data, 'xp') === '' ? target.xp : num('xp', 1e7);
+      if (e === null || e < MIN_ELO || w === null || l === null || xpIn === null) return { ok: false, error: 'invalid_rating' };
+      await db.batch([db.prepare('UPDATE users SET elo = ?, pvp_w = ?, pvp_l = ?, xp = ? WHERE key = ?').bind(e, w, l, xpIn, target.key), log('setelo', target.id, { from: [target.elo, target.pvp_w, target.pvp_l, target.xp], to: [e, w, l, xpIn] }), pvpBump()]);
+      return { ok: true };
+    }
     case 'resetpw': {
       const npw = field(data, 'npw');
       if (npw.length < 4 || npw.length > 100) return { ok: false, error: 'short_pw' };
@@ -172,15 +190,28 @@ async function handleAdmin(act, data, env) {
       return { ok: true };
     }
     case 'delete': {
-      const stmts = [db.prepare('DELETE FROM sessions WHERE key = ?').bind(target.key), db.prepare('DELETE FROM users WHERE key = ?').bind(target.key), log('delete', target.id, { best: target.best, wins: target.wins, losses: target.losses })];
+      const stmts = [db.prepare('DELETE FROM sessions WHERE key = ?').bind(target.key), db.prepare('DELETE FROM users WHERE key = ?').bind(target.key), log('delete', target.id, { best: target.best, wins: target.wins, losses: target.losses, elo: target.elo })];
       if (target.best >= 1) stmts.push(bump());
+      if (target.pvp_w + target.pvp_l >= 1) stmts.push(pvpBump());
       await db.batch(stmts);
       return { ok: true };
     }
     case 'matches': {
       const [limit, offset] = page(100);
-      const rows = await db.prepare('SELECT at, p1, p2, winner, status FROM matches ORDER BY id DESC LIMIT ? OFFSET ?').bind(limit, offset).all();
+      const st = field(data, 'status');
+      const rows = await db.prepare("SELECT id, at, p1, p2, winner, status, mode, e1, e2, d1, d2, xp1, xp2, pct, lft, ms FROM matches WHERE (?1 = '' OR status = ?1) ORDER BY id DESC LIMIT ?2 OFFSET ?3").bind(st, limit, offset).all();
       return { ok: true, list: rows.results };
+    }
+    // cancel a rated fight (e.g. win trading): both rating changes and the win/loss counts are taken back
+    case 'voidmatch': {
+      const mid = num('id', 1e12);
+      const m = mid === null ? null : await db.prepare('SELECT * FROM matches WHERE id = ?').bind(mid).first();
+      if (!m) return { ok: false, error: 'no_such_match' };
+      if (m.status !== 'rated') return { ok: false, error: 'not_rated' };
+      const ranked = m.mode === 'ranked', col = (won) => (ranked ? (won ? 'pvp_w' : 'pvp_l') : (won ? 'n_w' : 'n_l'));
+      const undo = (name, d, xp, won) => db.prepare(`UPDATE users SET elo = MAX(${MIN_ELO}, elo - ?), xp = MAX(0, xp - ?), ${col(won)} = MAX(0, ${col(won)} - 1) WHERE key = ?`).bind(d, xp, name.toLowerCase());
+      const r = await db.batch([db.prepare("UPDATE matches SET status = 'void' WHERE id = ? AND status = 'rated'").bind(mid), undo(m.p1, m.d1, m.xp1, m.winner === m.p1), undo(m.p2, m.d2, m.xp2, m.winner === m.p2), pvpBump(), log('voidmatch', m.p1 + ' vs ' + m.p2, { id: mid, mode: m.mode, winner: m.winner, d1: m.d1, d2: m.d2, xp1: m.xp1, xp2: m.xp2 })]);
+      return r[0].meta.changes ? { ok: true } : { ok: false, error: 'not_rated' };
     }
     case 'log': {
       const [limit, offset] = page(100);
@@ -209,7 +240,7 @@ async function handle(path, data, env, ip) {
         await db.prepare('INSERT INTO users (key, id, salt, hash, iter, created) VALUES (?, ?, ?, ?, ?, ?)').bind(key, id, salt, hash, PBKDF2_ITER, now).run();
       } catch (e) { return { ok: false, error: 'taken' }; }          // someone registered the same id at the same moment
       await countHit(db, 's:' + ip, SIGNUPS, now);
-      return { ok: true, id, best: 0, char: 'outfighter', token: await newToken(db, key, now) };
+      return { ok: true, id, best: 0, xp: 0, char: 'outfighter', token: await newToken(db, key, now) };
     }
 
     case '/api/login': {
@@ -221,7 +252,7 @@ async function handle(path, data, env, ip) {
       if (!u || !sameText(hash, u.hash)) { await countHit(db, tk, LOGIN_FAILS, now); return { ok: false, error: 'bad_credentials' }; }
       if (u.banned) return { ok: false, error: 'banned' };
       await housekeeping(db, now);
-      return { ok: true, id: u.id, admin: u.role === 'admin', best: u.best, char: CHARS.includes(u.char) ? u.char : 'outfighter', token: await newToken(db, u.key, now) };
+      return { ok: true, id: u.id, admin: u.role === 'admin', best: u.best, xp: u.xp, char: CHARS.includes(u.char) ? u.char : 'outfighter', token: await newToken(db, u.key, now) };
     }
 
     case '/api/char': {
@@ -238,7 +269,8 @@ async function handle(path, data, env, ip) {
       if (!u) return { ok: false, error: 'bad_token' };
       const total = await db.prepare('SELECT COUNT(*) AS c FROM users WHERE best >= 1 AND banned = 0').first();
       return { ok: true, id: u.id, char: CHARS.includes(u.char) ? u.char : 'outfighter', best: u.best, rank: await rankOf(db, u), total: total.c,
-               created: u.created || 0, wins: u.wins || 0, losses: u.losses || 0, admin: u.role === 'admin' };
+               created: u.created || 0, wins: u.wins || 0, losses: u.losses || 0, admin: u.role === 'admin',
+               elo: u.elo, pvp_w: u.pvp_w, pvp_l: u.pvp_l, n_w: u.n_w, n_l: u.n_l, xp: u.xp, pvp_rank: await pvpRankOf(db, u) };
     }
 
     // a finished fight against the CPU (multiplayer matches are not counted). Shown on the profile only - it does not touch the ranking
@@ -249,8 +281,11 @@ async function handle(path, data, env, ip) {
       // one result per stage ticket (the ticket is issued when the stage starts), and a win cannot come sooner than a real fight takes
       if (!u.stage_at || u.stage_res || now - u.stage_at > TICKET_MAX_MS) return { ok: false, error: 'no_ticket' };
       if (won && now - u.stage_at < minClear) return { ok: false, error: 'too_fast' };
-      const r = await db.prepare(`UPDATE users SET stage_res = 1, ${won ? 'wins = wins + 1' : 'losses = losses + 1'} WHERE key = ? AND stage_at = ? AND stage_res = 0`).bind(u.key, u.stage_at).run();
-      return r.meta.changes ? { ok: true } : { ok: false, error: 'no_ticket' };
+      // experience: a loss gives a little; a win gives some only when the stage was cleared before (a first clear is rewarded by /api/best)
+      const replay = u.best >= u.stage_lv && u.best_at < u.stage_at;
+      const gain = won ? (replay ? STAGE_REPLAY_XP : 0) : STAGE_LOSS_XP;
+      const r = await db.prepare(`UPDATE users SET stage_res = 1, xp = xp + ?, ${won ? 'wins = wins + 1' : 'losses = losses + 1'} WHERE key = ? AND stage_at = ? AND stage_res = 0`).bind(gain, u.key, u.stage_at).run();
+      return r.meta.changes ? { ok: true, gain, xp: u.xp + gain } : { ok: false, error: 'no_ticket' };
     }
 
     case '/api/password': {
@@ -275,6 +310,7 @@ async function handle(path, data, env, ip) {
       if (bad) return { ok: false, error: bad };
       const stmts = [db.prepare('DELETE FROM sessions WHERE key = ?').bind(u.key), db.prepare('DELETE FROM users WHERE key = ?').bind(u.key)];
       if (u.best >= 1) stmts.push(db.prepare("UPDATE meta SET v = v + 1 WHERE k = 'rank_version'"));   // open ranking screens refresh
+      if (u.pvp_w + u.pvp_l >= 1) stmts.push(db.prepare("UPDATE meta SET v = v + 1 WHERE k = 'pvp_version'"));
       await db.batch(stmts);
       return { ok: true };
     }
@@ -294,7 +330,7 @@ async function handle(path, data, env, ip) {
       const u = await userByToken(db, field(data, 'token'), now);
       if (!u) return { ok: false, error: 'bad_token' };
       const level = parseInt(field(data, 'level'), 10) || 0;
-      let best = u.best, at = u.best_at;
+      let best = u.best, at = u.best_at, gain = 0;
       if (level > best) {
         // stages are cleared one after another, so an honest client can only raise its record by exactly +1 at a time
         if (level > best + 1 || level > MAX_LEVEL) return { ok: false, error: 'invalid_level', best };
@@ -302,16 +338,17 @@ async function handle(path, data, env, ip) {
         if (u.stage_lv < level || now - u.stage_at > TICKET_MAX_MS) return { ok: false, error: 'no_ticket', best };
         if (now - u.stage_at < minClear) return { ok: false, error: 'too_fast', best };
         // compare-and-set: two requests for the same stage cannot both raise the record
-        const r = await db.prepare('UPDATE users SET best = ?, best_at = ? WHERE key = ? AND best = ?').bind(level, now, u.key, best).run();
+        const r = await db.prepare('UPDATE users SET best = ?, best_at = ?, xp = xp + ? WHERE key = ? AND best = ?').bind(level, now, stageFirstXp(level), u.key, best).run();
         if (r.meta.changes) {
-          best = level; at = now;
+          best = level; at = now; gain = stageFirstXp(level);
           await db.prepare("UPDATE meta SET v = v + 1 WHERE k = 'rank_version'").run();
         } else {
           const fresh = await db.prepare('SELECT best, best_at FROM users WHERE key = ?').bind(u.key).first();
           best = fresh.best; at = fresh.best_at;
         }
       }
-      return { ok: true, best, rank: await rankOf(db, { key: u.key, best, best_at: at }), version: await rankVersion(db) };
+      const xpNow = (await db.prepare('SELECT xp FROM users WHERE key = ?').bind(u.key).first())?.xp ?? u.xp;
+      return { ok: true, best, gain, xp: xpNow, rank: await rankOf(db, { key: u.key, best, best_at: at }), version: await rankVersion(db) };
     }
 
     case '/api/ranking': {
@@ -334,6 +371,28 @@ async function handle(path, data, env, ip) {
       let me = null;
       const u = await userByToken(db, field(data, 'token'), now);
       if (u) me = { rank: await rankOf(db, u), id: u.id, best: u.best };
+      return { ok: true, version, total: total.c, list, me };
+    }
+
+    // PvP rating ranking (same polling scheme as /api/ranking)
+    case '/api/pvp': {
+      const since = parseInt(field(data, 'since'), 10);
+      if (Number.isFinite(since)) {
+        const v = await pvpVersion(db);
+        if (v === since) return { ok: true, version: v, same: true };
+      }
+      let limit = 10;
+      const ls = field(data, 'limit');
+      if (ls !== '') { const l = parseInt(ls, 10); if (l >= 0 && l <= 50) limit = l; }
+      const [rows, total, version] = await Promise.all([
+        limit ? db.prepare('SELECT id, elo, pvp_w, pvp_l, xp FROM users WHERE pvp_w + pvp_l >= 1 AND banned = 0 ORDER BY elo DESC, key ASC LIMIT ?').bind(limit).all() : { results: [] },
+        db.prepare('SELECT COUNT(*) AS c FROM users WHERE pvp_w + pvp_l >= 1 AND banned = 0').first(),
+        pvpVersion(db),
+      ]);
+      const list = rows.results.map((r, i) => ({ rank: i + 1, id: r.id, elo: r.elo, w: r.pvp_w, l: r.pvp_l, xp: r.xp }));
+      let me = null;
+      const u = await userByToken(db, field(data, 'token'), now);
+      if (u) me = { rank: await pvpRankOf(db, u), id: u.id, elo: u.elo, w: u.pvp_w, l: u.pvp_l, xp: u.xp };
       return { ok: true, version, total: total.c, list, me };
     }
 
