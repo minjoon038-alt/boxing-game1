@@ -7,7 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
   iter    INTEGER NOT NULL,                 -- PBKDF2 iterations used for this account
   best    INTEGER NOT NULL DEFAULT 0,       -- highest cleared stage
   best_at INTEGER NOT NULL DEFAULT 0,       -- when that stage was reached (ms) - earlier wins a tie
-  char    TEXT NOT NULL DEFAULT 'outfighter'
+  char    TEXT NOT NULL DEFAULT 'outfighter',
+  created INTEGER NOT NULL DEFAULT 0,       -- sign-up time (ms); 0 = account older than this column
+  wins    INTEGER NOT NULL DEFAULT 0,       -- CPU fights won / lost (shown on the profile; has no effect on the ranking)
+  losses  INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS users_rank ON users (best DESC, best_at ASC, key ASC);
 

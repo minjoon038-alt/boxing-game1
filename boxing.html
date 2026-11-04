@@ -151,6 +151,33 @@
   #auth .msg{min-height:20px;margin-top:14px;font-size:13px;font-weight:600;text-align:center;color:#ff5a5f}
   #auth .msg.ok{color:#ffd166}
   #auth .hint{margin-top:6px;font-size:11px;color:#5f5f6e;text-align:center}
+  /* ----- 프로필 창: 메인 화면 오른쪽 위의 아이디 칩을 누르면 열린다 ----- */
+  #menu .chip{pointer-events:auto;cursor:pointer;background:rgba(8,10,22,.55);font-family:inherit;transition:border-color .15s,background .15s,color .15s}
+  #menu .chip:hover,#menu .chip:focus-visible{border-color:rgba(255,255,255,.6);background:rgba(20,24,44,.8);color:#fff;outline:none}
+  #profile{position:absolute;inset:0;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .3s ease both;background:rgba(2,3,10,.55)}
+  #profile.hidden{display:none}
+  #profile .panel{position:absolute;left:50%;top:calc(var(--u)*52);transform:translateX(-50%);width:calc(var(--u)*400);box-sizing:border-box;padding:calc(var(--u)*16) calc(var(--u)*22) calc(var(--u)*14);background:rgba(6,8,20,.92);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55)}
+  #profile .ttl{font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*8);padding-left:calc(var(--u)*2);padding-bottom:calc(var(--u)*12);border-bottom:1px solid rgba(255,255,255,.12)}
+  #profile .row{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*12);min-height:calc(var(--u)*37);border-bottom:1px solid rgba(255,255,255,.07)}
+  #profile .k{flex:none;width:calc(var(--u)*92);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a}
+  #profile .v{flex:1;min-width:0;font-size:calc(var(--u)*15);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #profile .v.pw{font-family:Consolas,'Courier New',monospace;letter-spacing:calc(var(--u)*2)}
+  #profile .v.gold{color:#ffd166}
+  #profile .ghost{flex:none;white-space:nowrap;padding:calc(var(--u)*5) calc(var(--u)*12);font-size:calc(var(--u)*11)}
+  #profile [hidden]{display:none !important}
+  #profile .v.dim{color:#8d93a8;font-weight:500;font-size:calc(var(--u)*12)}
+  #profile .foot{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*8);margin-top:calc(var(--u)*6);padding-top:calc(var(--u)*12);border-top:1px solid rgba(255,255,255,.12)}
+  #profile .foot .acts{display:flex;gap:calc(var(--u)*8)}
+  #profile .ghost.danger{color:#ff8a8f;border-color:rgba(255,90,95,.45)}
+  #profile .ghost.danger:hover,#profile .ghost.danger:focus-visible{color:#fff;border-color:#ff5a5f;background:rgba(90,16,22,.7)}
+  #profile .pfmsg{min-height:calc(var(--u)*18);margin-top:calc(var(--u)*6);font-size:calc(var(--u)*11.5);font-weight:600;line-height:1.4;color:#ff5a5f}
+  #profile .pfmsg.ok{color:#ffd166}
+  #profile form label{display:block;margin-top:calc(var(--u)*10);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a}
+  #profile form input{display:block;width:100%;box-sizing:border-box;margin-top:calc(var(--u)*5);padding:calc(var(--u)*9) calc(var(--u)*11);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:calc(var(--u)*8);color:#fff;font:inherit;font-size:calc(var(--u)*14);outline:none}
+  #profile form input:focus{border-color:#7da2ff;background:rgba(255,255,255,.09)}
+  #profile form .note{margin-top:calc(var(--u)*10);font-size:calc(var(--u)*11.5);line-height:1.6;color:#c4c9da}
+  #profile form .note b{color:#ff8a8f}
+  #profile form .foot{justify-content:flex-end}
   /* ----- 첫 로딩 화면: 그림/캐릭터가 모두 불러와지기 전에는 게임 화면(뼈대 캐릭터 등)이 보이지 않도록 덮어 둔다 ----- */
   #boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#05060d;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;transition:opacity .5s ease}
   #boot.out{opacity:0;pointer-events:none}
@@ -166,7 +193,7 @@
   <canvas id="c" width="960" height="540"></canvas>
   <!-- 메인 화면: 로그인 후 가장 먼저 보이고, PLAY를 누르면 게임이 시작된다 -->
   <div id="menu" class="hidden">
-    <div class="chip" id="menuChip"></div>
+    <button class="chip" id="menuChip" type="button" title="내 프로필"></button>
     <div class="col">
       <div class="logo"><b>BOXING</b></div>
       <div class="who"><div class="id" id="menuUser"></div><div class="best" id="menuBest"></div><div class="chr" id="menuChar"></div></div>
@@ -182,6 +209,39 @@
       </div>
       <div class="toast" id="mpToast"></div>
       <div class="tag">FIGHT. CLIMB. BE THE BEST.</div>
+    </div>
+  </div>
+  <!-- 프로필 창: 아이디, 비밀번호(기본은 가려 둠 → '보기'로 확인), 캐릭터, 기록, 전적. 비밀번호 변경 / 계정 삭제 -->
+  <div id="profile" class="hidden">
+    <div class="panel">
+      <div class="ttl">PROFILE</div>
+      <div id="pfView">
+        <div class="row"><span class="k">ID</span><span class="v" id="pfId"></span></div>
+        <div class="row"><span class="k">PASSWORD</span><span class="v pw" id="pfPw"></span><button class="ghost" id="pfPwBtn" type="button">보기</button></div>
+        <div class="row"><span class="k">CHARACTER</span><span class="v" id="pfChar"></span></div>
+        <div class="row"><span class="k">BEST STAGE</span><span class="v gold" id="pfBest"></span></div>
+        <div class="row"><span class="k">RANK</span><span class="v" id="pfRank"></span></div>
+        <div class="row"><span class="k">RECORD</span><span class="v" id="pfRecord"></span></div>
+        <div class="row"><span class="k">JOINED</span><span class="v" id="pfJoined"></span></div>
+        <div class="pfmsg" id="pfMsg"></div>
+        <div class="foot">
+          <div class="acts"><button class="ghost" id="pfChPw" type="button">비밀번호 변경</button><button class="ghost danger" id="pfDel" type="button">계정 삭제</button></div>
+          <button class="ghost" id="pfBack" type="button">← 메인 (ESC)</button>
+        </div>
+      </div>
+      <form id="pfPwForm" hidden autocomplete="off">
+        <label for="pfCur">현재 비밀번호</label><input id="pfCur" type="password" maxlength="100" autocomplete="current-password">
+        <label for="pfNew">새 비밀번호 (4자 이상)</label><input id="pfNew" type="password" maxlength="40" autocomplete="new-password">
+        <label for="pfNew2">새 비밀번호 확인</label><input id="pfNew2" type="password" maxlength="40" autocomplete="new-password">
+        <div class="pfmsg" id="pfPwMsg"></div>
+        <div class="foot"><button class="ghost" id="pfPwCancel" type="button">취소 (ESC)</button><button class="ghost gold" id="pfPwSave" type="submit">변경하기</button></div>
+      </form>
+      <form id="pfDelForm" hidden autocomplete="off">
+        <div class="note"><b>계정을 삭제하면 되돌릴 수 없습니다.</b><br>아이디, 베스트 스테이지, 랭킹 기록, 전적이 모두 사라지고 랭킹에서도 빠집니다.</div>
+        <label for="pfDelPw">비밀번호를 입력해 확인하세요</label><input id="pfDelPw" type="password" maxlength="100" autocomplete="current-password">
+        <div class="pfmsg" id="pfDelMsg"></div>
+        <div class="foot"><button class="ghost" id="pfDelCancel" type="button">취소 (ESC)</button><button class="ghost danger" id="pfDelGo" type="submit">영구 삭제</button></div>
+      </form>
     </div>
   </div>
   <!-- 멀티플레이 창: 방 만들기(6자리 코드 생성) / 멀티플레이(친구의 6자리 코드 입력). 두 PC가 인터넷으로 직접 연결된다 -->
@@ -808,7 +868,7 @@ function resolve(a, d, k){
 function koCheck(a, d, dir){
   if(d.hp > 0 || d.state === 'ko') return;
   d.hp = 0; setState(d,'ko'); d.vx = dir*420; if(d.player) buf.length = 0;
-  if(!d.player && !net.on) recordWin();
+  if(!net.on){ if(d.player) reportResult(false); else { recordWin(); reportResult(true); } }
   game.state = 'ko'; game.koT = 0; game.slow = 1.5; game.freeze = .22; game.shake = 24; game.flash = .5;
   sfx('ko');
 }
@@ -1103,13 +1163,14 @@ const TB = { img: null };                                  // 메인 화면 배�
    shF = 앞팔 어깨(몸 앞에 보이는 쪽), shB = 뒷팔 어깨(몸 뒤에 가려지는 쪽), upper/fore = 위팔·팔뚝 길이, armW = 팔 굵기 배율.
    idle / guard = 평소 / 가드(S) 자세의 글러브 위치. 이 값으로 각 캐릭터의 look.lead/rear/guard 를 정한다 (그림 전용, 판정과 무관).
    인파이터 = 원본 그림 그대로의 자세 / 아웃파이터 = 마르고 긴 몸에 앞손을 살짝 굽혀 내민 자세 / 슬러거 = 어깨를 끌어올린 두꺼운 몸
-   tall = 그림을 세로로 늘인 배율 (펀치 높이를 그만큼 맞춘다) */
+   tall = 그림을 세로로 늘인 배율 (펀치 높이를 그만큼 맞춘다)
+   hip / neck = 골반 / 목 높이(그림 y). 몸을 높이별로 휘게 그리는 관절 리그(drawRig)가 이 높이를 기준으로 다리·몸통·머리를 나눈다 */
 const SPR = {
-  out:  { w:768, h:866, ax:392, gy:832, mirror:false, shF:{ x:415, y:235 }, shB:{ x:392, y:210 }, upper:140, fore:196, armW:.74, tall:1.14,  // 오른쪽을 봄. 몸을 가로 .82배·세로 1.14배로 늘인 날렵한 체형, 가늘고 긴 팔 (얼굴은 인파이터와 같은 맨머리)
+  out:  { w:768, h:866, ax:392, gy:832, hip:455, neck:232, mirror:false, shF:{ x:415, y:235 }, shB:{ x:392, y:210 }, upper:140, fore:196, armW:.74, tall:1.14,  // 오른쪽을 봄. 몸을 가로 .82배·세로 1.14배로 늘인 날렵한 체형, 가늘고 긴 팔 (얼굴은 인파이터와 같은 맨머리)
           idle:{ lead:{ x:666, y:265 }, rear:{ x:616, y:247 } }, guard:{ lead:{ x:638, y:177 }, rear:{ x:616, y:215 } }, img:{} },   // 앞손을 앞으로 내밀되 팔꿈치는 살짝 굽힌 자세
-  in:   { w:760, h:773, ax:378, gy:748, mirror:true,  shF:{ x:392, y:228 }, shB:{ x:428, y:206 }, upper:110, fore:150, armW:1.18,  // 맨머리, 왼쪽을 봄. 짧고 굵은 팔
+  in:   { w:760, h:773, ax:378, gy:748, hip:420, neck:208, mirror:true, shF:{ x:392, y:228 }, shB:{ x:428, y:206 }, upper:110, fore:150, armW:1.18,  // 맨머리, 왼쪽을 봄. 짧고 굵은 팔
           idle:{ lead:{ x:190, y:215 }, rear:{ x:262, y:222 } }, guard:{ lead:{ x:196, y:160 }, rear:{ x:254, y:176 } }, img:{} },   // 피커부: 두 글러브를 양 볼에 붙이고 눈만 내놓는다 (가드 때는 얼굴을 다 가림)
-  slug: { w:760, h:773, ax:378, gy:748, mirror:true,  shF:{ x:348, y:262 }, shB:{ x:440, y:196 }, upper:140, fore:186, armW:1.3,   // 인파이터 그림 + 끌어올린 어깨, 머리를 어깨 사이에 묻음
+  slug: { w:760, h:773, ax:378, gy:748, hip:428, neck:236, mirror:true, shF:{ x:348, y:262 }, shB:{ x:440, y:196 }, upper:140, fore:186, armW:1.3,   // 인파이터 그림 + 끌어올린 어깨, 머리를 어깨 사이에 묻음
           idle:{ lead:{ x:132, y:252 }, rear:{ x:236, y:262 } }, guard:{ lead:{ x:166, y:178 }, rear:{ x:216, y:212 } }, img:{} }
 };
 const SPR_SC = .245;                                       // 원본 그림 1px = 게임 0.245px (키 약 177px — 판정 거리에 맞춘 크기)
@@ -1186,61 +1247,278 @@ function drawGlove(x, y, ang, th, flash, back, sMul){
   ctx.restore();
 }
 
-/* ---------- 스프라이트 캐릭터 그리기 ----------
-   P: drawFighter 가 계산한 자세 값 (lean/crouch/headSnap/bob, 글러브 위치 lead/rear). 그림이 아직 안 불러와졌으면 false (예전 도형 그리기로 대신)
-   - 몸: 기울기(lean)는 발을 땅에 붙인 채 위쪽만 앞뒤로 미는 기울임, 웅크림(crouch)은 위아래로 살짝 눌림. 평소 자세(look.lean/crouch)일 때 원본 그림 그대로
-   - 팔: 어깨 → 팔꿈치(아래로 굽음) → 손목. 위팔은 몸 색, 팔뚝은 원본처럼 검은 손목 밴드, 끝에 글러브 그림
-     뒷팔은 몸 뒤쪽 어깨(shB)에서 나와 몸에 가려지고, 앞팔만 몸 앞쪽 어깨(shF)에서 몸 위로 그려진다 (두 팔이 한 어깨에 붙어 보이지 않게)
-   - 펀치 중인 글러브는 판정과 같은 가로 위치(punchGeom 경로)에 그대로 그린다. 나머지 글러브는 몸을 따라 움직인다 */
-function drawSpriteFighter(f, P){
-  if(!sprOn(f)){
-    // 아직 불러오는 중이면 잠깐 그리지 않는다 (느린 접속에서 예전 도형 캐릭터가 번쩍 보이지 않게). 불러오기에 실패했을 때만 예전 도형으로 대신
-    const S = SPR[f.cd.look.sprite], side = f.player ? 'blue' : 'red', bad = i => !i || (i.complete && i.naturalWidth === 0);
-    return !(S && !bad(S.img[side]) && !bad(GLV.img[side]));
-  }
-  const L = f.cd.look, S = SPR[L.sprite], side = f.player ? 'blue' : 'red';
-  const img = S.img[side], gimg = GLV.img[side], C = SPR_COL[side];
-  const sc = SPR_SC*(L.sprS || 1), m = sc/.3, flash = f.flash > 0, FLASH = 'brightness(2.2) saturate(0)';
-  const c = Math.max(-4, P.crouch - L.crouch);
-  // 몸 기울기: 공격 중에는 더 크게 (준비 때 뒤로 젖혔다가 칠 때 앞으로 크게 내딛는 느낌) — 그림만 바뀐다
-  const k = (P.lean - L.lean)*(f.state === 'attack' ? .014 : .009) + P.headSnap*.004;
-  const sx = 1 + c*.002, sy = (1 - c*.0045)*(1 + P.bob*.004);
-  const T = p => ({ x:p.x*sx - k*p.y*sy, y:p.y*sy });
-  const loc = p => ({ x:(S.mirror ? S.ax - p.x : p.x - S.ax)*sc, y:(p.y - S.gy)*sc });
-  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+/* ---------- 스프라이트 캐릭터: 관절 리그 ----------
+   몸 그림 한 장을 높이별 가로 띠로 나눠 띠마다 따로 휘게 그린다 (띠 경계가 정확히 이어지는 아핀 변형이라 이음새가 없다).
+   그래서 그림 한 장으로도 골반 이동(체중 이동) / 무릎 굽힘 / 척추 굽힘 / 머리 움직임이 따로 움직인다. 팔은 어깨-팔꿈치-글러브 2관절로 코드가 그린다.
+   자세 q: hx 골반 앞뒤(+앞) / hy 골반 내림(무릎 굽힘, +아래) / bend 척추 굽힘(목 높이에서 골반보다 앞선 거리) / hd 머리 추가 이동(+y 아래) /
+           sf·sb 앞·뒤 어깨 이동(몸통 회전) / elF·elB 팔꿈치 방향(1 아래로 굽음 ~ -1 위로 들림) / gl·gr 앞·뒤 글러브 위치
+   모두 그림 전용이다: 판정은 punchGeom/gloveTouches 그대로이고, 펀치가 뻗는 동안 글러브의 가로 위치도 판정 경로와 똑같다.
+   멀티플레이 손님 화면도 동기화되는 값(state, t, atk, vx, connected, ctrl)만으로 같은 자세를 계산한다. */
+const RIG = {};
+function rigOf(f){                                         // 캐릭터 그림별 고정 값 (골반/목 높이, 띠를 나누는 높이들)
+  const L = f.cd.look, key = L.sprite + ':' + (L.sprS || 1);
+  if(RIG[key]) return RIG[key];
+  const S = SPR[L.sprite], sc = SPR_SC*(L.sprS || 1);
+  const hipH = (S.gy - S.hip)*sc, neckH = (S.gy - S.neck)*sc, top = S.gy*sc, bot = -(S.h - S.gy)*sc;
+  const ks = [bot, 0, hipH, neckH - 6, neckH + 12, top];
+  for(let i = 1; i < 18; i++) ks.push(bot + (top - bot)*i/18);
+  ks.sort((a, b) => a - b);
+  const knots = ks.filter((h, i) => i === 0 || h - ks[i - 1] > 2.5);
+  knots[knots.length - 1] = top;
+  return RIG[key] = { L, S, sc, hipH, neckH, top, knots };
+}
+// 자세 q 로 몸을 휘는 함수: 높이 h(발=0, 위로 +)에서의 가로 이동 X(h), 휘고 난 뒤의 높이 Y(h), 몸 위의 한 점을 옮기는 D(p)
+function rigWarp(R, q){
+  const { hipH, neckH } = R, tl = neckH - hipH;
+  const legC = 1/Math.sqrt(1 + (q.hx/hipH)**2), torC = 1/Math.sqrt(1 + (q.bend/tl)**2);   // 기울어진 만큼 세로 길이가 줄어든다 (몸이 늘어나 보이지 않게)
+  const hh = Math.max(hipH*.6, hipH*legC - q.hy);                                       // 무릎을 굽힌 뒤의 골반 높이
+  const hw = h => { const u = Math.max(0, Math.min(1, (h - neckH + 6)/18)); return u*u*(3 - 2*u); };   // 목 위(머리)로 갈수록 1
+  const X = h => h <= 0 ? 0 : h <= hipH ? q.hx*h/hipH : q.hx + q.bend*Math.pow((h - hipH)/tl, 1.25) + q.hd.x*hw(h);
+  const Y = h => h <= 0 ? h : h <= hipH ? h*hh/hipH : hh + (h - hipH)*torC - q.hd.y*hw(h);
+  return { X, Y, D: p => ({ x:p.x + X(-p.y), y:-Y(-p.y) }) };
+}
 
-  // 글러브 위치: 펀치 중인 손은 계산된 경로 그대로, 그 밖에는 상태별 자세를 몸의 움직임에 맞춰 옮긴다
-  let gl = { x:P.lead.x, y:P.lead.y }, gr = { x:P.rear.x, y:P.rear.y };
-  if(f.state === 'hit'){ gl = { x:L.lead.x - 14*m, y:L.lead.y + 12*m }; gr = { x:L.rear.x - 12*m, y:L.rear.y + 14*m }; }      // 맞으면 가드가 흐트러진다
-  else if(f.state === 'ko'){ gl = { x:L.lead.x - 24*m, y:L.lead.y + 32*m }; gr = { x:L.rear.x - 20*m, y:L.rear.y + 34*m }; }   // 팔이 풀린다
-  else if(f.state === 'dodge' || f.state === 'pivot'){ gl = { x:L.guard.lead.x, y:L.guard.lead.y }; gr = { x:L.guard.rear.x, y:L.guard.rear.y }; }   // 피할 때(피벗 포함)는 얼굴을 가린다
-  const punch = f.state === 'attack' ? f.atk.glove : null;
-  if(punch !== 'lead') gl = T(gl);
-  if(punch !== 'rear') gr = T(gr);
-  const shF = T(loc(S.shF)), shB = T(loc(S.shB));
+/* 클래스별 동작. 공격 한 번 = 준비(0→1) · 뻗기(1→2) · 회수(2→3) 의 위상 φ 위에 놓인 키 자세들을 잇는다.
+   키 자세 채널: [골반 x, 골반 내림, 척추 굽힘, 머리 x, 머리 y, 치는 쪽 어깨 x, y, 반대 어깨 x, y, 치는 팔 팔꿈치(1 아래 ~ -1 위), 반대 손 가드 정도(0~1), 반대 손 y]
+   A = 준비 동작의 끝(장전) / I = 타격 순간 / F = 타격 직후 따라가는 동작(팔로스루) / S = 가드로 돌아오며 자리 잡는 자세
+   lead: 몸의 부위가 앞서 움직이는 정도(위상) — 골반 → 척추 → 어깨 → 주먹 순서로 힘이 전달되는 연쇄(키네틱 체인)
+   deep: 준비 때 주먹을 당기는 깊이 / fF: 회수 시간 중 팔로스루 비율 / ret: 가드로 돌아오는 곡선 / drop: 회수 때 팔꿈치가 처지는 정도 / ft: 팔로스루 때 주먹이 더 가는 거리 */
+const MOTION = {
+  outfighter: {            // 민첩하고 가볍게: 작은 준비 → 빠르게 뻗고 → 튕기듯 회수, 발끝으로 통통 튄다
+    lead:{ hip:.2, spine:.1, head:-.03, off:.15 }, deep:.5, deepMin:10, fF:.16, sAt:.45, ez1:'o', ez2:'s', ret:'o3', drop:3,
+    keys:{
+      jab:      { A:[-2,1,-3, 0,1, -3,1, 0,0, 1, .3,0],   I:[5,1,9, -3,3, 6,-2, -2,0, .8, .7,0],   F:[3,0,6, -2,2, 4,-1, -1,0, .9, .6,0],   S:[0,-2,0, 0,0, 0,0, 0,0, 1, .2,0], ft:[2,0] },
+      straight: { A:[-6,3,-8, -2,1, -6,0, 3,0, 1, .4,0],  I:[9,2,15, -2,3, 10,-1, -5,1, .9, 1,-2], F:[6,1,10, -1,2, 7,0, -3,0, .95, .9,0], S:[0,-2,0, 0,0, 0,0, 0,0, 1, .2,0], ft:[3,1] },
+      uppercut: { A:[-3,9,1, 0,3, -2,6, 1,0, 1, .5,0],    I:[5,-5,7, -2,-2, 6,-6, -3,0, 1, 1,-2],  F:[3,-3,5, -1,-1, 4,-3, -2,0, 1, .8,0],  S:[0,-2,0, 0,0, 0,0, 0,0, 1, .2,0], ft:[1,-3] },
+      skill:    { A:[-8,4,-10, -2,1, -7,0, 3,0, 1, .5,0], I:[11,3,18, -2,3, 12,-1, -6,1, .9, 1,-2], F:[8,2,12, -1,2, 8,0, -4,0, .95, .9,0], S:[0,-2,0, 0,0, 0,0, 0,0, 1, .2,0], ft:[3,1] }
+    },
+    life(q, b, mv, s, x){  // 발끝으로 가볍게 통통 튀며 앞손으로 거리를 잰다
+      q.hy += s*(1.1 - 2.4*Math.abs(Math.sin(b*1.5))) + 1.6*Math.abs(mv)*Math.abs(Math.sin(x*.09));
+      q.hx += s*1.2*Math.sin(b*.75) + 2*mv; q.bend += s*1.6*Math.sin(b*.75 + .5) + 4*mv;
+      q.pl = { x:s*2.6*Math.sin(b*.9), y:-s*1.6*Math.max(0, Math.sin(b*.9)) };
+    },
+    guard(q){ q.sf.y -= 3; q.hd.y += 1; }                    // 앞 어깨를 올려 턱을 숨긴다
+  },
+  infighter: {             // 공격적인 회전: 골반이 먼저 돌고 몸통이 크게 따라 돈다. 회수하며 반대로 감아 다음 펀치를 장전한다
+    lead:{ hip:.3, spine:.16, head:-.05, off:.12 }, deep:.6, deepMin:8, fF:.26, sAt:.5, ez1:'s', ez2:'s', ret:'s', drop:6,
+    keys:{
+      body:     { A:[-3,7,6, 2,4, -7,2, 4,0, 1, .6,0],     I:[9,9,15, 4,6, 11,3, -6,0, 1, 1,0],     F:[7,8,13, 4,5, 7,2, -8,0, 1, 1,0],      S:[-2,4,4, 1,2, -3,0, 3,0, 1, .7,0], ft:[3,-3] },
+      hook:     { A:[-5,5,-3, -3,2, -5,4, 5,0, .3, .6,0],  I:[10,3,13, 2,4, 6,-3, -9,2, -.55, 1,0], F:[8,4,15, 3,4, 4,-1, -11,2, -.25, 1,0], S:[-2,4,4, 1,2, -3,0, 3,0, 1, .7,0], ft:[-10,4] },
+      uppercut: { A:[-4,13,8, 2,6, -5,7, 3,0, 1, .6,0],    I:[7,-4,6, 0,-2, 8,-8, -7,0, 1, 1,0],    F:[5,0,8, 1,0, 5,-4, -8,0, 1, 1,0],      S:[-2,4,4, 1,2, -3,0, 3,0, 1, .7,0], ft:[0,-5] },
+      skill:    { A:[-6,8,-4, -2,3, -8,2, 4,0, 1, .6,0],   I:[12,5,16, 2,4, 12,-1, -8,1, .9, 1,0],  F:[9,5,14, 2,3, 8,0, -8,0, .95, 1,0],    S:[-2,4,4, 1,2, -3,0, 3,0, 1, .7,0], ft:[3,2] }
+    },
+    life(q, b, mv, s, x){  // 낮은 자세로 머리를 흔들며(밥 앤 위브) 파고든다
+      q.hx += s*2.5*Math.sin(b*.45) + 2*mv; q.bend += s*4*Math.sin(b*.45 + .7) + 5*mv;
+      q.hd.x += s*2*Math.sin(b*.45 + 1.2); q.hy += s*(2 + 2*Math.sin(b*.9)) + 2*Math.abs(mv);
+    },
+    guard(q){ q.hy += 3; q.hd.y += 2; q.bend += 2; }         // 몸을 더 웅크려 가드 안에 숨는다
+  },
+  slugger: {               // 묵직하게: 크게 장전하고 체중을 실어 몸이 끝까지 따라간 뒤, 무겁게 가라앉으며 천천히 돌아온다
+    lead:{ hip:.35, spine:.18, head:-.08, off:.1 }, deep:1.1, fF:.34, sAt:.55, ez1:'s', ez2:'io', ret:'io', drop:12,
+    keys:{
+      jab:      { A:[-5,4,-6, 0,2, -6,-3, 1,0, 1, .4,0],   I:[10,4,13, 1,3, 7,0, -3,1, .9, .8,0],   F:[12,6,15, 2,4, 7,2, -3,1, .95, .8,0],  S:[3,5,6, 0,2, 2,2, 0,1, 1, .3,0], ft:[6,5] },
+      straight: { A:[-10,4,-14, -2,1, -9,-5, 4,0, 1, .5,0], I:[14,6,20, 3,4, 11,1, -7,2, .9, 1,0],   F:[16,9,23, 4,6, 10,4, -8,3, .95, 1,0], S:[3,5,6, 0,2, 2,2, 0,1, 1, .3,0], ft:[9,10] },
+      uppercut: { A:[-6,16,4, 0,6, -6,9, 3,1, 1, .5,0],    I:[10,-6,9, 0,-1, 9,-9, -7,0, 1, 1,0],   F:[9,-4,11, 1,0, 8,-6, -7,0, 1, 1,0],    S:[3,5,6, 0,2, 2,2, 0,1, 1, .3,0], ft:[3,-5] },
+      skill:    { A:[-10,4,-14, -2,1, -9,-5, 4,0, 1, .5,0], I:[14,6,20, 3,4, 11,1, -7,2, .9, 1,0],   F:[16,9,23, 4,6, 10,4, -8,3, .95, 1,0], S:[3,5,6, 0,2, 2,2, 0,1, 1, .3,0], ft:[9,10] }
+    },
+    life(q, b, mv, s, x){  // 거의 튀지 않고 어깨로 무겁게 숨 쉬며, 걸을 때는 한 걸음마다 몸이 내려앉는다
+      const br = Math.sin(b*.42), st = Math.abs(Math.sin(x*.05))*Math.abs(mv);
+      q.hy += s*1.2*br + 3*st; q.sf.y -= s*1.4*br; q.sb.y -= s*1.4*br;
+      q.hx += s*1.6*Math.sin(b*.3) + 3*mv; q.bend += s*1.8*Math.sin(b*.3 + .5) + 3*mv;
+    },
+    guard(q){ q.sf.y -= 3; q.sb.y -= 2; q.hd.y += 2; }       // 어깨를 끌어올리고 머리를 묻는다
+  }
+};
+const EZ = { s:u => u*u*(3 - 2*u), o:u => 1 - (1 - u)*(1 - u), o3:u => 1 - (1 - u)**3, io:u => u*u*u*(u*(u*6 - 15) + 10) };
+const REST = [0,0,0, 0,0, 0,0, 0,0, 1, 0,0];
+function motionTrack(M, nm){                               // 위상 위의 키 자세 목록 (끝 키의 이징으로 앞 키와 잇는다). 한 번 만들어 두고 쓴다
+  M.tr = M.tr || {};
+  if(M.tr[nm]) return M.tr[nm];
+  const K = M.keys[nm] || M.keys[Object.keys(M.keys)[0]], f = M.fF;
+  return M.tr[nm] = [[0, REST], [.7, K.A, 's'], [1, K.A, 's'], [2, K.I, 'o'], [2 + f, K.F, 's'], [2 + f + (1 - f)*M.sAt, K.S, M.ez1], [3, REST, M.ez2]];
+}
+function trackAt(tr, ph){
+  ph = Math.max(0, Math.min(3, ph));
+  for(let i = 1; i < tr.length; i++){
+    const [p1, v1, ez] = tr[i], [p0, v0] = tr[i - 1];
+    if(ph <= p1){ const e = EZ[ez](p1 > p0 ? (ph - p0)/(p1 - p0) : 1); return v0.map((a, j) => a + (v1[j] - a)*e); }
+  }
+  return tr[tr.length - 1][1];
+}
+const lerpP = (a, b, u) => ({ x:lerp(a.x, b.x, u), y:lerp(a.y, b.y, u) });
+const bez = (a, c, b, u) => ({ x:(1-u)*(1-u)*a.x + 2*u*(1-u)*c.x + u*u*b.x, y:(1-u)*(1-u)*a.y + 2*u*(1-u)*c.y + u*u*b.y });
+
+// 지금 상태의 목표 자세 (블렌딩 전)
+function rigPose(f, R, mv){
+  const L = R.L, m = R.sc/.3, st = f.state, b = f.bob, M = MOTION[f.ch] || MOTION.outfighter;
+  const q = { hx:0, hy:0, bend:0, hd:{ x:0, y:0 }, sf:{ x:0, y:0 }, sb:{ x:0, y:0 }, elF:1, elB:1, pl:null, pr:null, gl:null, gr:null, punch:null, trail:null, aura:0 };
+  // 예전 방식의 기울기/웅크림 값을 리그 채널로 옮긴다 (피격·회피·피벗·KO 연출은 예전 모양을 그대로 따른다)
+  const legacy = (lean, cr, snap) => { const k = (lean - L.lean)*.009 + (snap || 0)*.004; q.hx += k*R.hipH; q.bend += k*(R.neckH - R.hipH); q.hy += Math.max(-4, cr)*.8; };
+  const breath = () => { q.hy -= Math.sin(b)*1.3; };
+  let gl = L.lead, gr = L.rear, offW = 0, offY = 0;           // 몸에 붙어 움직이는 글러브 자리 (휘기 전 좌표)
+
+  if(st === 'idle'){
+    const G = f.ctrl.guard;
+    if(G){ gl = L.guard.lead; gr = L.guard.rear; legacy(L.guard.lean, L.guard.crouch); M.guard(q); }
+    M.life(q, b, mv, G ? .45 : 1, f.x);
+  }
+  else if(st === 'attack' && f.atk){
+    const k = f.atk, w = k.windup, e = w + k.active, t = f.t;
+    const ph = t < w ? t/w : t < e ? 1 + (t - w)/k.active : 2 + Math.min(1, (t - e)/k.recover);
+    const tr = motionTrack(M, k.name), Ld = M.lead;
+    const cH = trackAt(tr, ph + Ld.hip), cS = trackAt(tr, ph + Ld.spine), cA = trackAt(tr, ph), cHd = trackAt(tr, ph + Ld.head), cO = trackAt(tr, ph + Ld.off);
+    const imp = f.connected && ph > 1.4 ? 1.15 : 1;          // 맞혔으면 체중이 한 번 더 실린다 (팔로스루가 조금 더 깊다)
+    q.hx += cH[0]*imp; q.hy += cH[1]*imp; q.bend += cS[2]*imp; q.hd.x += cHd[3]; q.hd.y += cHd[4];
+    const sP = { x:cA[5], y:cA[6] }, sO = { x:cA[7], y:cA[8] };
+    if(k.glove === 'lead'){ q.sf = sP; q.sb = sO; q.elF = cA[9]; } else { q.sb = sP; q.sf = sO; q.elB = cA[9]; }
+    offW = Math.max(0, Math.min(1, cO[10])); offY = cO[11];
+    q.punch = k.glove;
+    // 주먹이 지나가는 길: 준비(당겼다가 출발점으로) → 뻗기(가로 위치 = 판정 경로) → 팔로스루 → 곡선을 그리며 가드로 복귀
+    const up = k.style === 'up', sk = k.style === 'skill', hk = k.style === 'hook', bd = k.style === 'body';
+    const pg = punchGeom(k), vy = sprVY(f);
+    const pull = { x:pg.pull.x, y:pg.pull.y*vy }, ext = { x:pg.ext.x, y:pg.ext.y*vy };
+    const W = rigWarp(R, q), home = W.D(k.glove === 'lead' ? L.lead : L.rear);
+    let g;
+    if(t < w){
+      // 당기는 깊이는 클래스마다 다르다. 아웃파이터·인파이터는 주먹을 턱 앞(어깨보다 앞)에 둔 채 몸통·어깨만 감고, 슬러거만 어깨 뒤까지 크게 젖힌다
+      const S = R.S, shX = W.D({ x:(S.mirror ? S.ax - S[k.glove === 'lead' ? 'shF' : 'shB'].x : S[k.glove === 'lead' ? 'shF' : 'shB'].x - S.ax)*R.sc, y:-R.neckH }).x;
+      const t0 = t/w, deep = { x:Math.max(pull.x - 24*M.deep, M.deepMin === undefined ? -1e9 : Math.min(pull.x, shX + M.deepMin)), y:pull.y + 12*vy*M.deep + 4 };
+      g = t0 < .7 ? lerpP(home, deep, easeOut(t0/.7)) : lerpP(deep, pull, EZ.s((t0 - .7)/.3));
+      if(sk) q.aura = easeIn(t0);
+    }
+    else if(t < e){
+      const u = easeOut((t - w)/k.active);
+      g = { x:lerp(pull.x, ext.x, u), y:lerp(pull.y, ext.y, up ? Math.pow(u, 1.6) : u) };   // 어퍼컷은 낮게 파고들다가 끝에서 솟는다
+      if(hk) g.y -= 24*vy*Math.sin(Math.PI*u);                                            // 훅: 가운데에서 가장 높이 올라갔다 내려오는 호
+      q.trail = { g, style: sk ? 'skill' : f.counterAtk ? 'counter' : up ? 'uppercut' : k.name };
+    }
+    else {
+      const ur = Math.min(1, (t - e)/k.recover), ft = (M.keys[k.name] || M.keys.skill).ft;
+      const F = { x:ext.x + ft[0], y:ext.y + ft[1] };
+      if(ur < M.fF) g = lerpP(ext, F, EZ.o(ur/M.fF));
+      else {
+        const v = EZ[M.ret]((ur - M.fF)/(1 - M.fF));
+        const C = up ? { x:lerp(F.x, home.x, .25), y:lerp(F.y, home.y, .55) }
+                : hk ? { x:F.x - 6, y:lerp(F.y, home.y, .5) + M.drop }
+                : bd ? { x:lerp(F.x, home.x, .7), y:lerp(F.y, home.y, .5) }
+                :      { x:lerp(F.x, home.x, .45), y:Math.max(F.y, home.y) + M.drop };   // 팔꿈치가 처지며 당겨 온다 (무거울수록 더 처진다)
+        g = bez(F, C, home, v);
+      }
+    }
+    if(k.glove === 'lead') gl = g; else gr = g;
+  }
+  else if(st === 'hit'){
+    // 맞은 세기(hitPow)만큼 젖혀지고, 머리가 몸보다 먼저 한 번 더 꺾였다가 돌아온다. 바디 블로우는 몸이 앞으로 접힌다
+    const u = Math.max(0, 1 - f.t/(f.stun || .3)), pw = f.hitPow, sn = Math.max(0, 1 - f.t/.12);
+    if(f.hitKind === 'body'){ legacy((12 + 12*pw)*u + 6*pw*sn, (10 + 10*pw)*u, 8*pw*sn); q.hd.y += 3*pw*sn; }
+    else { legacy(-(10 + 16*pw)*u - 8*pw*sn, (2 + 4*pw)*u, -9*pw*sn); q.hd.x -= 4*pw*sn; }
+    breath();
+    gl = { x:L.lead.x - 14*m, y:L.lead.y + 12*m }; gr = { x:L.rear.x - 12*m, y:L.rear.y + 14*m };     // 가드가 흐트러진다
+  }
+  else if(st === 'dodge'){
+    const u = Math.sin(Math.PI*Math.min(1, f.t/.34)), dk = f.cd.dodge;
+    if(dk === 'back'){ legacy(-40*u, 18*u); q.hd.x -= 4*u; }                                  // 아웃파이터: 상체를 뒤로 젖히며 물러남
+    else if(dk === 'dash'){ legacy(L.lean + 22*u, 34*u, 8*u); q.hd.y += 4*u; }               // 인파이터: 머리를 숙이고 앞으로 파고듦
+    else { legacy(L.lean - 6*u, 40*u); q.hd.y += 5*u; q.sf.y -= 3*u; q.sb.y -= 3*u; }        // 슬러거: 어깨를 올리며 제자리에서 숙임
+    gl = L.guard.lead; gr = L.guard.rear;
+  }
+  else if(st === 'pivot'){
+    const pu = Math.sin(Math.PI*Math.min(1, f.t/PIVOT.t));
+    legacy(L.lean + 8*pu, 22*pu); gl = L.guard.lead; gr = L.guard.rear;
+  }
+  else if(st === 'ko'){
+    legacy(-20, 0);
+    gl = { x:L.lead.x - 24*m, y:L.lead.y + 32*m }; gr = { x:L.rear.x - 20*m, y:L.rear.y + 34*m };    // 팔이 풀린다
+  }
+  else breath();
+
+  // 몸에 붙은 글러브는 휜 몸을 따라간다. 공격 중 반대 손은 가드 쪽으로 당겨 턱을 막는다
+  const W = rigWarp(R, q);
+  if(q.punch !== 'lead'){ let p = gl; if(q.punch) p = lerpP(L.lead, L.guard.lead, offW); gl = W.D(p); gl.y += offY; if(q.pl){ gl.x += q.pl.x; gl.y += q.pl.y; } }
+  if(q.punch !== 'rear'){ let p = gr; if(q.punch) p = lerpP(L.rear, L.guard.rear, offW); gr = W.D(p); gr.y += offY; if(q.pr){ gr.x += q.pr.x; gr.y += q.pr.y; } }
+  q.gl = gl; q.gr = gr;
+  return q;
+}
+
+// 상태가 바뀔 때(공격 시작, 가드 올리기, 피격에서 회복 등) 직전 자세에서 새 자세로 짧게 이어 준다 — 툭 끊기지 않게
+const poseArr = q => [q.hx, q.hy, q.bend, q.hd.x, q.hd.y, q.sf.x, q.sf.y, q.sb.x, q.sb.y, q.elF, q.elB, q.gl.x, q.gl.y, q.gr.x, q.gr.y];
+function poseSet(q, a){ q.hx = a[0]; q.hy = a[1]; q.bend = a[2]; q.hd = { x:a[3], y:a[4] }; q.sf = { x:a[5], y:a[6] }; q.sb = { x:a[7], y:a[8] }; q.elF = a[9]; q.elB = a[10]; q.gl = { x:a[11], y:a[12] }; q.gr = { x:a[13], y:a[14] }; }
+function blendDur(from, to, f){
+  const s0 = from.split('|')[0], s1 = to.split('|')[0];
+  if(s1 === 'hit') return .06;                             // 맞는 순간은 거의 즉시 (내던 주먹이 순간이동하지 않을 만큼만 잇는다)
+  if(s1 === 'ko') return .05;
+  if(s1 === 'attack') return Math.min(.05, f.atk ? f.atk.windup*.6 : .05);
+  if(s1 === 'dodge') return .04;
+  if(s1 === 'pivot') return .05;
+  if(s0 === 'hit') return .14;                             // 피격에서 가드로 천천히 돌아온다
+  if(s0 === 'dodge') return .1;
+  return .08;
+}
+function rigAnimate(f, R){
+  const A = f._an || (f._an = { key:'', lt:0, bt:0, bd:0, from:null, last:null, vs:0 });
+  const key = f.state + '|' + (f.state === 'attack' && f.atk ? f.atk.name : '') + '|' + (f.state === 'idle' && f.ctrl.guard ? 'g' : '');
+  const fresh = key !== A.key || f.t < A.lt - .02;          // 새 상태 (같은 공격을 다시 낸 경우도 시간이 처음으로 돌아가므로 새 상태)
+  const dtA = fresh ? 0 : Math.max(0, Math.min(.1, f.t - A.lt));
+  A.vs += ((f.state === 'idle' ? f.vx*f.face : 0) - A.vs)*Math.min(1, dtA*10);   // 걷는 속도(앞 +)를 부드럽게 따라간다
+  const q = rigPose(f, R, Math.max(-1.2, Math.min(1.2, A.vs/170)));
+  if(fresh){
+    const restarted = A.key.split('|')[0] !== f.state || f.t < A.lt - .02;   // 상태가 새로 시작됐으면 그 뒤로 흐른 시간부터, 가드만 바뀐 경우는 0부터
+    A.from = A.last && A.key ? A.last : null; A.bd = A.from ? blendDur(A.key, key, f) : 0; A.bt = restarted ? Math.max(0, f.t) : 0; A.key = key;
+  }
+  else A.bt += dtA;
+  A.lt = f.t;
+  const live = !(f.state === 'attack' && f.atk && f.t >= f.atk.windup);   // 주먹을 뻗기 시작한 뒤에는 섞지 않는다 (판정 경로와 같은 위치)
+  if(A.from && live && A.bt < A.bd){
+    const u = EZ.s(A.bt/A.bd), a = poseArr(q), b = A.from;
+    poseSet(q, a.map((v, i) => b[i] + (v - b[i])*u));
+  }
+  A.last = poseArr(q);
+  return q;
+}
+
+/* 그리기: 뒷팔(몸 뒤) → 몸(띠로 휘어서) → 뒷손 글러브 → 앞팔·앞손 글러브 (몸 앞) */
+function drawRig(f){
+  const R = rigOf(f), L = R.L, S = R.S, sc = R.sc, side = f.player ? 'blue' : 'red';
+  const img = S.img[side], gimg = GLV.img[side], C = SPR_COL[side];
+  const flash = f.flash > 0, FLASH = 'brightness(2.2) saturate(0)';
+  const q = rigAnimate(f, R), W = rigWarp(R, q);
+  if(q.trail) pushTrail(f, f.x + f.face*q.trail.g.x, GY - f.z + q.trail.g.y, q.trail.style);   // 글러브의 월드 좌표를 기록 (이펙트가 글러브에 그대로 연결된다)
+  if(f.state === 'ko') ctx.rotate(-Math.min(1, f.t*2.2)*1.4);
+  ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
+  if(q.aura){                                               // 카운터 스킬: 기 모으는 오라
+    ctx.save(); ctx.strokeStyle = COL.gold; ctx.globalAlpha = .5*q.aura; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, -110*sprVY(f), 40 + 60*(1 - q.aura), 0, Math.PI*2); ctx.stroke(); ctx.restore();
+  }
+  const loc = p => ({ x:(S.mirror ? S.ax - p.x : p.x - S.ax)*sc, y:(p.y - S.gy)*sc });
+  const shF0 = W.D(loc(S.shF)), shB0 = W.D(loc(S.shB));
+  const shF = { x:shF0.x + q.sf.x, y:shF0.y + q.sf.y }, shB = { x:shB0.x + q.sb.x, y:shB0.y + q.sb.y };
+  const gl = q.gl, gr = q.gr, punch = q.punch;
 
   const line = (a, b) => { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); };
   // 펀치를 뻗는 동안(active)의 글러브 크기 강조: 가운데에서 최대 1.22배
   const atkK = f.state === 'attack' ? f.atk : null, actU = atkK ? (f.t - atkK.windup)/atkK.active : -1;
   const pop = actU >= 0 && actU <= 1.4 ? 1 + .22*Math.sin(Math.PI*Math.min(1, actU/1.4)) : 1;
-  let pg = null;
-  const arm = (g, back) => {
-    const a = back ? shB : shF, l1 = S.upper*sc, l2 = S.fore*sc;
-    // 2관절 IK: 팔꿈치는 어깨-글러브를 잇는 선의 아래쪽으로 굽는다 (팔을 다 뻗으면 일직선)
+  const arm = (a, g, el, back, isPunch) => {
+    // 2관절 IK: 팔꿈치는 어깨-글러브 선에서 옆으로 굽는다. el = 굽는 방향(1 아래 / 음수면 위로 들린 팔꿈치 — 훅)
+    // 글러브가 어깨에 아주 가까우면(준비 동작) 팔뚝이 화면 안쪽을 향한 것으로 보고 짧게 그린다 — 팔꿈치가 머리 위로 꺾여 올라가지 않게
     const dx = g.x - a.x, dy = g.y - a.y, d = Math.hypot(dx, dy) || 1, ux = dx/d, uy = dy/d;
+    const l1 = S.upper*sc, l2 = Math.min(S.fore*sc, Math.sqrt(l1*l1 + d*d));
     let e;
     if(d >= l1 + l2) e = { x:a.x + dx*l1/(l1 + l2), y:a.y + dy*l1/(l1 + l2) };
-    else { const t = (l1*l1 - l2*l2 + d*d)/(2*d), h = Math.sqrt(Math.max(0, l1*l1 - t*t)); e = { x:a.x + ux*t - uy*h, y:a.y + uy*t + ux*h }; }
+    else { const t = (l1*l1 - l2*l2 + d*d)/(2*d), h = Math.sqrt(Math.max(0, l1*l1 - t*t))*el; e = { x:a.x + ux*t - uy*h, y:a.y + uy*t + ux*h }; }
+    // 주먹을 턱 앞으로 바짝 당겼을 때는 팔꿈치를 아래로 떨어뜨린다 (팔뚝이 어깨 뒤로 삐져나와 보이지 않게). 평소·가드 자세처럼 팔이 펴져 있으면 변화 없음
+    const hw = el > 0 ? Math.max(0, Math.min(1, (l1 + .3*l2 - d)/(.5*l2)))*el : 0;
+    if(hw > 0) e = lerpP(e, { x:a.x + .35*(g.x - a.x), y:a.y + l1*.8 }, hw);
     const fx = g.x - e.x, fy = g.y - e.y, fl = Math.hypot(fx, fy) || 1, ang = Math.atan2(fy, fx);
     const wb = Math.min(50*sc*L.gloveS, fl*.8), w = { x:g.x - fx/fl*wb, y:g.y - fy/fl*wb };
     const uw = 52*sc*S.armW, fw = 44*sc*S.armW, ow = 4.2;
-    const seg = (p, q, wid, col, gloss) => {           // 외곽선(+네온 빛) → 색 → 광택 한 마디
+    const seg = (p, q2, wid, col, gloss) => {             // 외곽선(+네온 빛) → 색 → 광택 한 마디
       ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       if(!flash){ ctx.shadowColor = C.glow; ctx.shadowBlur = 9; }
-      ctx.strokeStyle = C.ol; ctx.lineWidth = wid + ow; line(p, q);
+      ctx.strokeStyle = C.ol; ctx.lineWidth = wid + ow; line(p, q2);
       ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0;
-      ctx.strokeStyle = flash ? '#fff' : col; ctx.lineWidth = wid; line(p, q);
-      if(gloss && !flash){ ctx.strokeStyle = 'rgba(255,255,255,.32)'; ctx.lineWidth = wid*.22; line({ x:p.x, y:p.y - wid*.26 }, { x:q.x, y:q.y - wid*.26 }); }
+      ctx.strokeStyle = flash ? '#fff' : col; ctx.lineWidth = wid; line(p, q2);
+      if(gloss && !flash){ ctx.strokeStyle = 'rgba(255,255,255,.32)'; ctx.lineWidth = wid*.22; line({ x:p.x, y:p.y - wid*.26 }, { x:q2.x, y:q2.y - wid*.26 }); }
       ctx.restore();
     };
     return {
@@ -1254,7 +1532,7 @@ function drawSpriteFighter(f, P){
       glove: () => {                                                     // 글러브 그림: 원본은 왼쪽을 보고 있으므로 뒤집은 뒤, 팔뚝 방향에 맞춰 돌린다
         ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(ang - GLV.base); ctx.scale(-1, 1);
         if(flash) ctx.filter = FLASH; else { if(back) ctx.filter = 'brightness(.82)'; ctx.shadowColor = C.glow; ctx.shadowBlur = 10; }
-        const gs = GLV.size*sc*L.gloveS*(g === pg ? pop : 1);   // 뻗는 순간의 글러브는 살짝 커진다 (타격 순간 강조)
+        const gs = GLV.size*sc*L.gloveS*(isPunch ? pop : 1);   // 뻗는 순간의 글러브는 살짝 커진다 (타격 순간 강조)
         ctx.drawImage(gimg, -gs/2, -gs/2, gs, gs);
         ctx.restore();
       }
@@ -1262,21 +1540,34 @@ function drawSpriteFighter(f, P){
   };
 
   // 뒷팔: 뒤쪽 어깨에서 나와 몸통에 가려진다. 뒷손으로 펀치를 내는 동안에만 팔뚝을 몸 앞으로 꺼내 글러브와 이어 보이게 한다
-  pg = punch === 'lead' ? gl : punch === 'rear' ? gr : null;
-  const R = arm(gr, true), F = arm(gl, false), rearOut = punch === 'rear';
-  R.upper(); if(!rearOut) R.fore();                    // 1) 뒷팔 (몸 뒤)
+  const Rr = arm(shB, gr, q.elB, true, punch === 'rear'), Fr = arm(shF, gl, q.elF, false, punch === 'lead'), rearOut = punch === 'rear';
+  Rr.upper(); if(!rearOut) Rr.fore();                  // 1) 뒷팔 (몸 뒤)
 
-  ctx.save();                                          // 2) 몸
-  ctx.transform(1, 0, -k, 1, 0, 0); ctx.scale(sx, sy);
-  if(S.mirror) ctx.scale(-1, 1);
+  // 2) 몸: 높이별 띠마다 '그 높이의 가로 이동 + 위아래 늘이기'를 아핀 변형으로 준다. 띠의 위·아래 경계가 이웃 띠와 정확히 같은 곳에 놓인다
+  ctx.save();
   if(flash) ctx.filter = FLASH;
-  ctx.drawImage(img, -S.ax*sc, -S.gy*sc, S.w*sc, S.h*sc);
+  const K = R.knots, qs = img.naturalWidth/S.w, sg = S.mirror ? -1 : 1, a = sg*sc;
+  for(let i = 0; i < K.length - 1; i++){
+    const h0 = K[i], h1 = K[i + 1], y0 = S.gy - h0/sc, y1 = S.gy - h1/sc;       // 그림 속 y (y0 아래, y1 위)
+    const X0 = W.X(h0), X1 = W.X(h1), Y0 = -W.Y(h0), Y1 = -W.Y(h1);
+    const c = (X1 - X0)/(y1 - y0), d = (Y1 - Y0)/(y1 - y0);
+    const top = Math.max(0, y1 - 1.2), bot = Math.min(S.h, y0 + 1.2);         // 이웃 띠와 살짝 겹쳐 이음새 틈을 막는다
+    if(bot <= top) continue;
+    ctx.save(); ctx.transform(a, 0, c, d, X0 - c*y0 - a*S.ax, Y0 - d*y0);
+    ctx.drawImage(img, 0, top*qs, img.naturalWidth, (bot - top)*qs, 0, top, S.w, bot - top);
+    ctx.restore();
+  }
   ctx.restore();
 
-  if(rearOut) R.fore();                                // 3) 뒷손 글러브는 원본 그림처럼 몸 앞에
-  R.glove();
-  F.upper(); F.fore(); F.glove();                      // 4) 앞팔 + 앞손 글러브: 몸 앞
-  return true;
+  if(rearOut) Rr.fore();                               // 3) 뒷손 글러브는 원본 그림처럼 몸 앞에
+  Rr.glove();
+  Fr.upper(); Fr.fore(); Fr.glove();                   // 4) 앞팔 + 앞손 글러브: 몸 앞
+}
+// 그림 상태: 'on' 다 불러옴 / 'wait' 아직 불러오는 중(잠깐 그리지 않는다 — 예전 도형 캐릭터가 번쩍 보이지 않게) / 'bad' 불러오기 실패(예전 도형으로 대신)
+function sprState(f){
+  if(sprOn(f)) return 'on';
+  const S = SPR[f.cd.look.sprite], side = f.player ? 'blue' : 'red', bad = i => !i || (i.complete && i.naturalWidth === 0);
+  return S && !bad(S.img[side]) && !bad(GLV.img[side]) ? 'wait' : 'bad';
 }
 
 /* ---------- 펀치 궤적 ----------
@@ -1370,6 +1661,11 @@ function drawFighter(f){
   if(f.squash > 0){ ctx.scale(1 - .14*f.squash, 1 + .1*f.squash); }
   if(game.freeze > 0 && f.state === 'hit') ctx.translate((Math.random()-.5)*7, (Math.random()-.5)*4);
 
+  // 캐릭터 스프라이트 + 관절 리그 (drawRig). 그림을 불러오는 중이면 잠깐 그리지 않고, 불러오기에 실패했을 때만 아래의 예전 도형 그리기를 쓴다
+  const ss = sprState(f);
+  if(ss === 'on'){ drawRig(f); drawTrail(f); ctx.restore(); return; }
+  if(ss === 'wait'){ ctx.restore(); return; }
+
   // 캐릭터별 외형(CHARS[..].look). 아웃파이터는 참고 이미지 그대로: 머리가 몸통보다 앞으로 나오고, 글러브 두 개가 턱 높이에 붙어 있다
   const L = f.cd.look;
   let lean = L.lean, crouch = 0, headSnap = 0, lead = { x:L.lead.x, y:L.lead.y }, rear = { x:L.rear.x, y:L.rear.y };
@@ -1437,9 +1733,6 @@ function drawFighter(f){
   if(f.state !== 'ko' && f.state !== 'hit') crouch += L.crouch;       // 인파이터의 낮은 자세 (피격·KO 연출은 건드리지 않는다)
 
   if(trail) pushTrail(f, f.x + f.face*trail.g.x, GY - f.z + trail.g.y, trail.style);   // 글러브의 월드 좌표를 기록 (이펙트가 글러브에 그대로 연결된다)
-
-  // 캐릭터 스프라이트 (그림을 불러오기 전에는 아래의 도형 그리기를 쓴다)
-  if(drawSpriteFighter(f, { lean, crouch, headSnap, bob, lead, rear })){ drawTrail(f); ctx.restore(); return; }
 
   // 참고 이미지 실측 비율(0.88배): 어깨 y≈-153, 골반 y≈-96, 머리 중심 (몸통보다 +13 앞, y≈-191), 머리 반지름 21
   const hip = { x:0, y:-96 + crouch*.4 }, sh = { x:lean*.7 - 7, y:-153 + crouch + bob*.4 }, head = { x:lean + 8 + headSnap, y:-191 + crouch + bob*.6 };
@@ -1713,7 +2006,12 @@ addEventListener('keydown', e => {
   if(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
   audio();
   if(game.state === 'auth') return;
-  if(net.panel || net.sub) return;                       // 멀티플레이 창(또는 방 안의 캐릭터/랭킹 창)이 열려 있으면 메인 화면 단축키(Enter/R/ESC)를 막는다 (창의 키는 멀티플레이 모듈이 처리)
+  if(!$('profile').classList.contains('hidden')){        // 프로필 창이 열려 있으면 ESC / Enter / Backspace 로 닫기만 하고 다른 키는 모두 무시
+    if(e.code === 'Escape'){ e.preventDefault(); if(PF.mode === 'view') closeProfile(); else pfMode('view'); }
+    else if(PF.mode === 'view' && (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Backspace')){ e.preventDefault(); if(!(e.target && e.target.tagName === 'BUTTON' && e.code !== 'Backspace')) closeProfile(); }
+    return;
+  }
+  if(net.panel || net.sub) return;                      // 멀티플레이 창(또는 방 안의 캐릭터/랭킹 창)이 열려 있으면 메인 화면 단축키(Enter/R/ESC)를 막는다 (창의 키는 멀티플레이 모듈이 처리)
   if(game.state === 'charsel'){                         // 캐릭터 선택: ← → (또는 A D)로 고르고, Enter / ESC / Backspace 로 메인 화면 복귀. 게임 키는 모두 무시
     if(e.code === 'ArrowLeft' || e.code === 'KeyA'){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 2) % 3]); }
     else if(e.code === 'ArrowRight' || e.code === 'KeyD'){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 1) % 3]); }
@@ -1776,7 +2074,10 @@ const ERR = {
   short_pw: '비밀번호는 4자 이상이어야 합니다',
   taken: '이미 사용 중인 아이디입니다',
   bad_credentials: '아이디 또는 비밀번호가 올바르지 않습니다',
-  too_many: '시도가 너무 많습니다. 잠시 후 다시 해 주세요'
+  too_many: '시도가 너무 많습니다. 잠시 후 다시 해 주세요',
+  bad_password: '현재 비밀번호가 올바르지 않습니다',
+  bad_token: '로그인이 만료되었습니다. 다시 로그인해 주세요',
+  not_found: '이 서버에서는 지원하지 않는 기능입니다'
 };
 function authMsg(m, ok){ const el = $('authMsg'); el.textContent = m || ''; el.className = 'msg' + (ok ? ' ok' : ''); }
 function setMode(m){
@@ -1793,7 +2094,7 @@ function enterGame(u){
   game.user = u.id; game.token = u.token; game.best = u.best || 0;
   game.char = CHARS[u.char] ? u.char : 'outfighter';      // 계정에 저장된 캐릭터 (없으면 아웃파이터)
   $('auth').classList.add('fade'); setTimeout(() => { if(game.user) $('auth').classList.add('hidden'); $('auth').classList.remove('fade'); }, 480);
-  $('upw').value = ''; $('upw2').value = '';
+  $('upw').value = ''; $('upw2').value = ''; game.profile = null;
   if(document.activeElement) document.activeElement.blur();
   toTitle();                           // 로그인(또는 가입) 직후 가장 먼저 메인 화면
 }
@@ -1815,8 +2116,95 @@ async function refreshMenuRank(){
     if(game.state !== 'title' || game.user !== who || !r.me) return;       // 그 사이 화면/계정이 바뀌었으면 무시
     game.best = Math.max(game.best || 0, r.me.best);
     $('menuBest').textContent = 'BEST STAGE ' + r.me.best + (r.me.rank ? ' · RANK #' + r.me.rank + '/' + r.total : ' · UNRANKED');
+    game.myRank = r.me.rank ? '#' + r.me.rank + ' / ' + r.total : 'UNRANKED';
+    if(!$('profile').classList.contains('hidden')) renderProfile();     // 프로필 창이 열려 있는 중에 도착했으면 바로 반영
   }catch(e){}
 }
+
+/* ---------- 프로필 창 ---------- */
+// 비밀번호는 서버에 해시로만 저장되어 서버에서 다시 꺼낼 수 없다. 그래서 이번 접속에서 로그인/가입/변경할 때 입력한 값만 메모리(game.pw)에 들고 있다가 '보기'를 누를 때만 보여준다 (저장·전송하지 않고, 로그아웃/새로고침하면 사라진다)
+let pwShown = false;
+const PF = { mode:'view', busy:false };
+const pfDate = ms => { const d = new Date(ms); return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0'); };
+function pfSay(id, text, ok){ const el = $(id); el.textContent = text || ''; el.classList.toggle('ok', !!ok); }
+function renderProfile(){
+  $('pfId').textContent = game.user || '';
+  const has = typeof game.pw === 'string' && game.pw.length > 0;
+  const pe = $('pfPw'); pe.textContent = !has ? '이번 접속에서는 확인할 수 없음' : pwShown ? game.pw : '●'.repeat(Math.min(game.pw.length, 20)); pe.classList.toggle('dim', !has);
+  $('pfPwBtn').hidden = !has; $('pfPwBtn').textContent = pwShown ? '숨기기' : '보기';
+  $('pfChar').textContent = CHARS[game.char] ? CHARS[game.char].name : '';
+  $('pfBest').textContent = 'STAGE ' + (game.best || 0);
+  $('pfRank').textContent = game.myRank || '불러오는 중…';
+  const p = game.profile, rec = $('pfRecord'), jn = $('pfJoined');
+  if(!p){ rec.textContent = jn.textContent = '불러오는 중…'; return; }
+  if(p.failed){ rec.textContent = jn.textContent = '확인할 수 없음 (서버 업데이트 필요)'; rec.classList.add('dim'); jn.classList.add('dim'); return; }
+  rec.classList.remove('dim'); jn.classList.remove('dim');
+  const n = (p.wins || 0) + (p.losses || 0);
+  rec.textContent = n ? p.wins + '승 ' + p.losses + '패 · 승률 ' + Math.round(p.wins*100/n) + '%' : '아직 경기 기록이 없습니다';
+  jn.textContent = p.created ? pfDate(p.created) : '-';
+}
+function pfMode(m){                                      // 'view' 기본 화면 / 'pw' 비밀번호 변경 / 'del' 계정 삭제
+  PF.mode = m;
+  $('pfView').hidden = m !== 'view'; $('pfPwForm').hidden = m !== 'pw'; $('pfDelForm').hidden = m !== 'del';
+  for(const id of ['pfCur', 'pfNew', 'pfNew2', 'pfDelPw']) $(id).value = '';
+  pfSay('pfPwMsg', ''); pfSay('pfDelMsg', '');
+  if(m === 'pw') $('pfCur').focus(); else if(m === 'del') $('pfDelPw').focus(); else if(document.activeElement) document.activeElement.blur();
+}
+async function loadProfile(){                            // 가입일·전적·순위는 서버에서 가져온다 (실패해도 창은 그대로 쓸 수 있다)
+  const who = game.user;
+  try{
+    const r = await api('/api/profile', { token: game.token });
+    if(game.user !== who) return;
+    if(!r.ok){ game.profile = { failed:true }; if(!$('profile').classList.contains('hidden')) renderProfile(); return; }     // 이 서버가 프로필 기능을 모른다 (아직 업데이트 전)
+    game.profile = r; game.best = Math.max(game.best || 0, r.best || 0);
+    game.myRank = r.rank ? '#' + r.rank + ' / ' + r.total : 'UNRANKED';
+    if(!$('profile').classList.contains('hidden')) renderProfile();
+  }catch(e){ if(game.user === who){ game.profile = { failed:true }; if(!$('profile').classList.contains('hidden')) renderProfile(); } }
+}
+function openProfile(){
+  if(game.state !== 'title' || net.panel || net.sub) return;
+  pwShown = false; pfMode('view'); pfSay('pfMsg', ''); renderProfile(); $('profile').classList.remove('hidden');
+  $('pfBack').focus(); loadProfile();
+}
+function closeProfile(){ pwShown = false; PF.mode = 'view'; $('profile').classList.add('hidden'); if(document.activeElement) document.activeElement.blur(); }
+$('menuChip').addEventListener('click', () => { audio(); openProfile(); });
+$('pfPwBtn').addEventListener('click', () => { pwShown = !pwShown; renderProfile(); });
+$('pfBack').addEventListener('click', closeProfile);
+$('pfChPw').addEventListener('click', () => { pfSay('pfMsg', ''); pfMode('pw'); });
+$('pfDel').addEventListener('click', () => { pfSay('pfMsg', ''); pfMode('del'); });
+$('pfPwCancel').addEventListener('click', () => pfMode('view'));
+$('pfDelCancel').addEventListener('click', () => pfMode('view'));
+$('profile').addEventListener('keydown', e => { if(e.code === 'Escape' && e.target && e.target.tagName === 'INPUT'){ e.preventDefault(); pfMode('view'); } });   // 입력칸 안에서도 ESC 로 취소
+$('pfPwForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  if(PF.busy) return;
+  const cur = $('pfCur').value, n1 = $('pfNew').value, n2 = $('pfNew2').value;
+  if(!cur) return pfSay('pfPwMsg', '현재 비밀번호를 입력해 주세요');
+  if(n1.length < 4) return pfSay('pfPwMsg', ERR.short_pw);
+  if(n1 !== n2) return pfSay('pfPwMsg', '새 비밀번호 확인이 일치하지 않습니다');
+  if(n1 === cur) return pfSay('pfPwMsg', '현재와 다른 비밀번호를 입력해 주세요');
+  PF.busy = true; $('pfPwSave').disabled = true;
+  try{
+    const r = await api('/api/password', { token: game.token, pw: cur, npw: n1 });
+    if(!r.ok) pfSay('pfPwMsg', ERR[r.error] || '요청이 거절되었습니다');
+    else { game.pw = n1; pwShown = false; pfMode('view'); renderProfile(); pfSay('pfMsg', '비밀번호가 변경되었습니다. 다른 기기에서는 새 비밀번호로 다시 로그인해야 합니다', true); }
+  }catch(e){ pfSay('pfPwMsg', '서버에 연결할 수 없습니다'); }
+  finally{ PF.busy = false; $('pfPwSave').disabled = false; }
+});
+$('pfDelForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  if(PF.busy) return;
+  const pw = $('pfDelPw').value;
+  if(!pw) return pfSay('pfDelMsg', '비밀번호를 입력해 주세요');
+  PF.busy = true; $('pfDelGo').disabled = true;
+  try{
+    const r = await api('/api/delete', { token: game.token, pw });
+    if(!r.ok) pfSay('pfDelMsg', ERR[r.error] || '요청이 거절되었습니다');
+    else { logout(); authMsg('계정이 삭제되었습니다', true); }
+  }catch(e){ pfSay('pfDelMsg', '서버에 연결할 수 없습니다'); }
+  finally{ PF.busy = false; $('pfDelGo').disabled = false; }
+});
+$('profile').addEventListener('click', e => { if(e.target === $('profile')) closeProfile(); });      // 바깥(어두운 곳)을 누르면 닫기
 
 /* ---------- 랭킹 화면 ---------- */
 const RANK_POLL_MS = 3000;                              // 랭킹 화면이 열려 있는 동안 순위가 바뀌었는지 확인하는 간격 (서버 무료 한도를 아끼려고 3초)
@@ -1989,6 +2377,7 @@ $('authForm').addEventListener('submit', async ev => {
     }
     const r = await api(authMode === 'signup' ? '/api/signup' : '/api/login', { id, pw });   // 중복 검사·비밀번호 확인은 서버가 처리
     if(!r.ok) return authMsg(ERR[r.error] || '요청이 거절되었습니다');
+    game.pw = pw; game.myRank = null;       // 프로필 창의 '보기'용 (이번 접속 동안 메모리에만)
     enterGame(r);   // 가입 직후 바로 로그인
   }catch(err){
     authMsg(err && err.message === 'server'
@@ -1997,7 +2386,7 @@ $('authForm').addEventListener('submit', async ev => {
   }
 });
 function logout(){
-  stopRank(); stopChars(); stopStages(); game.user = null; game.token = null; game.char = 'outfighter'; game.state = 'auth'; hideMenu();
+  stopRank(); stopChars(); stopStages(); closeProfile(); game.user = null; game.token = null; game.pw = null; game.myRank = null; game.profile = null; game.char = 'outfighter'; game.state = 'auth'; hideMenu();
   $('auth').classList.remove('hidden', 'fade'); setMode('login'); $('uid').focus();
 }
 // 스테이지를 깨면 서버에 기록한다. 서버가 순위를 바로 다시 계산하므로, 랭킹 화면을 열어 둔 다른 사람 화면도 2초 안에 바뀐다
@@ -2018,6 +2407,11 @@ async function recordWin(){
     else game.newBest = false;                                                  // 서버가 거절한 기록은 신기록으로 표시하지 않는다
   }catch(e){ game.saveError = 'network'; }                                       // 서버에 닿지 못함 → 다음 승리 때 함께 저장된다
   if(game.state === 'title') refreshMenuRank();                                    // 저장이 끝나기 전에 ESC로 메인에 왔다면 내 순위 표시를 새로 고친다
+}
+// 한 판이 끝나면 승/패를 서버에 알린다 (프로필의 전적에만 쓰이고 랭킹과는 무관). 멀티플레이 대전은 세지 않는다
+function reportResult(won){
+  if(net.on || !game.token || game.autoP) return;
+  api('/api/result', { token: game.token, won }).then(r => { if(r.ok && game.profile) game.profile[won ? 'wins' : 'losses']++; }).catch(() => {});
 }
 setMode('login');
 addEventListener('keyup', e => { keys[e.code] = false; });

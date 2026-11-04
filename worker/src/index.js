@@ -1,6 +1,6 @@
 // BOXING accounts + ranking API for Cloudflare Workers + D1.
 // Same endpoints and JSON shapes as server.ps1 (the local server), so boxing.html works with either:
-//   POST /api/signup  /api/login  /api/char  /api/best  /api/ranking     (GET /api/health for a quick check)
+//   POST /api/signup  /api/login  /api/char  /api/best  /api/ranking  /api/profile  /api/result  /api/password  /api/delete     (GET /api/health for a quick check)
 
 const CHARS = ['outfighter', 'infighter', 'slugger'];
 const ID_RE = /^[A-Za-z0-9_가-힣]{3,12}$/;           // 3-12 chars: letters, digits, _, Hangul
@@ -81,6 +81,15 @@ async function rankOf(db, u) {
   ).bind(u.best, u.best_at, u.key).first();
   return r.c + 1;
 }
+// current-password check for the sensitive endpoints (change password / delete account). Wrong guesses count against the same
+// per-(ip, account) limit as logins, so these endpoints cannot be used to brute-force a password around the login limit
+async function checkPassword(db, u, pw, ip, now) {
+  const tk = 'l:' + ip + ':' + u.key;
+  if (await isLimited(db, tk, LOGIN_FAILS, now)) return 'too_many';
+  const hash = await pbkdf2(pw.slice(0, 100), u.salt, u.iter);
+  if (!sameText(hash, u.hash)) { await countHit(db, tk, LOGIN_FAILS, now); return 'bad_password'; }
+  return null;
+}
 const rankVersion = async db => (await db.prepare("SELECT v FROM meta WHERE k = 'rank_version'").first())?.v ?? 1;
 
 async function handle(path, data, env, ip) {
@@ -95,7 +104,7 @@ async function handle(path, data, env, ip) {
       if (await db.prepare('SELECT 1 FROM users WHERE key = ?').bind(key).first()) return { ok: false, error: 'taken' };
       const salt = randHex(16), hash = await pbkdf2(pw, salt, PBKDF2_ITER);
       try {
-        await db.prepare('INSERT INTO users (key, id, salt, hash, iter) VALUES (?, ?, ?, ?, ?)').bind(key, id, salt, hash, PBKDF2_ITER).run();
+        await db.prepare('INSERT INTO users (key, id, salt, hash, iter, created) VALUES (?, ?, ?, ?, ?, ?)').bind(key, id, salt, hash, PBKDF2_ITER, now).run();
       } catch (e) { return { ok: false, error: 'taken' }; }          // someone registered the same id at the same moment
       await countHit(db, 's:' + ip, SIGNUPS, now);
       return { ok: true, id, best: 0, char: 'outfighter', token: await newToken(db, key, now) };
@@ -119,6 +128,49 @@ async function handle(path, data, env, ip) {
       if (!CHARS.includes(ch)) return { ok: false, error: 'bad_char' };
       if (u.char !== ch) await db.prepare('UPDATE users SET char = ? WHERE key = ?').bind(ch, u.key).run();
       return { ok: true, char: ch };
+    }
+
+    case '/api/profile': {
+      const u = await userByToken(db, field(data, 'token'), now);
+      if (!u) return { ok: false, error: 'bad_token' };
+      const total = await db.prepare('SELECT COUNT(*) AS c FROM users WHERE best >= 1').first();
+      return { ok: true, id: u.id, char: CHARS.includes(u.char) ? u.char : 'outfighter', best: u.best, rank: await rankOf(db, u), total: total.c,
+               created: u.created || 0, wins: u.wins || 0, losses: u.losses || 0 };
+    }
+
+    // a finished fight against the CPU (multiplayer matches are not counted). Shown on the profile only - it does not touch the ranking
+    case '/api/result': {
+      const u = await userByToken(db, field(data, 'token'), now);
+      if (!u) return { ok: false, error: 'bad_token' };
+      const won = data.won === true || data.won === 'true' || data.won === 1;
+      await db.prepare(`UPDATE users SET ${won ? 'wins = wins + 1' : 'losses = losses + 1'} WHERE key = ?`).bind(u.key).run();
+      return { ok: true };
+    }
+
+    case '/api/password': {
+      const u = await userByToken(db, field(data, 'token'), now);
+      if (!u) return { ok: false, error: 'bad_token' };
+      const npw = field(data, 'npw');
+      if (npw.length < 4 || npw.length > 100) return { ok: false, error: 'short_pw' };
+      const bad = await checkPassword(db, u, pw, ip, now);
+      if (bad) return { ok: false, error: bad };
+      const salt = randHex(16), hash = await pbkdf2(npw, salt, PBKDF2_ITER), token = field(data, 'token');
+      await db.batch([
+        db.prepare('UPDATE users SET salt = ?, hash = ?, iter = ? WHERE key = ?').bind(salt, hash, PBKDF2_ITER, u.key),
+        db.prepare('DELETE FROM sessions WHERE key = ? AND token != ?').bind(u.key, token),     // every other device must log in again with the new password
+      ]);
+      return { ok: true };
+    }
+
+    case '/api/delete': {
+      const u = await userByToken(db, field(data, 'token'), now);
+      if (!u) return { ok: false, error: 'bad_token' };
+      const bad = await checkPassword(db, u, pw, ip, now);
+      if (bad) return { ok: false, error: bad };
+      const stmts = [db.prepare('DELETE FROM sessions WHERE key = ?').bind(u.key), db.prepare('DELETE FROM users WHERE key = ?').bind(u.key)];
+      if (u.best >= 1) stmts.push(db.prepare("UPDATE meta SET v = v + 1 WHERE k = 'rank_version'"));   // open ranking screens refresh
+      await db.batch(stmts);
+      return { ok: true };
     }
 
     case '/api/best': {
