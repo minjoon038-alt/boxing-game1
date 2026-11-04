@@ -143,6 +143,13 @@ async function handle(path, data, env, ip) {
     }
 
     case '/api/ranking': {
+      // The ranking screen polls every few seconds. If the client already has the current version, answer with just that
+      // (one tiny read) instead of recomputing the list and ranks - this keeps the free D1 read quota from running out.
+      const since = parseInt(field(data, 'since'), 10);
+      if (Number.isFinite(since)) {
+        const v = await rankVersion(db);
+        if (v === since) return { ok: true, version: v, same: true };
+      }
       let limit = 10;
       const ls = field(data, 'limit');
       if (ls !== '') { const l = parseInt(ls, 10); if (l >= 0 && l <= 50) limit = l; }

@@ -1811,6 +1811,7 @@ async function refreshMenuRank(){
 }
 
 /* ---------- 랭킹 화면 ---------- */
+const RANK_POLL_MS = 3000;                              // 랭킹 화면이 열려 있는 동안 순위가 바뀌었는지 확인하는 간격 (서버 무료 한도를 아끼려고 3초)
 const RANK = { open:false, timer:null, version:null, prev:new Map(), first:true, busy:false };
 function setLive(on){
   const el = $('rankLive'); el.textContent = on ? 'LIVE' : 'OFFLINE'; el.classList.toggle('on', on);
@@ -1846,9 +1847,10 @@ async function pollRank(force){
   if(!RANK.open || RANK.busy || (document.hidden && !force)) return;
   RANK.busy = true;
   try{
-    const r = await api('/api/ranking', { token: game.token, limit: 30 });
+    const r = await api('/api/ranking', { token: game.token, limit: 30, since: RANK.version });      // since: 이미 가진 버전 — 바뀐 게 없으면 서버가 목록을 다시 만들지 않고 same 만 답한다 (무료 서버 한도 절약)
     if(!RANK.open) return;                                  // 응답을 기다리는 사이 화면을 닫았다면 버린다
     setLive(true);
+    if(r.same && RANK.version !== null) return;           // 순위가 바뀌지 않았다
     if(r.version !== RANK.version){
       const updated = RANK.version !== null;
       RANK.version = r.version; renderRank(r);
@@ -1868,7 +1870,7 @@ function openRank(){
   setLive(false); $('rankLive').textContent = 'CONNECTING';
   $('rank').classList.remove('hidden');
   pollRank(true);
-  clearInterval(RANK.timer); RANK.timer = setInterval(() => pollRank(false), 1200);   // 열려 있는 동안 1.2초마다 확인 → 순위가 바뀌면 바로 갱신
+  clearInterval(RANK.timer); RANK.timer = setInterval(() => pollRank(false), RANK_POLL_MS);   // 열려 있는 동안 RANK_POLL_MS 마다 확인 → 순위가 바뀌면 바로 갱신
 }
 function stopRank(){ RANK.open = false; clearInterval(RANK.timer); RANK.timer = null; $('rank').classList.add('hidden'); }
 function closeRank(){ stopRank(); if(game.state === 'ranking') toTitle(); }
@@ -2370,7 +2372,7 @@ function openSub(kind){
     RANK.open = true; RANK.version = null; RANK.first = true; RANK.prev = new Map();
     $m('rankList').textContent = ''; $m('rankList').hidden = true; $m('rankEmpty').hidden = false; $m('rankEmpty').textContent = '불러오는 중…'; $m('rankMine').textContent = '';
     setLive(false); $m('rankLive').textContent = 'CONNECTING'; $m('rank').classList.remove('hidden');
-    pollRank(true); clearInterval(RANK.timer); RANK.timer = setInterval(() => pollRank(false), 1200);
+    pollRank(true); clearInterval(RANK.timer); RANK.timer = setInterval(() => pollRank(false), RANK_POLL_MS);
   }
 }
 function closeSub(){
