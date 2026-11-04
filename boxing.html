@@ -30,6 +30,7 @@
   #menu .play:active{transform:skewX(-14deg) scale(.98)}
   #menu .enter{position:absolute;left:0;right:0;top:calc(var(--u)*304);text-align:center;font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*3);color:#8d93a8;pointer-events:none}
   #menu .sub{position:absolute;left:0;right:0;top:calc(var(--u)*338);display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*8)}
+  #menu .sub #matchBtn{grid-column:1/-1}
   #menu .sub .ghost{padding:calc(var(--u)*9) 0;border-radius:calc(var(--u)*8);letter-spacing:calc(var(--u)*1);white-space:nowrap;text-align:center}
   #menu .tag{position:absolute;left:0;right:0;bottom:calc(var(--u)*24);text-align:center;font-size:calc(var(--u)*9.5);letter-spacing:calc(var(--u)*3);white-space:nowrap;color:#6d7490;pointer-events:none;border-top:1px solid rgba(255,255,255,.14);padding-top:calc(var(--u)*10)}
   .ghost{background:rgba(8,10,22,.6);border:1px solid rgba(255,255,255,.2);border-radius:calc(var(--u)*16);padding:calc(var(--u)*7) calc(var(--u)*20);color:#c4c9da;font-family:inherit;font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*2);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
@@ -200,6 +201,7 @@
       <button class="play" id="playBtn" type="button"><span>▶ PLAY</span></button>
       <div class="enter">또는 ENTER</div>
       <div class="sub">
+        <button class="ghost gold" id="matchBtn" type="button">랜덤 매칭</button>
         <button class="ghost" id="stageBtn" type="button">스테이지</button>
         <button class="ghost" id="charBtn" type="button">캐릭터</button>
         <button class="ghost gold" id="rankBtn" type="button">랭킹</button>
@@ -2522,7 +2524,7 @@ function toast(t){
 function showPanel(mode){
   $m('mp').classList.remove('hidden'); net.panel = true; hideMenu();
   $m('mpJoin').classList.toggle('hide', mode !== 'join'); $m('mpHost').classList.toggle('hide', mode !== 'host');
-  $m('mpTtl').textContent = mode === 'host' ? 'CREATE ROOM' : 'MULTIPLAYER';
+  $m('mpTtl').textContent = mode === 'host' ? 'CREATE ROOM' : mode === 'match' ? 'RANDOM MATCH' : 'MULTIPLAYER';
   $m('mpLive').textContent = ''; setMsg('');
 }
 function hidePanelUI(){ $m('mp').classList.add('hidden'); net.panel = false; }
@@ -2533,15 +2535,15 @@ function closePanel(){                                   // 창 닫기 = 아직 
 }
 function openPanel(mode){
   if(game.state !== 'title' || net.on || net.panel) return;
-  teardown(false); net.role = mode === 'host' ? 'host' : 'guest'; showPanel(mode);
-  if(mode === 'host') hostRoom(); else { $m('mpCode').value = ''; setTimeout(() => $m('mpCode').focus(), 50); }
+  teardown(false); net.role = mode === 'host' ? 'host' : mode === 'match' ? '' : 'guest'; showPanel(mode);
+  if(mode === 'host') hostRoom(); else if(mode === 'match') startRandom(); else { $m('mpCode').value = ''; setTimeout(() => $m('mpCode').focus(), 50); }
 }
 
 /* ---------- 연결 정리 ---------- */
 function teardown(sendBye){
   const L = net.link, PR = net.peerObj;
   net.sess++;                                            // 진행 중이던 연결 시도의 늦은 콜백은 이 번호가 달라져서 무시된다
-  net.link = null; net.peerObj = null; net.peer = null; net.ready = false; net.busy = false; net.code = '';
+  net.link = null; net.peerObj = null; net.peer = null; net.ready = false; net.busy = false; net.code = ''; net.rep = null; net.mode = '';
   net.rbuf.length = 0; net.fx.length = 0; net.vote.me = net.vote.peer = false;
   if(L){ if(sendBye) L.send({ k:'bye' }); L.onmessage = L.onclose = null; setTimeout(() => L.close(), 250); }
   if(PR){ PR.__bye = true; setTimeout(() => { try{ PR.destroy(); }catch(e){} }, 300); }   // __bye: 일부러 닫는 중 → 자동 재접속 금지 (방 코드가 서버에 남지 않게)
@@ -2557,6 +2559,109 @@ function peerGone(msg){
   leaveMatch(false);
   if(game.state !== 'title') toTitle();
   toast(msg);
+}
+
+/* ---------- 랜덤 매칭 (서버 대기열) ----------
+   Cloudflare 서버의 대기열(/ws/lobby)에 줄을 서면 서버가 두 명을 짝지어 방(/ws/room/..)을 만들어 준다. 서버는 대기열·방 배정·승패 기록만 맡는다.
+   실제 대전은 두 PC 가 직접 연결(P2P, PeerJS)해서 한다 — 한국에서는 무료 서버 경로가 로스앤젤레스를 거쳐 왕복 0.4초 안팎이라 실시간 대전에 쓸 수 없기 때문이다.
+   P2P 가 12초 안에 안 되면(회사/학교 네트워크 등) 서버 중계로 자동 전환한다. 그때는 무료 한도를 아끼려고 방장의 화면 상태를 30번/초로 보내고, 손님 쪽은 그 사이를 이동 속도로 이어 그린다.
+   어느 쪽이든 그 뒤의 대전 코드(방장이 전투를 계산, 손님은 입력만 보냄)는 방 코드 방식과 똑같다. */
+const WS_BASE = (typeof API === 'string' && API ? API : location.origin).replace(/^http/, 'ws');
+function wsLink(ws){                                       // 서버 중계 모드의 연결 (방 코드 방식의 연결과 같은 규격)
+  const l = { half:true,                                   // half: 방장 화면 상태를 격프레임으로만 보낸다
+    send(o){ try{ if(ws.readyState === 1) ws.send(JSON.stringify(o)); }catch(e){} },
+    close(){ try{ ws.close(1000, 'bye'); }catch(e){} },
+    buffered(){ try{ return ws.bufferedAmount; }catch(e){ return 0; } } };
+  ws.onmessage = ev => {
+    let d; try{ d = JSON.parse(ev.data); }catch(e){ return; }
+    if(d && d.k === 'rtt'){ net.srv = Math.round(performance.now() - d.t); return; }                // 서버까지의 왕복 시간
+    if(l.onmessage) l.onmessage(d);
+  };
+  ws.onclose = ws.onerror = () => { if(l.onclose) l.onclose(); };
+  return l;
+}
+function startRandom(){
+  if(net.busy) return;
+  if(!game.token){ setMsg('로그인이 필요합니다.', true); return; }
+  net.busy = true; net.srv = 0; net.mode = ''; setMsg('서버에 연결하는 중…'); $m('mpLive').textContent = 'CONNECTING';
+  const sess = net.sess, stale = () => sess !== net.sess;
+  let lobby = null, room = null, peer = null, tick = 0, timer = 0, mode = '';
+  const drop = x => { if(x){ x.onopen = x.onmessage = x.onclose = x.onerror = null; try{ x.close(); }catch(e){} } };
+  const cleanup = () => { clearInterval(tick); clearTimeout(timer); if(peer){ peer.__bye = true; try{ peer.destroy(); }catch(e){} peer = null; } drop(lobby); drop(room); lobby = room = null; net.rep = null; };
+  net.peerObj = { destroy: cleanup };                      // 창을 닫거나 대전이 끝나 연결을 정리할 때(teardown) 이것도 같이 정리된다 — PeerJS 가 있던 자리를 같이 쓴다
+  const fail = msg => { if(stale()) return; cleanup(); net.busy = false; net.peerObj = null; net.role = ''; $m('mpLive').textContent = ''; setMsg(msg, true); };
+  const json = ev => { try{ return JSON.parse(ev.data); }catch(e){ return null; } };
+  try{ lobby = new WebSocket(WS_BASE + '/ws/lobby'); }catch(e){ return fail('서버에 연결할 수 없습니다. 방 코드로 친구와 대전할 수 있습니다.'); }
+  lobby.onopen = () => lobby && lobby.send(JSON.stringify({ k:'auth', token:game.token }));
+  lobby.onerror = lobby.onclose = () => fail('서버에 연결하지 못했습니다. 잠시 후 다시 시도하거나, 방 코드로 친구와 대전해 보세요.');
+  lobby.onmessage = ev => {
+    if(stale()) return;
+    const m = json(ev); if(!m) return;
+    if(m.k === 'ready'){
+      lobby.send(JSON.stringify({ k:'queue', ch:game.char }));
+      const t0 = performance.now(); $m('mpLive').textContent = 'SEARCHING'; setMsg('상대를 찾는 중… 0초');
+      tick = setInterval(() => {
+        const sec = Math.floor((performance.now() - t0)/1000);
+        if(sec >= 60){ try{ lobby.send(JSON.stringify({ k:'cancel' })); }catch(e){} fail('상대를 찾지 못했습니다. 잠시 후 다시 시도하거나, 방 코드로 친구와 대전해 보세요.'); }
+        else setMsg('상대를 찾는 중… ' + sec + '초  (ESC 로 취소)');
+      }, 1000);
+    }
+    else if(m.k === 'err') fail(m.error === 'bad_token' ? '로그인이 만료되었습니다. 다시 로그인해 주세요.' : m.error === 'replaced' ? '다른 창에서 매칭을 시작해서 이 창의 매칭은 취소되었습니다.' : '매칭 서버가 바쁩니다. 잠시 후 다시 시도해 주세요.');
+    else if(m.k === 'matched') enterRoom(m);
+  };
+
+  function enterRoom(m){
+    clearInterval(tick); drop(lobby); lobby = null;
+    net.role = m.role === 'host' ? 'host' : 'guest';
+    net.peer = { name:cleanName(m.opp && m.opp.name), ch:CHARS[m.opp && m.opp.ch] ? m.opp.ch : 'outfighter' };
+    $m('mpLive').textContent = 'MATCHED'; setMsg('상대를 찾았습니다! 연결하는 중…');
+    try{ room = new WebSocket(WS_BASE + '/ws/room/' + m.room); }catch(e){ return fail('상대와 연결하지 못했습니다.'); }
+    const rsend = o => { try{ if(room && room.readyState === 1) room.send(JSON.stringify(o)); }catch(e){} };
+    net.rep = rsend;                                       // 서버로 가는 길: 승패 보고와 서버 왕복 측정. 대전이 P2P 여도 이 길로 보낸다
+    const usep2p = link => { if(mode){ try{ link.close(); }catch(e){} return; } mode = 'p2p'; net.mode = 'p2p'; clearTimeout(timer); net.busy = false; attach(link); };
+    const useRelay = () => {                               // P2P 가 안 될 때: 서버가 두 사람 사이의 메시지를 전달한다
+      if(mode === 'relay' || net.on || !room) return;
+      const old = net.link; if(old && mode === 'p2p'){ old.onmessage = old.onclose = null; old.close(); net.link = null; }
+      mode = 'relay'; net.mode = 'relay'; clearTimeout(timer);
+      if(peer){ peer.__bye = true; try{ peer.destroy(); }catch(e){} peer = null; }
+      net.busy = false; attach(wsLink(room));
+    };
+    const hostP2P = async () => {                          // 방장: 방 번호로 PeerJS 자리를 열고, 준비되면 서버를 통해 손님에게 알린다
+      try{ await loadPeer(); }catch(e){ return; }
+      if(stale() || mode || !room) return;
+      const p = new window.Peer(ID_PREFIX + m.room, { debug:0 }); peer = p;
+      p.on('open', () => rsend({ k:'rdy' }));
+      p.on('connection', conn => conn.on('open', () => { if(stale() || mode){ try{ conn.close(); }catch(e){} return; } usep2p(wrapConn(conn)); }));
+      p.on('error', () => {});                             // 안 되면 아래 타이머가 서버 중계로 넘어간다
+    };
+    const guestP2P = async () => {                         // 손님: 방장이 준비됐다는 알림을 받으면 그 자리로 연결한다
+      try{ await loadPeer(); }catch(e){ return; }
+      if(stale() || mode || !room || peer) return;
+      const p = new window.Peer({ debug:0 }); peer = p;
+      p.on('open', () => {
+        if(stale() || mode) return;
+        const conn = p.connect(ID_PREFIX + m.room, { reliable:true, serialization:'json' });
+        conn.on('open', () => { if(stale() || mode){ try{ conn.close(); }catch(e){} return; } usep2p(wrapConn(conn)); });
+      });
+      p.on('error', () => {});
+    };
+    room.onopen = () => rsend({ k:'auth', token:game.token });
+    room.onerror = room.onclose = () => { if(stale()) return; if(!mode) fail('상대와 연결하지 못했습니다. 다시 시도해 주세요.'); else if(mode === 'p2p') net.rep = null; };
+    room.onmessage = ev => {
+      if(stale()) return;
+      const d = json(ev); if(!d) return;
+      if(d.k === 'go'){                                    // 두 사람이 모두 방에 들어왔다
+        setMsg('상대와 직접 연결하는 중…');
+        timer = setTimeout(() => { if(!mode){ rsend({ k:'relay' }); useRelay(); } }, window.__NET_NO_P2P ? 50 : 12000);
+        if(!window.__NET_NO_P2P && net.role === 'host') hostP2P();
+      }
+      else if(d.k === 'rdy'){ if(net.role === 'guest' && !mode && !window.__NET_NO_P2P) guestP2P(); }
+      else if(d.k === 'relay') useRelay();
+      else if(d.k === 'rtt') net.srv = Math.round(performance.now() - d.t);
+      else if(d.k === 'bye'){ if(mode === 'p2p') peerGone('상대가 방을 나갔습니다'); else if(!mode) fail('상대가 방을 나갔습니다.'); }
+      else if(d.k === 'err') fail('이 방에 들어갈 수 없습니다.');
+    };
+  }
 }
 
 /* ---------- 방 만들기 (방장) ---------- */
@@ -2651,7 +2756,7 @@ function joinBC(code){
 
 /* ---------- 연결된 뒤: 인사 → (방장) 대전 시작 ---------- */
 function attach(link){
-  net.link = link; net.lastRx = performance.now(); net.ping = 0;
+  net.link = link; net.lastRx = performance.now(); net.ping = 0; net.round = 0; net.repR = -1; net.tick = false;
   link.onmessage = onMsg;
   link.onclose = () => peerGone('연결이 끊어졌습니다');
   link.send({ k:'hi', name:cleanName(game.user), ch:game.char, v:1 });
@@ -2683,7 +2788,8 @@ function startMatch(){                                   // 방장: 새 경기 (
   P = mk(310, 1, true, 1, game.char); E = mk(650, -1, false, 1, net.peer.ch); E.human = true; E.spd = 1;
   net.names = [cleanName(game.user), net.peer.name];
   net.fx.length = 0; net.rbuf.length = 0; net.r = { move:0, guard:0, at:performance.now() };
-  net.link.send({ k:'start', hc:game.char, gc:net.peer.ch, hn:net.names[0], gn:net.names[1] });
+  net.round = (net.round || 0) + 1;                                 // 몇 번째 경기인지 (서버에 승패를 보고할 때 같은 경기를 가리키는 번호)
+  net.link.send({ k:'start', hc:game.char, gc:net.peer.ch, hn:net.names[0], gn:net.names[1], r:net.round });
   game.state = 'intro';
 }
 function beginGuest(m){                                  // 손님: 방장의 시작 신호를 받아 같은 파이터를 세운다
@@ -2691,7 +2797,7 @@ function beginGuest(m){                                  // 손님: 방장의 �
   net.on = true; net.ready = true; net.role = 'guest';
   closeSub(); hidePanelUI(); start(1);
   P = mk(310, 1, true, 1, CHARS[m.hc] ? m.hc : 'outfighter'); E = mk(650, -1, false, 1, CHARS[m.gc] ? m.gc : 'outfighter'); E.human = true; E.spd = 1;
-  net.names = [cleanName(m.hn), cleanName(m.gn)];
+  net.names = [cleanName(m.hn), cleanName(m.gn)]; net.round = m.r | 0;
   game.state = 'intro'; net.lastInAt = 0; net.lastIn = '';
 }
 net.rematch = function(){                                // 결과 화면에서 Enter: 양쪽이 모두 누르면 재대결
@@ -2758,6 +2864,7 @@ function replay(e){
 }
 function applySnap(m){
   if(!m.g || !m.p || !m.e) return;
+  net.fresh = true;
   const g = m.g;
   game.state = g[0]; game.introT = g[1]; game.koT = g[2]; game.flash = g[3]; game.shake = g[4]; game.slow = g[5]; game.freeze = g[6]; game.kick = g[7];
   unpackF(P, m.p); unpackF(E, m.e);
@@ -2770,6 +2877,10 @@ function guestStep(dt){                                  // 손님 쪽 한 프�
   let ts = 1;
   if(game.slow > 0){ game.slow -= dt; ts = game.state === 'ko' ? .2 : .3; }
   dt *= ts;
+  if(net.link && net.link.half){                         // 서버 연결: 화면 상태가 격프레임으로 오므로, 새 상태가 없는 프레임에는 이동 속도만큼 이어서 그린다 (다음 상태가 오면 바로잡힌다)
+    if(!net.fresh && game.state === 'fight') for(const f of [P, E]) if(f.state !== 'ko') f.x = Math.max(100, Math.min(860, f.x + f.vx*dt));
+    net.fresh = false;
+  }
   for(const p of parts){ p.life -= dt; p.vy += 1100*dt; p.x += p.vx*dt; p.y += p.vy*dt; }
   for(const r of rings) r.life -= dt;
   for(const s of stars) s.life -= dt;
@@ -2843,9 +2954,17 @@ const _step = step, _runAI = runAI, _toTitle = toTitle, _draw = draw, _recordWin
 step = function(dt){
   if(net.sub){ for(const f of net.disp || []) f.bob += dt*5; for(const v of PV) v.bob += dt*5; }
   if(!net.on || !net.ready) return _step(dt);
-  if(net.role === 'guest'){ guestStep(dt); sendIn(false); return; }
-  net.rdt = dt; _step(dt); sendSnap();
+  if(net.role === 'guest'){ guestStep(dt); sendIn(false); matchResult(); return; }
+  net.rdt = dt; _step(dt);
+  if(!net.link || !net.link.half || (net.tick = !net.tick)) sendSnap();               // 서버 연결이면 2프레임에 한 번 (무료 한도 절약), 방 코드(P2P)는 매 프레임
+  matchResult();
 };
+// 경기가 끝나면 두 사람이 각자 승자를 서버에 알린다. 서버는 둘이 일치할 때만 대전 기록으로 남긴다 (랜덤 매칭일 때만)
+function matchResult(){
+  if(!net.rep || game.state !== 'ko' || net.repR === net.round) return;
+  net.repR = net.round;
+  net.rep({ k:'result', r:net.round, w: P.hp <= 0 ? 'guest' : 'host' });       // P = 방장(왼쪽), E = 손님(오른쪽)
+}
 runAI = function(f, o, dt){
   if(net.on && net.role === 'host' && f === E){ remoteCtl(E, net.rdt); return; }
   return _runAI(f, o, dt);
@@ -2862,7 +2981,7 @@ draw = function(){
   _draw();
   if(net.on && net.ready){
     ctx.setTransform(1,0,0,1,0,0);
-    txt((net.role === 'host' ? 'HOST' : 'GUEST') + (net.role === 'guest' ? '  ·  PING ' + net.ping + 'ms' : ''), W/2, 44, 11, COL.dim, 'center', 600, 3);
+    txt((net.role === 'host' ? 'HOST' : 'GUEST') + (net.role === 'guest' ? '  ·  PING ' + net.ping + 'ms' : '') + (net.mode === 'p2p' ? '  ·  P2P' : net.mode === 'relay' ? '  ·  RELAY' + (net.srv ? ' ' + net.srv + 'ms' : '') : ''), W/2, 44, 11, COL.dim, 'center', 600, 3);
   }
 };
 // 방장은 화면에 보이는 모든 연출(입자/글자/소리)을 손님에게도 전달한다
@@ -2875,10 +2994,12 @@ stars.push = function(...a){ if(net.on && net.role === 'host' && a[0]) net.fx.pu
 setInterval(() => {
   if(!net.link) return;
   net.link.send({ k:'ping', t:performance.now() });
+  if(net.rep && net.mode === 'relay' && (net.rttTick = !net.rttTick)) net.rep({ k:'rtt', t:performance.now() });     // 서버 중계일 때만, 2초마다 서버까지의 왕복 시간 측정
   if(performance.now() - net.lastRx > 8000) peerGone('상대와의 연결이 끊어졌습니다');
 }, 1000);
 
 /* ---------- 버튼 / 키 ---------- */
+$m('matchBtn').addEventListener('click', () => { audio(); openPanel('match'); });
 $m('hostBtn').addEventListener('click', () => { audio(); openPanel('host'); });
 $m('joinBtn').addEventListener('click', () => { audio(); openPanel('join'); });
 $m('mpBack').addEventListener('click', () => { audio(); closePanel(); });

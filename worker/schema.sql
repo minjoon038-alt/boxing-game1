@@ -51,3 +51,15 @@ CREATE TABLE IF NOT EXISTS audit (
   detail TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS audit_at ON audit (at DESC);
+
+-- finished random-match / room fights (written by the Room when both players report the same winner; 'disputed' when they differ)
+CREATE TABLE IF NOT EXISTS matches (
+  id     INTEGER PRIMARY KEY AUTOINCREMENT,
+  at     INTEGER NOT NULL,
+  room   TEXT NOT NULL,
+  p1     TEXT NOT NULL,           -- host (left / blue)
+  p2     TEXT NOT NULL,           -- guest (right / red)
+  winner TEXT NOT NULL DEFAULT '',  -- '' when the two reports disagreed
+  status TEXT NOT NULL            -- 'agreed' | 'disputed'
+);
+CREATE INDEX IF NOT EXISTS matches_at ON matches (at DESC);

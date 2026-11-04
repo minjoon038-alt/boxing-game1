@@ -6,3 +6,16 @@ compatibility_date = "2025-01-01"
 binding = "DB"
 database_name = "boxing"
 database_id = "130aca5a-19e4-41d5-91c9-37d2d01080af"
+
+# Real-time part: random matchmaking (Lobby) and match rooms (Room). SQLite-backed objects are the only kind the Free plan supports.
+[[durable_objects.bindings]]
+name = "LOBBY"
+class_name = "Lobby"
+
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Lobby", "Room"]

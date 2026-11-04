@@ -3,6 +3,8 @@
 //   POST /api/signup  /api/login  /api/char  /api/stage  /api/best  /api/ranking  /api/profile  /api/result  /api/password  /api/delete     (GET /api/health for a quick check)
 //   POST /api/admin/*  (stats, users, user, ban, setbest, setrecord, resetpw, delete, log) - only for accounts whose role is 'admin' in the database
 
+export { Lobby, Room } from './online.js';      // Durable Objects: random matchmaking + match rooms (WebSocket)
+
 const CHARS = ['outfighter', 'infighter', 'slugger'];
 const ID_RE = /^[A-Za-z0-9_가-힣]{3,12}$/;           // 3-12 chars: letters, digits, _, Hangul
 const MAX_LEVEL = 99;
@@ -114,8 +116,9 @@ async function handleAdmin(act, data, env) {
   const num = (name, max) => { const v = parseInt(field(data, name), 10); return Number.isFinite(v) && v >= 0 && v <= max ? v : null; };
   const page = (maxLimit) => { const l = num('limit', maxLimit) || 20, o = num('offset', 1e9) || 0; return [l, o]; };
   const tid = field(data, 'target');
-  const target = ['stats', 'users', 'log'].includes(act) ? null : (ID_RE.test(tid) ? await db.prepare('SELECT * FROM users WHERE key = ?').bind(tid.toLowerCase()).first() : null);
-  if (!['stats', 'users', 'log'].includes(act)) {
+  const NO_TARGET = ['stats', 'users', 'log', 'matches'];
+  const target = NO_TARGET.includes(act) ? null : (ID_RE.test(tid) ? await db.prepare('SELECT * FROM users WHERE key = ?').bind(tid.toLowerCase()).first() : null);
+  if (!NO_TARGET.includes(act)) {
     if (!target) return { ok: false, error: 'no_such_user' };
     if (target.role === 'admin' && act !== 'user') return { ok: false, error: 'protected' };     // admin accounts cannot be changed through the API
   }
@@ -173,6 +176,11 @@ async function handleAdmin(act, data, env) {
       if (target.best >= 1) stmts.push(bump());
       await db.batch(stmts);
       return { ok: true };
+    }
+    case 'matches': {
+      const [limit, offset] = page(100);
+      const rows = await db.prepare('SELECT at, p1, p2, winner, status FROM matches ORDER BY id DESC LIMIT ? OFFSET ?').bind(limit, offset).all();
+      return { ok: true, list: rows.results };
     }
     case 'log': {
       const [limit, offset] = page(100);
@@ -338,6 +346,14 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+    // WebSocket routes: the matchmaking lobby (one global object) and the match rooms (one object per room id)
+    if (url.pathname === '/ws/lobby' || url.pathname.startsWith('/ws/room/')) {
+      if (request.headers.get('Upgrade') !== 'websocket') return json({ ok: false, error: 'expected_websocket' }, 426);
+      if (url.pathname === '/ws/lobby') return env.LOBBY.get(env.LOBBY.idFromName('main')).fetch(request);
+      const room = url.pathname.slice('/ws/room/'.length);
+      if (!/^[0-9a-f]{32}$/.test(room)) return json({ ok: false, error: 'not_found' }, 404);
+      return env.ROOM.get(env.ROOM.idFromName(room)).fetch(request);
+    }
     if (request.method === 'GET' && url.pathname === '/api/health') return json({ ok: true, service: 'boxing-api' });
     if (request.method !== 'POST' || !url.pathname.startsWith('/api/')) return json({ ok: false, error: 'not_found' }, 404);
     try {

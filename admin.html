@@ -90,6 +90,7 @@
       <button data-tab="dash" class="on">대시보드</button>
       <button data-tab="users">유저</button>
       <button data-tab="rank">랭킹</button>
+      <button data-tab="matches">대전 기록</button>
       <button data-tab="log">활동 기록</button>
     </nav>
     <span class="who"><span id="me"></span> · <a href="boxing.html" style="color:var(--blue)">게임으로</a> · <button id="logout" style="padding:4px 10px">로그아웃</button></span>
@@ -112,6 +113,11 @@
       <div class="bar"><span class="small">베스트 스테이지 순(정지된 유저 포함). 행을 누르면 기록을 수정할 수 있습니다. 공식 랭킹에서는 정지된 유저가 빠집니다.</span><button id="rref">새로고침</button></div>
       <table><thead><tr><th class="r">#</th><th>아이디</th><th class="r">스테이지</th><th class="r">승</th><th class="r">패</th></tr></thead><tbody id="rbody"></tbody></table>
       <div class="pager"><span id="rpinfo"></span><button id="rprev">이전</button><button id="rnext">다음</button></div>
+    </section>
+    <section id="v-matches" class="hidden">
+      <div class="bar"><span class="small">랜덤 매칭·방 대전의 결과입니다. 두 사람이 같은 승자를 보고하면 '일치', 다르면 '불일치'(승자 없음)로 남습니다.</span><button id="mref">새로고침</button></div>
+      <table><thead><tr><th>시간</th><th>방장(왼쪽)</th><th>손님(오른쪽)</th><th>승자</th><th>상태</th></tr></thead><tbody id="mbody"></tbody></table>
+      <div class="pager"><span id="mpinfo"></span><button id="mprev">이전</button><button id="mnext">다음</button></div>
     </section>
     <section id="v-log" class="hidden">
       <div class="bar"><button id="lref">새로고침</button></div>
@@ -169,16 +175,17 @@ let tab = 'dash';
 function show(t){
   tab = t; say('');
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
-  for(const k of ['dash', 'users', 'rank', 'log']) $('v-' + k).classList.toggle('hidden', k !== t);
+  for(const k of ['dash', 'users', 'rank', 'matches', 'log']) $('v-' + k).classList.toggle('hidden', k !== t);
   load();
 }
 document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.tab)));
-const PAGE = { users:{ off:0, n:20 }, rank:{ off:0, n:20 }, log:{ off:0, n:20 } };
+const PAGE = { users:{ off:0, n:20 }, rank:{ off:0, n:20 }, matches:{ off:0, n:20 }, log:{ off:0, n:20 } };
 async function load(){
   try{
     if(tab === 'dash') await loadDash();
     else if(tab === 'users') await loadUsers('users');
     else if(tab === 'rank') await loadUsers('rank');
+    else if(tab === 'matches') await loadMatches();
     else await loadLog();
   }catch(e){ say(e.message); }
 }
@@ -205,6 +212,15 @@ async function loadUsers(kind){
   $(p + 'pinfo').textContent = r.total ? (P.off + 1) + '–' + Math.min(P.off + P.n, r.total) + ' / ' + r.total : '';
   $(p + 'prev').disabled = P.off === 0; $(p + 'next').disabled = P.off + P.n >= r.total;
 }
+async function loadMatches(){
+  const P = PAGE.matches, r = await admin('matches', { limit: P.n, offset: P.off });
+  if(!r.ok) return say(ERR[r.error] || '불러오지 못했습니다');
+  const body = $('mbody'); body.textContent = '';
+  if(!r.list.length){ const tr = document.createElement('tr'); const c = td(tr, '대전 기록이 없습니다', 'empty'); c.colSpan = 5; body.append(tr); }
+  for(const e of r.list){ const tr = document.createElement('tr'); tr.style.cursor = 'default'; td(tr, fmtDate(e.at)); td(tr, e.p1); td(tr, e.p2); td(tr, e.winner || '-'); const c = td(tr, e.status === 'agreed' ? '일치' : '불일치'); if(e.status !== 'agreed') c.style.color = 'var(--red)'; body.append(tr); }
+  $('mpinfo').textContent = r.list.length ? (P.off + 1) + '–' + (P.off + r.list.length) : '';
+  $('mprev').disabled = P.off === 0; $('mnext').disabled = r.list.length < P.n;
+}
 async function loadLog(){
   const P = PAGE.log, r = await admin('log', { limit: P.n, offset: P.off });
   if(!r.ok) return say(ERR[r.error] || '불러오지 못했습니다');
@@ -215,8 +231,8 @@ async function loadLog(){
   $('lprev').disabled = P.off === 0; $('lnext').disabled = r.list.length < P.n;
 }
 const pager = (kind, prev, next) => { $(prev).addEventListener('click', () => { PAGE[kind].off = Math.max(0, PAGE[kind].off - PAGE[kind].n); load(); }); $(next).addEventListener('click', () => { PAGE[kind].off += PAGE[kind].n; load(); }); };
-pager('users', 'uprev', 'unext'); pager('rank', 'rprev', 'rnext'); pager('log', 'lprev', 'lnext');
-$('uref').addEventListener('click', () => { PAGE.users.off = 0; load(); }); $('rref').addEventListener('click', load); $('lref').addEventListener('click', load);
+pager('users', 'uprev', 'unext'); pager('rank', 'rprev', 'rnext'); pager('matches', 'mprev', 'mnext'); pager('log', 'lprev', 'lnext');
+$('uref').addEventListener('click', () => { PAGE.users.off = 0; load(); }); $('rref').addEventListener('click', load); $('mref').addEventListener('click', load); $('lref').addEventListener('click', load);
 $('uq').addEventListener('keydown', e => { if(e.key === 'Enter'){ PAGE.users.off = 0; load(); } });
 $('usort').addEventListener('change', () => { PAGE.users.off = 0; load(); });
 
