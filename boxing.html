@@ -151,9 +151,17 @@
   #auth .msg{min-height:20px;margin-top:14px;font-size:13px;font-weight:600;text-align:center;color:#ff5a5f}
   #auth .msg.ok{color:#ffd166}
   #auth .hint{margin-top:6px;font-size:11px;color:#5f5f6e;text-align:center}
+  /* ----- 첫 로딩 화면: 그림/캐릭터가 모두 불러와지기 전에는 게임 화면(뼈대 캐릭터 등)이 보이지 않도록 덮어 둔다 ----- */
+  #boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#05060d;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;transition:opacity .5s ease}
+  #boot.out{opacity:0;pointer-events:none}
+  #boot h1{margin:0 0 26px;font-weight:200;font-size:44px;letter-spacing:14px;padding-left:14px}
+  #boot .bar{width:220px;height:2px;background:rgba(255,255,255,.12);overflow:hidden}
+  #boot .bar i{display:block;height:100%;width:6%;background:#f2f2f2;transition:width .25s ease}
+  #boot .msg{margin-top:14px;font-size:11px;letter-spacing:4px;color:#5f5f6e}
 </style>
 </head>
 <body>
+<div id="boot"><h1>BOXING</h1><div class="bar"><i></i></div><div class="msg">LOADING</div></div>
 <div id="wrap">
   <canvas id="c" width="960" height="540"></canvas>
   <!-- 메인 화면: 로그인 후 가장 먼저 보이고, PLAY를 누르면 게임이 시작된다 -->
@@ -2023,6 +2031,32 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+/* ---------- 첫 로딩: 필요한 그림이 모두 불러와질 때까지 로딩 화면(#boot)으로 덮어 둔다 ----------
+   배경 2장(메인/링) + 캐릭터 6장 + 글러브 2장. 느린 접속에서 뼈대 캐릭터나 빈 배경이 잠깐 보이지 않게 한다.
+   그림 하나가 실패하거나 너무 오래 걸려도(BOOT_MAX_MS) 게임은 열린다 — 이때만 예전 도형 캐릭터로 대신 그린다. */
+(function(){
+  const BOOT_MAX_MS = 20000, t0 = performance.now(), boot = document.getElementById('boot');
+  if(!boot) return;
+  const bar = boot.querySelector('.bar i'), msg = boot.querySelector('.msg');
+  const imgs = [];
+  for(const k in SPR) for(const c of ['blue', 'red']) imgs.push(SPR[k].img[c]);
+  for(const c of ['blue', 'red']) imgs.push(GLV.img[c]);
+  const settled = i => i.complete;                                   // 불러왔거나(성공) 실패했거나
+  const check = () => {
+    const done = imgs.filter(settled).length + (TB.img ? 1 : 0) + (BG.canvas ? 1 : 0), total = imgs.length + 2;
+    bar.style.width = Math.max(6, Math.round(100*done/total)) + '%';
+    const late = performance.now() - t0 > BOOT_MAX_MS;
+    if(done >= total || late){
+      boot.classList.add('out'); setTimeout(() => boot.remove(), 600);
+      if(late && done < total) console.warn('일부 그림을 불러오지 못했지만 게임을 엽니다 (' + done + '/' + total + ')');
+      return;
+    }
+    if(performance.now() - t0 > 6000) msg.textContent = 'LOADING… (연결이 느립니다)';
+    setTimeout(check, 60);
+  };
+  check();
+})();
 window.__boxingReady = true;
 </script>
 <script>
