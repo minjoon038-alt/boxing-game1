@@ -157,7 +157,7 @@
   #profile{position:absolute;inset:0;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .3s ease both;background:rgba(2,3,10,.55)}
   #profile.hidden{display:none}
   #profile .panel{position:absolute;left:50%;top:calc(var(--u)*52);transform:translateX(-50%);width:calc(var(--u)*400);box-sizing:border-box;padding:calc(var(--u)*16) calc(var(--u)*22) calc(var(--u)*14);background:rgba(6,8,20,.92);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55)}
-  #profile .ttl{font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*8);padding-left:calc(var(--u)*2);padding-bottom:calc(var(--u)*12);border-bottom:1px solid rgba(255,255,255,.12)}
+  #profile .ttl{display:flex;align-items:center;justify-content:space-between;font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*8);padding-left:calc(var(--u)*2);padding-bottom:calc(var(--u)*12);border-bottom:1px solid rgba(255,255,255,.12)}
   #profile .row{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*12);min-height:calc(var(--u)*37);border-bottom:1px solid rgba(255,255,255,.07)}
   #profile .k{flex:none;width:calc(var(--u)*92);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a}
   #profile .v{flex:1;min-width:0;font-size:calc(var(--u)*15);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -214,7 +214,7 @@
   <!-- 프로필 창: 아이디, 비밀번호(기본은 가려 둠 → '보기'로 확인), 캐릭터, 기록, 전적. 비밀번호 변경 / 계정 삭제 -->
   <div id="profile" class="hidden">
     <div class="panel">
-      <div class="ttl">PROFILE</div>
+      <div class="ttl">PROFILE<button class="ghost gold" id="pfAdmin" type="button" hidden>관리자 페이지</button></div>
       <div id="pfView">
         <div class="row"><span class="k">ID</span><span class="v" id="pfId"></span></div>
         <div class="row"><span class="k">PASSWORD</span><span class="v pw" id="pfPw"></span><button class="ghost" id="pfPwBtn" type="button">보기</button></div>
@@ -650,8 +650,14 @@ function mk(x, face, player, lvl, ch){
 }
 function setState(f, s){ f.state = s; f.t = 0; }
 
+// 스테이지가 시작되면 서버에 티켓을 요청한다. 서버는 티켓이 있어야, 그리고 실제 한 판이 걸릴 만한 시간이 지난 뒤에만 클리어/승리를 인정한다 (조작된 요청으로 기록을 올리는 것을 막는다)
+function stageTicket(level){
+  if(net.on || !game.token || game.autoP) return;
+  const go = n => api('/api/stage', { token: game.token, level }).catch(() => { if(n > 0) setTimeout(() => go(n - 1), 2000); });   // 접속이 잠깐 끊겼으면 한 번 더 시도
+  go(1);
+}
 function start(level){
-  hideMenu();
+  hideMenu(); stageTicket(level);
   game.level = level; game.newBest = false; game.rank = null; game.saveError = null; game.escAt = 0;
   P = mk(310, 1, true, 1, game.char);
   E = mk(650, -1, false, level, cpuChar(level));
@@ -2077,7 +2083,8 @@ const ERR = {
   too_many: '시도가 너무 많습니다. 잠시 후 다시 해 주세요',
   bad_password: '현재 비밀번호가 올바르지 않습니다',
   bad_token: '로그인이 만료되었습니다. 다시 로그인해 주세요',
-  not_found: '이 서버에서는 지원하지 않는 기능입니다'
+  not_found: '이 서버에서는 지원하지 않는 기능입니다',
+  banned: '이용이 정지된 계정입니다'
 };
 function authMsg(m, ok){ const el = $('authMsg'); el.textContent = m || ''; el.className = 'msg' + (ok ? ' ok' : ''); }
 function setMode(m){
@@ -2091,7 +2098,7 @@ function setMode(m){
 document.querySelectorAll('#auth .tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
 
 function enterGame(u){
-  game.user = u.id; game.token = u.token; game.best = u.best || 0;
+  game.user = u.id; game.token = u.token; game.best = u.best || 0; game.admin = !!u.admin;     // admin: 서버가 알려 준 값 (화면에 관리자 버튼을 보일지만 정한다. 실제 권한은 서버가 매 요청마다 검사한다)
   game.char = CHARS[u.char] ? u.char : 'outfighter';      // 계정에 저장된 캐릭터 (없으면 아웃파이터)
   $('auth').classList.add('fade'); setTimeout(() => { if(game.user) $('auth').classList.add('hidden'); $('auth').classList.remove('fade'); }, 480);
   $('upw').value = ''; $('upw2').value = ''; game.profile = null;
@@ -2135,6 +2142,7 @@ function renderProfile(){
   $('pfChar').textContent = CHARS[game.char] ? CHARS[game.char].name : '';
   $('pfBest').textContent = 'STAGE ' + (game.best || 0);
   $('pfRank').textContent = game.myRank || '불러오는 중…';
+  $('pfAdmin').hidden = !game.admin;
   const p = game.profile, rec = $('pfRecord'), jn = $('pfJoined');
   if(!p){ rec.textContent = jn.textContent = '불러오는 중…'; return; }
   if(p.failed){ rec.textContent = jn.textContent = '확인할 수 없음 (서버 업데이트 필요)'; rec.classList.add('dim'); jn.classList.add('dim'); return; }
@@ -2156,7 +2164,7 @@ async function loadProfile(){                            // 가입일·전적·�
     const r = await api('/api/profile', { token: game.token });
     if(game.user !== who) return;
     if(!r.ok){ game.profile = { failed:true }; if(!$('profile').classList.contains('hidden')) renderProfile(); return; }     // 이 서버가 프로필 기능을 모른다 (아직 업데이트 전)
-    game.profile = r; game.best = Math.max(game.best || 0, r.best || 0);
+    game.profile = r; game.best = Math.max(game.best || 0, r.best || 0); game.admin = !!r.admin;
     game.myRank = r.rank ? '#' + r.rank + ' / ' + r.total : 'UNRANKED';
     if(!$('profile').classList.contains('hidden')) renderProfile();
   }catch(e){ if(game.user === who){ game.profile = { failed:true }; if(!$('profile').classList.contains('hidden')) renderProfile(); } }
@@ -2170,6 +2178,7 @@ function closeProfile(){ pwShown = false; PF.mode = 'view'; $('profile').classLi
 $('menuChip').addEventListener('click', () => { audio(); openProfile(); });
 $('pfPwBtn').addEventListener('click', () => { pwShown = !pwShown; renderProfile(); });
 $('pfBack').addEventListener('click', closeProfile);
+$('pfAdmin').addEventListener('click', () => window.open('admin.html', '_blank', 'noopener'));
 $('pfChPw').addEventListener('click', () => { pfSay('pfMsg', ''); pfMode('pw'); });
 $('pfDel').addEventListener('click', () => { pfSay('pfMsg', ''); pfMode('del'); });
 $('pfPwCancel').addEventListener('click', () => pfMode('view'));
@@ -2386,7 +2395,7 @@ $('authForm').addEventListener('submit', async ev => {
   }
 });
 function logout(){
-  stopRank(); stopChars(); stopStages(); closeProfile(); game.user = null; game.token = null; game.pw = null; game.myRank = null; game.profile = null; game.char = 'outfighter'; game.state = 'auth'; hideMenu();
+  stopRank(); stopChars(); stopStages(); closeProfile(); game.user = null; game.token = null; game.pw = null; game.myRank = null; game.profile = null; game.admin = false; game.char = 'outfighter'; game.state = 'auth'; hideMenu();
   $('auth').classList.remove('hidden', 'fade'); setMode('login'); $('uid').focus();
 }
 // 스테이지를 깨면 서버에 기록한다. 서버가 순위를 바로 다시 계산하므로, 랭킹 화면을 열어 둔 다른 사람 화면도 2초 안에 바뀐다

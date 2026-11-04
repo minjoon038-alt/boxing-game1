@@ -1,6 +1,7 @@
 // BOXING accounts + ranking API for Cloudflare Workers + D1.
 // Same endpoints and JSON shapes as server.ps1 (the local server), so boxing.html works with either:
-//   POST /api/signup  /api/login  /api/char  /api/best  /api/ranking  /api/profile  /api/result  /api/password  /api/delete     (GET /api/health for a quick check)
+//   POST /api/signup  /api/login  /api/char  /api/stage  /api/best  /api/ranking  /api/profile  /api/result  /api/password  /api/delete     (GET /api/health for a quick check)
+//   POST /api/admin/*  (stats, users, user, ban, setbest, setrecord, resetpw, delete, log) - only for accounts whose role is 'admin' in the database
 
 const CHARS = ['outfighter', 'infighter', 'slugger'];
 const ID_RE = /^[A-Za-z0-9_가-힣]{3,12}$/;           // 3-12 chars: letters, digits, _, Hangul
@@ -11,6 +12,10 @@ const MAX_SESSIONS = 5;                                      // per account (old
 const MAX_BODY = 4096;
 const LOGIN_FAILS = { max: 8, windowMs: 10 * 60 * 1000 };    // wrong passwords per (ip, account)
 const SIGNUPS = { max: 15, windowMs: 60 * 60 * 1000 };       // sign-ups per ip
+const ADMIN_SESSION_MS = 12 * 3600 * 1000;                   // admin actions need a login that is at most this old
+// Stage ticket: the game asks for a ticket when a stage starts; a clear / win is only accepted with a ticket that is at least
+// MIN_CLEAR_MS old (a real fight takes longer than that) and at most TICKET_MAX_MS old. Overridable with the MIN_CLEAR_MS variable (tests).
+const MIN_CLEAR_MS = 6000, TICKET_MAX_MS = 6 * 3600 * 1000;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -63,8 +68,15 @@ async function newToken(db, key, now) {
 async function userByToken(db, token, now) {
   if (!token) return null;
   return await db.prepare(
-    'SELECT u.* FROM sessions s JOIN users u ON u.key = s.key WHERE s.token = ? AND s.created > ?'
+    'SELECT u.* FROM sessions s JOIN users u ON u.key = s.key WHERE s.token = ? AND s.created > ? AND u.banned = 0'
   ).bind(token, now - SESSION_MS).first();
+}
+// admin = a valid, recent (<= ADMIN_SESSION_MS) login of an account whose role is 'admin'. The role lives only in the database
+async function adminByToken(db, token, now) {
+  if (!token) return null;
+  return await db.prepare(
+    "SELECT u.* FROM sessions s JOIN users u ON u.key = s.key WHERE s.token = ? AND s.created > ? AND u.role = 'admin' AND u.banned = 0"
+  ).bind(token, now - ADMIN_SESSION_MS).first();
 }
 async function housekeeping(db, now) {                       // cheap clean-up, run on logins
   await db.batch([
@@ -77,7 +89,7 @@ async function housekeeping(db, now) {                       // cheap clean-up, 
 async function rankOf(db, u) {
   if (!u || u.best < 1) return 0;
   const r = await db.prepare(
-    `SELECT COUNT(*) AS c FROM users WHERE best >= 1 AND (best > ?1 OR (best = ?1 AND (best_at < ?2 OR (best_at = ?2 AND key < ?3))))`
+    `SELECT COUNT(*) AS c FROM users WHERE best >= 1 AND banned = 0 AND (best > ?1 OR (best = ?1 AND (best_at < ?2 OR (best_at = ?2 AND key < ?3))))`
   ).bind(u.best, u.best_at, u.key).first();
   return r.c + 1;
 }
@@ -92,8 +104,90 @@ async function checkPassword(db, u, pw, ip, now) {
 }
 const rankVersion = async db => (await db.prepare("SELECT v FROM meta WHERE k = 'rank_version'").first())?.v ?? 1;
 
-async function handle(path, data, env, ip) {
+// ---------- admin: every request re-checks the role in the database; every change is written to the audit log ----------
+async function handleAdmin(act, data, env) {
   const db = env.DB, now = Date.now();
+  const admin = await adminByToken(db, field(data, 'token'), now);
+  if (!admin) return { ok: false, error: 'forbidden' };
+  const log = (action, target, detail) => db.prepare('INSERT INTO audit (at, admin, action, target, detail) VALUES (?, ?, ?, ?, ?)').bind(now, admin.id, action, target, detail ? JSON.stringify(detail) : '');
+  const bump = () => db.prepare("UPDATE meta SET v = v + 1 WHERE k = 'rank_version'");
+  const num = (name, max) => { const v = parseInt(field(data, name), 10); return Number.isFinite(v) && v >= 0 && v <= max ? v : null; };
+  const page = (maxLimit) => { const l = num('limit', maxLimit) || 20, o = num('offset', 1e9) || 0; return [l, o]; };
+  const tid = field(data, 'target');
+  const target = ['stats', 'users', 'log'].includes(act) ? null : (ID_RE.test(tid) ? await db.prepare('SELECT * FROM users WHERE key = ?').bind(tid.toLowerCase()).first() : null);
+  if (!['stats', 'users', 'log'].includes(act)) {
+    if (!target) return { ok: false, error: 'no_such_user' };
+    if (target.role === 'admin' && act !== 'user') return { ok: false, error: 'protected' };     // admin accounts cannot be changed through the API
+  }
+  const pub = u => ({ id: u.id, char: u.char, best: u.best, wins: u.wins, losses: u.losses, created: u.created, banned: !!u.banned, admin: u.role === 'admin' });
+
+  switch (act) {
+    case 'stats': {
+      const r = await db.prepare('SELECT COUNT(*) AS users, SUM(best >= 1 AND banned = 0) AS ranked, SUM(banned) AS banned, SUM(created > ?) AS new24h, SUM(wins) AS wins, SUM(losses) AS losses FROM users').bind(now - 24 * 3600 * 1000).first();
+      return { ok: true, users: r.users, ranked: r.ranked || 0, banned: r.banned || 0, new24h: r.new24h || 0, wins: r.wins || 0, losses: r.losses || 0, version: await rankVersion(db) };
+    }
+    case 'users': {
+      const [limit, offset] = page(50);
+      const q = field(data, 'q').toLowerCase().replace(/[\\%_]/g, c => '\\' + c).slice(0, 20);
+      const order = { best: 'best DESC, best_at ASC, key ASC', wins: 'wins DESC, key ASC', name: 'key ASC' }[field(data, 'sort')] || 'created DESC, key ASC';
+      const [rows, total] = await Promise.all([
+        db.prepare(`SELECT * FROM users WHERE key LIKE ?1 ESCAPE '\\' ORDER BY ${order} LIMIT ?2 OFFSET ?3`).bind('%' + q + '%', limit, offset).all(),
+        db.prepare("SELECT COUNT(*) AS c FROM users WHERE key LIKE ?1 ESCAPE '\\'").bind('%' + q + '%').first(),
+      ]);
+      return { ok: true, total: total.c, list: rows.results.map(pub) };
+    }
+    case 'user': {
+      const sess = await db.prepare('SELECT COUNT(*) AS c FROM sessions WHERE key = ? AND created > ?').bind(target.key, now - SESSION_MS).first();
+      return { ok: true, user: { ...pub(target), rank: target.banned ? 0 : await rankOf(db, target), sessions: sess.c, stage_lv: target.stage_lv, stage_at: target.stage_at } };
+    }
+    case 'ban': {
+      const on = data.banned === true || data.banned === 'true';
+      const reason = field(data, 'reason').slice(0, 100);
+      const stmts = [db.prepare('UPDATE users SET banned = ? WHERE key = ?').bind(on ? 1 : 0, target.key), log(on ? 'ban' : 'unban', target.id, reason ? { reason } : null)];
+      if (on) stmts.push(db.prepare('DELETE FROM sessions WHERE key = ?').bind(target.key));      // logged out everywhere right away
+      if (target.best >= 1) stmts.push(bump());                                                  // banned players leave the ranking (and come back when unbanned)
+      await db.batch(stmts);
+      return { ok: true };
+    }
+    case 'setbest': {
+      const v = num('best', MAX_LEVEL);
+      if (v === null) return { ok: false, error: 'invalid_level' };
+      await db.batch([db.prepare('UPDATE users SET best = ?, best_at = ? WHERE key = ?').bind(v, v === target.best ? target.best_at : now, target.key), log('setbest', target.id, { from: target.best, to: v }), bump()]);
+      return { ok: true };
+    }
+    case 'setrecord': {
+      const w = num('wins', 1e6), l = num('losses', 1e6);
+      if (w === null || l === null) return { ok: false, error: 'invalid_record' };
+      await db.batch([db.prepare('UPDATE users SET wins = ?, losses = ? WHERE key = ?').bind(w, l, target.key), log('setrecord', target.id, { from: [target.wins, target.losses], to: [w, l] })]);
+      return { ok: true };
+    }
+    case 'resetpw': {
+      const npw = field(data, 'npw');
+      if (npw.length < 4 || npw.length > 100) return { ok: false, error: 'short_pw' };
+      const salt = randHex(16), hash = await pbkdf2(npw, salt, PBKDF2_ITER);
+      await db.batch([db.prepare('UPDATE users SET salt = ?, hash = ?, iter = ? WHERE key = ?').bind(salt, hash, PBKDF2_ITER, target.key), db.prepare('DELETE FROM sessions WHERE key = ?').bind(target.key), log('resetpw', target.id, null)]);
+      return { ok: true };
+    }
+    case 'delete': {
+      const stmts = [db.prepare('DELETE FROM sessions WHERE key = ?').bind(target.key), db.prepare('DELETE FROM users WHERE key = ?').bind(target.key), log('delete', target.id, { best: target.best, wins: target.wins, losses: target.losses })];
+      if (target.best >= 1) stmts.push(bump());
+      await db.batch(stmts);
+      return { ok: true };
+    }
+    case 'log': {
+      const [limit, offset] = page(100);
+      const rows = await db.prepare('SELECT at, admin, action, target, detail FROM audit ORDER BY id DESC LIMIT ? OFFSET ?').bind(limit, offset).all();
+      return { ok: true, list: rows.results };
+    }
+    default:
+      return { ok: false, error: 'not_found' };
+  }
+}
+
+async function handle(path, data, env, ip) {
+  if (path.startsWith('/api/admin/')) return handleAdmin(path.slice('/api/admin/'.length), data, env);
+  const db = env.DB, now = Date.now();
+  const minClear = env.MIN_CLEAR_MS !== undefined ? Number(env.MIN_CLEAR_MS) : MIN_CLEAR_MS;
   const id = field(data, 'id'), pw = field(data, 'pw'), key = id.toLowerCase();
 
   switch (path) {
@@ -117,8 +211,9 @@ async function handle(path, data, env, ip) {
       // always do the hashing work, so a missing account takes as long as a wrong password
       const hash = await pbkdf2(pw.slice(0, 100), u ? u.salt : 'x'.repeat(32), u ? u.iter : PBKDF2_ITER);
       if (!u || !sameText(hash, u.hash)) { await countHit(db, tk, LOGIN_FAILS, now); return { ok: false, error: 'bad_credentials' }; }
+      if (u.banned) return { ok: false, error: 'banned' };
       await housekeeping(db, now);
-      return { ok: true, id: u.id, best: u.best, char: CHARS.includes(u.char) ? u.char : 'outfighter', token: await newToken(db, u.key, now) };
+      return { ok: true, id: u.id, admin: u.role === 'admin', best: u.best, char: CHARS.includes(u.char) ? u.char : 'outfighter', token: await newToken(db, u.key, now) };
     }
 
     case '/api/char': {
@@ -133,9 +228,9 @@ async function handle(path, data, env, ip) {
     case '/api/profile': {
       const u = await userByToken(db, field(data, 'token'), now);
       if (!u) return { ok: false, error: 'bad_token' };
-      const total = await db.prepare('SELECT COUNT(*) AS c FROM users WHERE best >= 1').first();
+      const total = await db.prepare('SELECT COUNT(*) AS c FROM users WHERE best >= 1 AND banned = 0').first();
       return { ok: true, id: u.id, char: CHARS.includes(u.char) ? u.char : 'outfighter', best: u.best, rank: await rankOf(db, u), total: total.c,
-               created: u.created || 0, wins: u.wins || 0, losses: u.losses || 0 };
+               created: u.created || 0, wins: u.wins || 0, losses: u.losses || 0, admin: u.role === 'admin' };
     }
 
     // a finished fight against the CPU (multiplayer matches are not counted). Shown on the profile only - it does not touch the ranking
@@ -143,8 +238,11 @@ async function handle(path, data, env, ip) {
       const u = await userByToken(db, field(data, 'token'), now);
       if (!u) return { ok: false, error: 'bad_token' };
       const won = data.won === true || data.won === 'true' || data.won === 1;
-      await db.prepare(`UPDATE users SET ${won ? 'wins = wins + 1' : 'losses = losses + 1'} WHERE key = ?`).bind(u.key).run();
-      return { ok: true };
+      // one result per stage ticket (the ticket is issued when the stage starts), and a win cannot come sooner than a real fight takes
+      if (!u.stage_at || u.stage_res || now - u.stage_at > TICKET_MAX_MS) return { ok: false, error: 'no_ticket' };
+      if (won && now - u.stage_at < minClear) return { ok: false, error: 'too_fast' };
+      const r = await db.prepare(`UPDATE users SET stage_res = 1, ${won ? 'wins = wins + 1' : 'losses = losses + 1'} WHERE key = ? AND stage_at = ? AND stage_res = 0`).bind(u.key, u.stage_at).run();
+      return r.meta.changes ? { ok: true } : { ok: false, error: 'no_ticket' };
     }
 
     case '/api/password': {
@@ -173,6 +271,17 @@ async function handle(path, data, env, ip) {
       return { ok: true };
     }
 
+    // the game calls this when a stage starts. Too-frequent calls are answered without touching the database
+    case '/api/stage': {
+      const u = await userByToken(db, field(data, 'token'), now);
+      if (!u) return { ok: false, error: 'bad_token' };
+      const lv = parseInt(field(data, 'level'), 10);
+      if (!(lv >= 1 && lv <= MAX_LEVEL && lv <= u.best + 2)) return { ok: false, error: 'invalid_level' };
+      if (now - u.stage_at < Math.min(1500, minClear)) return { ok: true };
+      await db.prepare('UPDATE users SET stage_lv = ?, stage_at = ?, stage_res = 0 WHERE key = ?').bind(lv, now, u.key).run();
+      return { ok: true };
+    }
+
     case '/api/best': {
       const u = await userByToken(db, field(data, 'token'), now);
       if (!u) return { ok: false, error: 'bad_token' };
@@ -181,6 +290,9 @@ async function handle(path, data, env, ip) {
       if (level > best) {
         // stages are cleared one after another, so an honest client can only raise its record by exactly +1 at a time
         if (level > best + 1 || level > MAX_LEVEL) return { ok: false, error: 'invalid_level', best };
+        // ... and only with a ticket for this (or a later) stage that is old enough to be a real fight
+        if (u.stage_lv < level || now - u.stage_at > TICKET_MAX_MS) return { ok: false, error: 'no_ticket', best };
+        if (now - u.stage_at < minClear) return { ok: false, error: 'too_fast', best };
         // compare-and-set: two requests for the same stage cannot both raise the record
         const r = await db.prepare('UPDATE users SET best = ?, best_at = ? WHERE key = ? AND best = ?').bind(level, now, u.key, best).run();
         if (r.meta.changes) {
@@ -206,8 +318,8 @@ async function handle(path, data, env, ip) {
       const ls = field(data, 'limit');
       if (ls !== '') { const l = parseInt(ls, 10); if (l >= 0 && l <= 50) limit = l; }
       const [rows, total, version] = await Promise.all([
-        limit ? db.prepare('SELECT id, best FROM users WHERE best >= 1 ORDER BY best DESC, best_at ASC, key ASC LIMIT ?').bind(limit).all() : { results: [] },
-        db.prepare('SELECT COUNT(*) AS c FROM users WHERE best >= 1').first(),
+        limit ? db.prepare('SELECT id, best FROM users WHERE best >= 1 AND banned = 0 ORDER BY best DESC, best_at ASC, key ASC LIMIT ?').bind(limit).all() : { results: [] },
+        db.prepare('SELECT COUNT(*) AS c FROM users WHERE best >= 1 AND banned = 0').first(),
         rankVersion(db),
       ]);
       const list = rows.results.map((r, i) => ({ rank: i + 1, id: r.id, best: r.best }));

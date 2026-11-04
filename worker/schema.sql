@@ -10,7 +10,12 @@ CREATE TABLE IF NOT EXISTS users (
   char    TEXT NOT NULL DEFAULT 'outfighter',
   created INTEGER NOT NULL DEFAULT 0,       -- sign-up time (ms); 0 = account older than this column
   wins    INTEGER NOT NULL DEFAULT 0,       -- CPU fights won / lost (shown on the profile; has no effect on the ranking)
-  losses  INTEGER NOT NULL DEFAULT 0
+  losses  INTEGER NOT NULL DEFAULT 0,
+  role    TEXT NOT NULL DEFAULT 'user',     -- 'admin' can only be granted with a direct database command, never through the API
+  banned  INTEGER NOT NULL DEFAULT 0,
+  stage_lv  INTEGER NOT NULL DEFAULT 0,     -- stage ticket: the stage the player started (server-issued, checked when a clear is recorded)
+  stage_at  INTEGER NOT NULL DEFAULT 0,
+  stage_res INTEGER NOT NULL DEFAULT 0      -- 1 once this ticket's win/loss has been counted
 );
 CREATE INDEX IF NOT EXISTS users_rank ON users (best DESC, best_at ASC, key ASC);
 
@@ -35,3 +40,14 @@ CREATE TABLE IF NOT EXISTS meta (
   v INTEGER NOT NULL
 );
 INSERT OR IGNORE INTO meta (k, v) VALUES ('rank_version', 1);
+
+-- every admin action is written here (who, what, on whom)
+CREATE TABLE IF NOT EXISTS audit (
+  id     INTEGER PRIMARY KEY AUTOINCREMENT,
+  at     INTEGER NOT NULL,
+  admin  TEXT NOT NULL,
+  action TEXT NOT NULL,
+  target TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS audit_at ON audit (at DESC);

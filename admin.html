@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>BOXING · 관리자</title>
+<style>
+  :root{--bg:#07091a;--panel:#0d1126;--line:rgba(255,255,255,.12);--dim:#7e849a;--txt:#e8ebf7;--gold:#ffd166;--red:#ff5a5f;--blue:#7da2ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:14px}
+  h1{margin:0;font-size:18px;font-weight:700;letter-spacing:6px}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:8px;padding:7px 14px}
+  button:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.1)}
+  button:disabled{opacity:.5;cursor:default}
+  button.gold{color:var(--gold);border-color:rgba(255,209,102,.5)}
+  button.danger{color:#ff8a8f;border-color:rgba(255,90,95,.5)}
+  button.danger:hover{background:rgba(90,16,22,.7);color:#fff}
+  input,select{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none;color:var(--txt)}
+  select option{background:#0d1126}
+  input:focus,select:focus{border-color:var(--blue)}
+  .hidden{display:none !important}
+  .msg{min-height:20px;font-size:13px;font-weight:600;color:var(--red)}
+  .msg.ok{color:var(--gold)}
+  /* login */
+  #login{max-width:340px;margin:12vh auto 0;padding:26px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+  #login label{display:block;margin:14px 0 6px;font-size:11px;letter-spacing:2px;color:var(--dim)}
+  #login input{width:100%}
+  #login button{width:100%;margin-top:16px;padding:10px}
+  #login .note{margin-top:14px;font-size:11.5px;line-height:1.6;color:var(--dim)}
+  /* app */
+  header{display:flex;align-items:center;gap:18px;padding:14px 22px;border-bottom:1px solid var(--line)}
+  header .who{margin-left:auto;color:var(--dim);font-size:12.5px}
+  nav{display:flex;gap:6px}
+  nav button{border:0;background:none;color:var(--dim);padding:8px 14px;border-radius:8px}
+  nav button.on{background:rgba(125,162,255,.16);color:#fff}
+  main{padding:20px 22px;max-width:1100px;margin:0 auto}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card b{display:block;font-size:26px;margin-top:6px}
+  .card span{font-size:11px;letter-spacing:2px;color:var(--dim)}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .bar input[type=search]{width:220px}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
+  th{font-size:11px;letter-spacing:2px;color:var(--dim);font-weight:600}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:rgba(125,162,255,.08)}
+  th.r,td.r{text-align:right}
+  .tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;font-size:10.5px;font-weight:700}
+  .tag.ban{background:rgba(255,90,95,.2);color:#ff8a8f}
+  .tag.adm{background:rgba(255,209,102,.2);color:var(--gold)}
+  .pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:12px;color:var(--dim);font-size:12.5px}
+  .empty{padding:30px;text-align:center;color:var(--dim)}
+  /* modal */
+  #modal{position:fixed;inset:0;background:rgba(2,3,10,.7);display:flex;align-items:flex-start;justify-content:center;padding-top:6vh;overflow:auto}
+  #box{width:min(560px,94vw);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  #box h2{margin:0 0 4px;font-size:18px}
+  #box .sub{color:var(--dim);font-size:12.5px;margin-bottom:12px}
+  #box dl{display:grid;grid-template-columns:100px 1fr;gap:6px 10px;margin:0 0 14px}
+  #box dt{color:var(--dim);font-size:11px;letter-spacing:2px;padding-top:2px}
+  #box dd{margin:0}
+  .act{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 0;border-top:1px solid rgba(255,255,255,.07)}
+  .act label{width:92px;font-size:12px;color:var(--dim)}
+  .act input{width:110px}
+  .act input.w{width:170px}
+  .close{float:right}
+  .small{font-size:12px;color:var(--dim)}
+  td.detail{white-space:normal;color:var(--dim);font-size:12.5px;max-width:320px;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<!-- 관리자 페이지: 이 페이지는 화면일 뿐이다. 모든 조회/변경은 서버가 요청마다 '관리자 계정인지'를 데이터베이스에서 다시 확인하고, 아니면 거절한다 -->
+<section id="login">
+  <h1>ADMIN</h1>
+  <form id="loginForm" autocomplete="off">
+    <label for="lid">ID</label><input id="lid" maxlength="12" autocomplete="username" spellcheck="false">
+    <label for="lpw">PASSWORD</label><input id="lpw" type="password" maxlength="100" autocomplete="current-password">
+    <div class="msg" id="lmsg" style="margin-top:12px"></div>
+    <button type="submit" class="gold" id="lgo">로그인</button>
+  </form>
+  <div class="note">관리자로 지정된 계정만 쓸 수 있습니다. 관리자 로그인은 12시간 동안 유지되고, 다시 로그인하면 이어서 쓸 수 있습니다.</div>
+</section>
+
+<div id="app" class="hidden">
+  <header>
+    <h1>ADMIN</h1>
+    <nav id="tabs">
+      <button data-tab="dash" class="on">대시보드</button>
+      <button data-tab="users">유저</button>
+      <button data-tab="rank">랭킹</button>
+      <button data-tab="log">활동 기록</button>
+    </nav>
+    <span class="who"><span id="me"></span> · <a href="boxing.html" style="color:var(--blue)">게임으로</a> · <button id="logout" style="padding:4px 10px">로그아웃</button></span>
+  </header>
+  <main>
+    <div class="msg" id="gmsg"></div>
+    <section id="v-dash">
+      <div class="cards" id="cards"></div>
+    </section>
+    <section id="v-users" class="hidden">
+      <div class="bar">
+        <input id="uq" type="search" placeholder="아이디 검색" maxlength="20">
+        <select id="usort"><option value="created">최근 가입순</option><option value="best">베스트 스테이지순</option><option value="wins">승수순</option><option value="name">이름순</option></select>
+        <button id="uref">새로고침</button>
+      </div>
+      <table><thead><tr><th>아이디</th><th class="r">스테이지</th><th class="r">승</th><th class="r">패</th><th>가입일</th></tr></thead><tbody id="ubody"></tbody></table>
+      <div class="pager"><span id="upinfo"></span><button id="uprev">이전</button><button id="unext">다음</button></div>
+    </section>
+    <section id="v-rank" class="hidden">
+      <div class="bar"><span class="small">베스트 스테이지 순(정지된 유저 포함). 행을 누르면 기록을 수정할 수 있습니다. 공식 랭킹에서는 정지된 유저가 빠집니다.</span><button id="rref">새로고침</button></div>
+      <table><thead><tr><th class="r">#</th><th>아이디</th><th class="r">스테이지</th><th class="r">승</th><th class="r">패</th></tr></thead><tbody id="rbody"></tbody></table>
+      <div class="pager"><span id="rpinfo"></span><button id="rprev">이전</button><button id="rnext">다음</button></div>
+    </section>
+    <section id="v-log" class="hidden">
+      <div class="bar"><button id="lref">새로고침</button></div>
+      <table><thead><tr><th>시간</th><th>관리자</th><th>작업</th><th>대상</th><th>내용</th></tr></thead><tbody id="lbody"></tbody></table>
+      <div class="pager"><span id="lpinfo"></span><button id="lprev">이전</button><button id="lnext">다음</button></div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="hidden"><div id="box"></div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+// 서버 주소: 게임(boxing.html)과 같은 규칙
+const API_CLOUD = 'https://boxing-api.boxing-api.workers.dev';
+const API = window.BOXING_API || (location.protocol === 'file:' ? 'http://localhost:8123' : /\.github\.io$/.test(location.hostname) && API_CLOUD ? API_CLOUD : '');
+let TOKEN = null, ME = '';                                   // 토큰은 메모리에만 둔다 (새로고침하면 다시 로그인)
+const ERR = { forbidden: '권한이 없거나 로그인이 만료되었습니다. 다시 로그인해 주세요', no_such_user: '그런 유저가 없습니다', protected: '관리자 계정은 이 페이지에서 바꿀 수 없습니다',
+  invalid_level: '스테이지는 0~99 사이여야 합니다', invalid_record: '승/패는 0 이상의 숫자여야 합니다', short_pw: '비밀번호는 4자 이상이어야 합니다', too_many: '시도가 너무 많습니다. 잠시 후 다시 해 주세요',
+  bad_credentials: '아이디 또는 비밀번호가 올바르지 않습니다', banned: '정지된 계정입니다', server_error: '서버 오류가 발생했습니다', not_found: '이 서버는 관리자 기능을 지원하지 않습니다' };
+async function call(path, body){
+  let res;
+  try{ res = await fetch(API + path, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(body) }); }
+  catch(e){ throw new Error('서버에 연결할 수 없습니다'); }
+  let r; try{ r = await res.json(); }catch(e){ throw new Error('서버 응답을 읽을 수 없습니다'); }
+  if(r.error === 'forbidden' && TOKEN){ toLogin(ERR.forbidden); throw new Error(ERR.forbidden); }
+  return r;
+}
+const admin = (act, body) => call('/api/admin/' + act, { token:TOKEN, ...body });
+const fmtDate = ms => { if(!ms) return '-'; const d = new Date(ms), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); };
+function say(text, ok){ const m = $('gmsg'); m.textContent = text || ''; m.classList.toggle('ok', !!ok); }
+function td(tr, text, cls){ const c = document.createElement('td'); c.textContent = text; if(cls) c.className = cls; tr.append(c); return c; }
+function tags(c, u){ if(u.banned){ const t = document.createElement('span'); t.className = 'tag ban'; t.textContent = '정지'; c.append(t); } if(u.admin){ const t = document.createElement('span'); t.className = 'tag adm'; t.textContent = '관리자'; c.append(t); } }
+
+/* ---------- 로그인 ---------- */
+function toLogin(msg){ TOKEN = null; $('app').classList.add('hidden'); $('modal').classList.add('hidden'); $('login').classList.remove('hidden'); $('lmsg').textContent = msg || ''; $('lpw').value = ''; }
+$('loginForm').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const id = $('lid').value.trim(), pw = $('lpw').value;
+  if(!id || !pw) return $('lmsg').textContent = '아이디와 비밀번호를 입력해 주세요';
+  $('lgo').disabled = true; $('lmsg').textContent = '';
+  try{
+    const r = await call('/api/login', { id, pw });
+    if(!r.ok) return $('lmsg').textContent = ERR[r.error] || '로그인할 수 없습니다';
+    if(!r.admin) return $('lmsg').textContent = '관리자 계정이 아닙니다';
+    TOKEN = r.token; ME = r.id; $('me').textContent = ME; $('lpw').value = '';
+    $('login').classList.add('hidden'); $('app').classList.remove('hidden'); show('dash');
+  }catch(e){ $('lmsg').textContent = e.message; }
+  finally{ $('lgo').disabled = false; }
+});
+$('logout').addEventListener('click', () => toLogin(''));
+
+/* ---------- 탭 ---------- */
+let tab = 'dash';
+function show(t){
+  tab = t; say('');
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  for(const k of ['dash', 'users', 'rank', 'log']) $('v-' + k).classList.toggle('hidden', k !== t);
+  load();
+}
+document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.tab)));
+const PAGE = { users:{ off:0, n:20 }, rank:{ off:0, n:20 }, log:{ off:0, n:20 } };
+async function load(){
+  try{
+    if(tab === 'dash') await loadDash();
+    else if(tab === 'users') await loadUsers('users');
+    else if(tab === 'rank') await loadUsers('rank');
+    else await loadLog();
+  }catch(e){ say(e.message); }
+}
+async function loadDash(){
+  const r = await admin('stats', {});
+  if(!r.ok) return say(ERR[r.error] || '불러오지 못했습니다');
+  const total = r.wins + r.losses, cards = [['전체 유저', r.users], ['랭킹 등록', r.ranked], ['정지', r.banned], ['최근 24시간 가입', r.new24h], ['총 승', r.wins], ['총 패', r.losses], ['평균 승률', total ? Math.round(r.wins * 100 / total) + '%' : '-']];
+  $('cards').textContent = '';
+  for(const [k, v] of cards){ const d = document.createElement('div'); d.className = 'card'; const s = document.createElement('span'), b = document.createElement('b'); s.textContent = k; b.textContent = v; d.append(s, b); $('cards').append(d); }
+}
+async function loadUsers(kind){
+  const P = PAGE[kind], rank = kind === 'rank';
+  const r = await admin('users', { q: rank ? '' : $('uq').value.trim(), sort: rank ? 'best' : $('usort').value, limit: P.n, offset: P.off });
+  if(!r.ok) return say(ERR[r.error] || '불러오지 못했습니다');
+  const body = $(rank ? 'rbody' : 'ubody'); body.textContent = '';
+  if(!r.list.length){ const tr = document.createElement('tr'); const c = td(tr, '유저가 없습니다', 'empty'); c.colSpan = 5; body.append(tr); }
+  r.list.forEach((u, i) => {
+    const tr = document.createElement('tr');
+    if(rank){ td(tr, P.off + i + 1, 'r'); const c = td(tr, u.id); tags(c, u); td(tr, u.best, 'r'); td(tr, u.wins, 'r'); td(tr, u.losses, 'r'); }
+    else { const c = td(tr, u.id); tags(c, u); td(tr, u.best, 'r'); td(tr, u.wins, 'r'); td(tr, u.losses, 'r'); td(tr, fmtDate(u.created)); }
+    tr.addEventListener('click', () => openUser(u.id)); body.append(tr);
+  });
+  const p = rank ? 'r' : 'u';
+  $(p + 'pinfo').textContent = r.total ? (P.off + 1) + '–' + Math.min(P.off + P.n, r.total) + ' / ' + r.total : '';
+  $(p + 'prev').disabled = P.off === 0; $(p + 'next').disabled = P.off + P.n >= r.total;
+}
+async function loadLog(){
+  const P = PAGE.log, r = await admin('log', { limit: P.n, offset: P.off });
+  if(!r.ok) return say(ERR[r.error] || '불러오지 못했습니다');
+  const body = $('lbody'); body.textContent = '';
+  if(!r.list.length){ const tr = document.createElement('tr'); const c = td(tr, '기록이 없습니다', 'empty'); c.colSpan = 5; body.append(tr); }
+  for(const e of r.list){ const tr = document.createElement('tr'); tr.style.cursor = 'default'; td(tr, fmtDate(e.at)); td(tr, e.admin); td(tr, e.action); td(tr, e.target); td(tr, e.detail, 'detail'); body.append(tr); }
+  $('lpinfo').textContent = r.list.length ? (P.off + 1) + '–' + (P.off + r.list.length) : '';
+  $('lprev').disabled = P.off === 0; $('lnext').disabled = r.list.length < P.n;
+}
+const pager = (kind, prev, next) => { $(prev).addEventListener('click', () => { PAGE[kind].off = Math.max(0, PAGE[kind].off - PAGE[kind].n); load(); }); $(next).addEventListener('click', () => { PAGE[kind].off += PAGE[kind].n; load(); }); };
+pager('users', 'uprev', 'unext'); pager('rank', 'rprev', 'rnext'); pager('log', 'lprev', 'lnext');
+$('uref').addEventListener('click', () => { PAGE.users.off = 0; load(); }); $('rref').addEventListener('click', load); $('lref').addEventListener('click', load);
+$('uq').addEventListener('keydown', e => { if(e.key === 'Enter'){ PAGE.users.off = 0; load(); } });
+$('usort').addEventListener('change', () => { PAGE.users.off = 0; load(); });
+
+/* ---------- 유저 상세 / 관리 ---------- */
+function el(tag, props, ...kids){ const e = document.createElement(tag); Object.assign(e, props || {}); for(const k of kids) e.append(k); return e; }
+async function openUser(id){
+  say('');
+  const r = await admin('user', { target: id }).catch(e => ({ error: e.message }));
+  if(!r.ok) return say(ERR[r.error] || r.error || '불러오지 못했습니다');
+  const u = r.user, box = $('box'); box.textContent = '';
+  box.append(el('button', { className:'close', textContent:'닫기', onclick: () => $('modal').classList.add('hidden') }), el('h2', { textContent: u.id }));
+  const sub = el('div', { className:'sub' }); sub.textContent = (u.banned ? '정지된 계정' : u.admin ? '관리자 계정' : '일반 계정'); box.append(sub);
+  const dl = el('dl'); const row = (k, v) => dl.append(el('dt', { textContent:k }), el('dd', { textContent:v }));
+  row('캐릭터', u.char); row('베스트 스테이지', u.best + (u.rank ? '  (현재 랭킹 ' + u.rank + '위)' : '')); row('전적', u.wins + '승 ' + u.losses + '패'); row('가입일', fmtDate(u.created)); row('로그인 중인 기기', u.sessions + '대');
+  row('마지막 스테이지 시작', u.stage_at ? 'STAGE ' + u.stage_lv + ' · ' + fmtDate(u.stage_at) : '-');
+  box.append(dl);
+  const msg = el('div', { className:'msg' }); const done = async (p, okText) => { try{ const x = await p; if(x.ok){ say(okText, true); $('modal').classList.add('hidden'); load(); } else msg.textContent = ERR[x.error] || x.error || '거절되었습니다'; }catch(e){ msg.textContent = e.message; } };
+  if(u.admin){ box.append(el('div', { className:'small', textContent:'관리자 계정은 서버가 변경을 막고 있습니다 (보기만 가능).' })); }
+  else {
+    const num = (v, w) => el('input', { type:'number', min:0, value:v, className: w || '' });
+    const best = num(u.best), wins = num(u.wins), losses = num(u.losses), npw = el('input', { type:'text', className:'w', placeholder:'새 임시 비밀번호', maxLength:100, autocomplete:'off' }), reason = el('input', { type:'text', className:'w', placeholder:'사유(선택)', maxLength:100 }), conf = el('input', { type:'text', className:'w', placeholder:'아이디를 그대로 입력', autocomplete:'off' });
+    const act = (label, input, btn) => box.append(el('div', { className:'act' }, el('label', { textContent:label }), ...input, btn));
+    act('베스트 스테이지', [best], el('button', { className:'gold', textContent:'변경', onclick: () => done(admin('setbest', { target:u.id, best:best.value }), '베스트 스테이지를 바꿨습니다') }));
+    act('전적', [wins, el('span', { textContent:'승', className:'small' }), losses, el('span', { textContent:'패', className:'small' })], el('button', { className:'gold', textContent:'변경', onclick: () => done(admin('setrecord', { target:u.id, wins:wins.value, losses:losses.value }), '전적을 바꿨습니다') }));
+    act('비밀번호 초기화', [npw], el('button', { textContent:'초기화', onclick: () => { if(npw.value.length < 4) return msg.textContent = ERR.short_pw; done(admin('resetpw', { target:u.id, npw:npw.value }), '비밀번호를 바꾸고 모든 기기에서 로그아웃시켰습니다'); } }));
+    act(u.banned ? '정지 해제' : '정지', u.banned ? [] : [reason], el('button', { className: u.banned ? '' : 'danger', textContent: u.banned ? '해제' : '정지', onclick: () => done(admin('ban', { target:u.id, banned:!u.banned, reason:reason.value }), u.banned ? '정지를 풀었습니다' : '정지했습니다 (모든 기기에서 로그아웃, 랭킹에서 제외)') }));
+    act('계정 삭제', [conf], el('button', { className:'danger', textContent:'영구 삭제', onclick: () => { if(conf.value.toLowerCase() !== u.id.toLowerCase()) return msg.textContent = '확인을 위해 아이디를 정확히 입력해 주세요'; done(admin('delete', { target:u.id }), '계정을 삭제했습니다'); } }));
+  }
+  box.append(msg); $('modal').classList.remove('hidden');
+}
+$('modal').addEventListener('click', e => { if(e.target === $('modal')) $('modal').classList.add('hidden'); });
+addEventListener('keydown', e => { if(e.key === 'Escape') $('modal').classList.add('hidden'); });
+</script>
+</body>
+</html>
