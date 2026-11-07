@@ -195,9 +195,9 @@ const W = 960, H = 540, GY = 430;
 /* ---------- 화면 해상도 ----------
    게임 좌표는 언제나 960x540 이다. 캔버스의 실제 픽셀 수만 화면에 보이는 크기(x 기기 픽셀 비율)에 맞춰 GFX.r 배로 키워서 그린다
    → 큰 화면에서도 브라우저가 늘려서 흐려지지 않는다. 판정·속도는 게임 좌표 기준이라 전혀 바뀌지 않는다.
-   GFX.max: 배율 상한 (2 = 1920x1080). 느린 컴퓨터면 자동으로 낮춘다 (frame 참고).
+   GFX.max: 배율 상한 (3 = 2880x1620). 느린 컴퓨터면 자동으로 낮춘다 (frame 참고).
    그림자 흐림(shadowBlur)과 필터의 blur(px) 는 변환(transform)의 영향을 받지 않는 '실제 픽셀' 단위라서, 같은 모양이 되도록 GFX.r 배로 바꿔 준다. */
-const GFX = { r: 1, max: 2, slow: 0, n: 0 };
+const GFX = { r: 1, max: 3, slow: 0, n: 0 };     // max 3 = 2880x1620 (1440p · 4K 화면용). 그림은 이 배율에 맞춰 2배로 업스케일해 두었다
 (function(){
   const P2 = CanvasRenderingContext2D.prototype, st = P2.setTransform;
   const sb = Object.getOwnPropertyDescriptor(P2, 'shadowBlur'), fl = Object.getOwnPropertyDescriptor(P2, 'filter');
@@ -1157,7 +1157,7 @@ function step(dt){
 /* ---------- 배경 (링 이미지: ring-bg.webp) ----------
    이미지는 0.72배로 줄여 가로 중앙에 두고, 링 매트의 한가운데(원본 y=808)가 캐릭터 발 위치(GY)에 오도록 세로 위치를 맞춘다.
    이렇게 하면 좌우 코너 패드가 캐릭터 이동 범위(x 100~860) 끝에 맞닿고, 좌우로 30px씩 여유가 있어 가장 센 화면 흔들림(±21px)에도 가장자리가 비지 않는다. */
-const BG = { scale: .72, feetY: 808, canvas: null, w: 0, h: 0 };     // w/h: 게임 좌표에서의 크기 (그림은 원본 해상도 그대로 들고 있다)
+const BG = { scale: .72, feetY: 808, srcW: 1418, canvas: null, w: 0, h: 0 };     // srcW: 좌표(feetY, 전광판 위치)를 잰 원본 그림의 폭. 더 큰(업스케일한) 그림으로 바꿔도 같은 자리에 그려진다     // w/h: 게임 좌표에서의 크기 (그림은 원본 해상도 그대로 들고 있다)
 const TB = { img: null };                                  // 메인 화면 배경 (title-bg.jpg, 16:9 전체 화면 그림)
 
 /* ---------- 캐릭터 스프라이트 ----------
@@ -1205,10 +1205,11 @@ const sprVY = f => sprOn(f) ? SPR_VY*(f.cd.look.sprS || 1)*(SPR[f.cd.look.sprite
   img.onload = () => {
     const c = document.createElement('canvas');
     c.width = img.naturalWidth; c.height = img.naturalHeight;               // 원본 해상도 그대로 (화면에 그릴 때 BG.scale 배로 줄인다 → 고해상도 화면에서 선명)
-    BG.w = Math.round(img.naturalWidth*BG.scale); BG.h = Math.round(img.naturalHeight*BG.scale);
+    const ks = img.naturalWidth/BG.srcW;                                   // 그림 해상도 / 좌표 기준 해상도
+    BG.w = Math.round(BG.srcW*BG.scale); BG.h = Math.round(img.naturalHeight/ks*BG.scale);
     const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height);
     try{                                                       // 그림 속 전광판의 'BOXING' 글자를 'UPBOX' 로 덮어쓴다 (전광판 바탕색을 그림에서 직접 찍어 와서 칠한다)
-      const k = c.width / img.naturalWidth, px = g.getImageData(Math.round(500*k), Math.round(300*k), 1, 1).data;
+      const k = c.width / BG.srcW, px = g.getImageData(Math.round(500*k), Math.round(300*k), 1, 1).data;
       g.save(); g.scale(k, k);
       g.fillStyle = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')'; g.fillRect(536, 252, 358, 84);
       g.fillStyle = '#e4e7f4'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '300 68px system-ui, "Segoe UI", Arial, sans-serif';
