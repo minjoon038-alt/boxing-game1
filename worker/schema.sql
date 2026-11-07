@@ -15,15 +15,8 @@ CREATE TABLE IF NOT EXISTS users (
   banned  INTEGER NOT NULL DEFAULT 0,
   stage_lv  INTEGER NOT NULL DEFAULT 0,     -- stage ticket: the stage the player started (server-issued, checked when a clear is recorded)
   stage_at  INTEGER NOT NULL DEFAULT 0,
-  stage_res INTEGER NOT NULL DEFAULT 0,     -- 1 once this ticket's win/loss has been counted
-  elo     INTEGER NOT NULL DEFAULT 1000,    -- PvP rating (ELO, ranked matches only); separate from the stage ranking
-  pvp_w   INTEGER NOT NULL DEFAULT 0,       -- ranked wins / losses
-  pvp_l   INTEGER NOT NULL DEFAULT 0,
-  n_w     INTEGER NOT NULL DEFAULT 0,       -- normal-match wins / losses
-  n_l     INTEGER NOT NULL DEFAULT 0,
-  xp      INTEGER NOT NULL DEFAULT 0        -- experience (every fight and every cleared stage); the level is calculated from it
+  stage_res INTEGER NOT NULL DEFAULT 0      -- 1 once this ticket's win/loss has been counted
 );
-CREATE INDEX IF NOT EXISTS users_elo ON users (elo DESC, key ASC);
 CREATE INDEX IF NOT EXISTS users_rank ON users (best DESC, best_at ASC, key ASC);
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -47,7 +40,6 @@ CREATE TABLE IF NOT EXISTS meta (
   v INTEGER NOT NULL
 );
 INSERT OR IGNORE INTO meta (k, v) VALUES ('rank_version', 1);
-INSERT OR IGNORE INTO meta (k, v) VALUES ('pvp_version', 1);   -- grows on every rated PvP fight (the PvP ranking screen polls it)
 
 -- every admin action is written here (who, what, on whom)
 CREATE TABLE IF NOT EXISTS audit (
@@ -68,17 +60,6 @@ CREATE TABLE IF NOT EXISTS matches (
   p1     TEXT NOT NULL,           -- host (left / blue)
   p2     TEXT NOT NULL,           -- guest (right / red)
   winner TEXT NOT NULL DEFAULT '',  -- '' when the two reports disagreed
-  status TEXT NOT NULL,           -- 'rated' (rewards given) | 'disputed' | 'fast' (too short) | 'limit' (same pair too often / one-sided: no reward) | 'void' (cancelled)
-  mode TEXT NOT NULL DEFAULT 'ranked',   -- 'ranked' | 'normal'
-  e1 INTEGER NOT NULL DEFAULT 0,  -- host / guest rating before the fight
-  e2 INTEGER NOT NULL DEFAULT 0,
-  d1 INTEGER NOT NULL DEFAULT 0,  -- rating change that was actually applied (0 when none)
-  d2 INTEGER NOT NULL DEFAULT 0,
-  xp1 INTEGER NOT NULL DEFAULT 0, -- experience that was actually given
-  xp2 INTEGER NOT NULL DEFAULT 0,
-  pct INTEGER NOT NULL DEFAULT 100,   -- share of the normal reward that was given (repeat pairings get less)
-  lft TEXT NOT NULL DEFAULT '',   -- role that left during the fight (an AI took over for it)
-  ms INTEGER NOT NULL DEFAULT 0   -- server-measured length of the fight
+  status TEXT NOT NULL            -- 'agreed' | 'disputed'
 );
 CREATE INDEX IF NOT EXISTS matches_at ON matches (at DESC);
-CREATE INDEX IF NOT EXISTS matches_pair ON matches (p1, p2, at);

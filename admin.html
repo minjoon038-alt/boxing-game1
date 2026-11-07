@@ -51,7 +51,6 @@
   .tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;font-size:10.5px;font-weight:700}
   .tag.ban{background:rgba(255,90,95,.2);color:#ff8a8f}
   .tag.adm{background:rgba(255,209,102,.2);color:var(--gold)}
-  .tag.sus{background:rgba(255,150,60,.2);color:#ffb070}
   .pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:12px;color:var(--dim);font-size:12.5px}
   .empty{padding:30px;text-align:center;color:var(--dim)}
   /* modal */
@@ -104,20 +103,20 @@
     <section id="v-users" class="hidden">
       <div class="bar">
         <input id="uq" type="search" placeholder="아이디 검색" maxlength="20">
-        <select id="usort"><option value="created">최근 가입순</option><option value="best">베스트 스테이지순</option><option value="elo">랭크 레이팅순</option><option value="wins">승수순</option><option value="name">이름순</option></select>
+        <select id="usort"><option value="created">최근 가입순</option><option value="best">베스트 스테이지순</option><option value="wins">승수순</option><option value="name">이름순</option></select>
         <button id="uref">새로고침</button>
       </div>
-      <table><thead><tr><th>아이디</th><th class="r">스테이지</th><th class="r">승</th><th class="r">패</th><th class="r">레벨</th><th class="r">랭크 (티어·레이팅)</th><th class="r">랭크 전적</th><th class="r">일반전</th><th>가입일</th></tr></thead><tbody id="ubody"></tbody></table>
+      <table><thead><tr><th>아이디</th><th class="r">스테이지</th><th class="r">승</th><th class="r">패</th><th>가입일</th></tr></thead><tbody id="ubody"></tbody></table>
       <div class="pager"><span id="upinfo"></span><button id="uprev">이전</button><button id="unext">다음</button></div>
     </section>
     <section id="v-rank" class="hidden">
-      <div class="bar"><select id="rsort"><option value="best">스테이지 랭킹</option><option value="elo">랭크 레이팅 랭킹</option></select><span class="small">정지된 유저 포함. 행을 누르면 기록을 수정할 수 있습니다. 공식 랭킹에서는 정지된 유저가 빠집니다.</span><button id="rref">새로고침</button></div>
-      <table><thead><tr><th class="r">#</th><th>아이디</th><th class="r">스테이지</th><th class="r">승</th><th class="r">패</th><th class="r">레벨</th><th class="r">랭크 (티어·레이팅)</th><th class="r">랭크 전적</th><th class="r">일반전</th></tr></thead><tbody id="rbody"></tbody></table>
+      <div class="bar"><span class="small">베스트 스테이지 순(정지된 유저 포함). 행을 누르면 기록을 수정할 수 있습니다. 공식 랭킹에서는 정지된 유저가 빠집니다.</span><button id="rref">새로고침</button></div>
+      <table><thead><tr><th class="r">#</th><th>아이디</th><th class="r">스테이지</th><th class="r">승</th><th class="r">패</th></tr></thead><tbody id="rbody"></tbody></table>
       <div class="pager"><span id="rpinfo"></span><button id="rprev">이전</button><button id="rnext">다음</button></div>
     </section>
     <section id="v-matches" class="hidden">
-      <div class="bar"><select id="mstatus"><option value="">전체 상태</option><option value="rated">반영</option><option value="disputed">불일치</option><option value="fast">시간 부족</option><option value="limit">반복 대전</option><option value="void">무효/취소</option></select><span class="small">일반전·랭크전 결과입니다. 두 사람이 같은 승자를 보고해야 반영됩니다(한 사람이 나가면 AI 가 대신하고, AI 가 지면 나간 사람이 진 것으로 하며 AI 가 이기면 무효). 같은 상대와 24시간 안에 3번째는 보상 50%, 4번째부터는 한쪽이 계속 이기면 0%입니다. 너무 짧은 경기는 기록만 남습니다. '취소'를 누르면 반영된 점수와 전적을 되돌립니다.</span><button id="mref">새로고침</button></div>
-      <table><thead><tr><th>시간</th><th>모드</th><th>방장(왼쪽)</th><th>손님(오른쪽)</th><th>승자</th><th>상태</th><th class="r">점수 변화 (방장 / 손님)</th><th class="r">경험치 (방장 / 손님)</th><th class="r">경기 시간</th><th></th></tr></thead><tbody id="mbody"></tbody></table>
+      <div class="bar"><span class="small">랜덤 매칭·방 대전의 결과입니다. 두 사람이 같은 승자를 보고하면 '일치', 다르면 '불일치'(승자 없음)로 남습니다.</span><button id="mref">새로고침</button></div>
+      <table><thead><tr><th>시간</th><th>방장(왼쪽)</th><th>손님(오른쪽)</th><th>승자</th><th>상태</th></tr></thead><tbody id="mbody"></tbody></table>
       <div class="pager"><span id="mpinfo"></span><button id="mprev">이전</button><button id="mnext">다음</button></div>
     </section>
     <section id="v-log" class="hidden">
@@ -132,16 +131,12 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const levelNeed = L => 100 + 20 * (L - 1);
-function levelOf(xp){ let level = 1, rest = Math.max(0, xp | 0); while(level < 100 && rest >= levelNeed(level)){ rest -= levelNeed(level); level++; } return { level, into:rest, need:levelNeed(level) }; }
-const TIERS = [[0, '브론즈'], [1500, '실버'], [2000, '골드'], [2500, '프로'], [3000, '챔피언(랭커)']];
-const tierName = elo => { let n = TIERS[0][1]; for(const [min, name] of TIERS) if(elo >= min) n = name; return n; };
 // 서버 주소: 게임(boxing.html)과 같은 규칙
 const API_CLOUD = 'https://boxing-api.boxing-api.workers.dev';
 const API = window.BOXING_API || (location.protocol === 'file:' ? 'http://localhost:8123' : /\.github\.io$/.test(location.hostname) && API_CLOUD ? API_CLOUD : '');
 let TOKEN = null, ME = '';                                   // 토큰은 메모리에만 둔다 (새로고침하면 다시 로그인)
 const ERR = { forbidden: '권한이 없거나 로그인이 만료되었습니다. 다시 로그인해 주세요', no_such_user: '그런 유저가 없습니다', protected: '관리자 계정은 이 페이지에서 바꿀 수 없습니다',
-  invalid_level: '스테이지는 0~99 사이여야 합니다', invalid_record: '승/패는 0 이상의 숫자여야 합니다', invalid_rating: '레이팅은 100~5000, 승/패는 0 이상의 숫자여야 합니다', no_such_match: '그런 경기가 없습니다', not_rated: '점수가 반영된 경기만 취소할 수 있습니다', short_pw: '비밀번호는 4자 이상이어야 합니다', too_many: '시도가 너무 많습니다. 잠시 후 다시 해 주세요',
+  invalid_level: '스테이지는 0~99 사이여야 합니다', invalid_record: '승/패는 0 이상의 숫자여야 합니다', short_pw: '비밀번호는 4자 이상이어야 합니다', too_many: '시도가 너무 많습니다. 잠시 후 다시 해 주세요',
   bad_credentials: '아이디 또는 비밀번호가 올바르지 않습니다', banned: '정지된 계정입니다', server_error: '서버 오류가 발생했습니다', not_found: '이 서버는 관리자 기능을 지원하지 않습니다' };
 async function call(path, body){
   let res;
@@ -155,9 +150,7 @@ const admin = (act, body) => call('/api/admin/' + act, { token:TOKEN, ...body })
 const fmtDate = ms => { if(!ms) return '-'; const d = new Date(ms), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); };
 function say(text, ok){ const m = $('gmsg'); m.textContent = text || ''; m.classList.toggle('ok', !!ok); }
 function td(tr, text, cls){ const c = document.createElement('td'); c.textContent = text; if(cls) c.className = cls; tr.append(c); return c; }
-function tags(c, u){ if(u.banned){ const t = document.createElement('span'); t.className = 'tag ban'; t.textContent = '정지'; c.append(t); } if(u.admin){ const t = document.createElement('span'); t.className = 'tag adm'; t.textContent = '관리자'; c.append(t); }
-  const n = (u.pvp_w || 0) + (u.pvp_l || 0);                // PvP 8판 이상인데 승률 90% 이상이면 눈에 띄게 표시 (방장 쪽 조작 등을 의심해 볼 만한 계정)
-  if(n >= 8 && u.pvp_w / n >= 0.9){ const t = document.createElement('span'); t.className = 'tag sus'; t.textContent = '승률 의심'; t.title = 'PvP ' + n + '판 중 ' + u.pvp_w + '승'; c.append(t); } }
+function tags(c, u){ if(u.banned){ const t = document.createElement('span'); t.className = 'tag ban'; t.textContent = '정지'; c.append(t); } if(u.admin){ const t = document.createElement('span'); t.className = 'tag adm'; t.textContent = '관리자'; c.append(t); } }
 
 /* ---------- 로그인 ---------- */
 function toLogin(msg){ TOKEN = null; $('app').classList.add('hidden'); $('modal').classList.add('hidden'); $('login').classList.remove('hidden'); $('lmsg').textContent = msg || ''; $('lpw').value = ''; }
@@ -200,38 +193,31 @@ async function loadDash(){
   const r = await admin('stats', {});
   if(!r.ok) return say(ERR[r.error] || '불러오지 못했습니다');
   const total = r.wins + r.losses, cards = [['전체 유저', r.users], ['랭킹 등록', r.ranked], ['정지', r.banned], ['최근 24시간 가입', r.new24h], ['총 승', r.wins], ['총 패', r.losses], ['평균 승률', total ? Math.round(r.wins * 100 / total) + '%' : '-']];
-  if(r.pvp) cards.push(['PvP 경기 (24시간)', r.pvp.day], ['PvP 경기 (전체)', r.pvp.total], ['점수 반영된 경기', r.pvp.rated], ['결과 불일치', r.pvp.disputed]);
   $('cards').textContent = '';
   for(const [k, v] of cards){ const d = document.createElement('div'); d.className = 'card'; const s = document.createElement('span'), b = document.createElement('b'); s.textContent = k; b.textContent = v; d.append(s, b); $('cards').append(d); }
 }
 async function loadUsers(kind){
   const P = PAGE[kind], rank = kind === 'rank';
-  const r = await admin('users', { q: rank ? '' : $('uq').value.trim(), sort: rank ? $('rsort').value : $('usort').value, limit: P.n, offset: P.off });
+  const r = await admin('users', { q: rank ? '' : $('uq').value.trim(), sort: rank ? 'best' : $('usort').value, limit: P.n, offset: P.off });
   if(!r.ok) return say(ERR[r.error] || '불러오지 못했습니다');
   const body = $(rank ? 'rbody' : 'ubody'); body.textContent = '';
-  if(!r.list.length){ const tr = document.createElement('tr'); const c = td(tr, '유저가 없습니다', 'empty'); c.colSpan = 9; body.append(tr); }
+  if(!r.list.length){ const tr = document.createElement('tr'); const c = td(tr, '유저가 없습니다', 'empty'); c.colSpan = 5; body.append(tr); }
   r.list.forEach((u, i) => {
     const tr = document.createElement('tr');
-    if(rank){ td(tr, P.off + i + 1, 'r'); const c = td(tr, u.id); tags(c, u); td(tr, u.best, 'r'); td(tr, u.wins, 'r'); td(tr, u.losses, 'r'); td(tr, 'LV ' + levelOf(u.xp).level, 'r'); td(tr, tierName(u.elo) + ' ' + u.elo, 'r'); td(tr, u.pvp_w + '승 ' + u.pvp_l + '패', 'r'); td(tr, u.n_w + '승 ' + u.n_l + '패', 'r'); }
-    else { const c = td(tr, u.id); tags(c, u); td(tr, u.best, 'r'); td(tr, u.wins, 'r'); td(tr, u.losses, 'r'); td(tr, 'LV ' + levelOf(u.xp).level, 'r'); td(tr, tierName(u.elo) + ' ' + u.elo, 'r'); td(tr, u.pvp_w + '승 ' + u.pvp_l + '패', 'r'); td(tr, u.n_w + '승 ' + u.n_l + '패', 'r'); td(tr, fmtDate(u.created)); }
+    if(rank){ td(tr, P.off + i + 1, 'r'); const c = td(tr, u.id); tags(c, u); td(tr, u.best, 'r'); td(tr, u.wins, 'r'); td(tr, u.losses, 'r'); }
+    else { const c = td(tr, u.id); tags(c, u); td(tr, u.best, 'r'); td(tr, u.wins, 'r'); td(tr, u.losses, 'r'); td(tr, fmtDate(u.created)); }
     tr.addEventListener('click', () => openUser(u.id)); body.append(tr);
   });
   const p = rank ? 'r' : 'u';
   $(p + 'pinfo').textContent = r.total ? (P.off + 1) + '–' + Math.min(P.off + P.n, r.total) + ' / ' + r.total : '';
   $(p + 'prev').disabled = P.off === 0; $(p + 'next').disabled = P.off + P.n >= r.total;
 }
-const MSTATUS = { rated:'반영', disputed:'불일치', fast:'시간 부족', limit:'반복 대전(보상 없음)', void:'무효/취소' };
 async function loadMatches(){
-  const P = PAGE.matches, r = await admin('matches', { limit: P.n, offset: P.off, status: $('mstatus').value });
+  const P = PAGE.matches, r = await admin('matches', { limit: P.n, offset: P.off });
   if(!r.ok) return say(ERR[r.error] || '불러오지 못했습니다');
   const body = $('mbody'); body.textContent = '';
-  if(!r.list.length){ const tr = document.createElement('tr'); const c = td(tr, '대전 기록이 없습니다', 'empty'); c.colSpan = 10; body.append(tr); }
-  for(const e of r.list){ const tr = document.createElement('tr'); tr.style.cursor = 'default'; td(tr, fmtDate(e.at)); td(tr, e.mode === 'ranked' ? '랭크' : '일반'); td(tr, e.p1); td(tr, e.p2); td(tr, e.winner || '-'); const c = td(tr, (MSTATUS[e.status] || e.status) + (e.status === 'rated' && e.pct < 100 ? ' (' + e.pct + '%)' : '') + (e.lft ? ' · ' + (e.lft === 'host' ? '방장' : '손님') + ' 나감(AI)' : '')); if(e.status === 'disputed') c.style.color = 'var(--red)'; else if(e.status !== 'rated') c.style.color = 'var(--dim)';
-    const sg = n => (n > 0 ? '+' : '') + n;
-    td(tr, e.status === 'rated' && e.mode === 'ranked' ? e.e1 + ' → ' + (e.e1 + e.d1) + ' (' + sg(e.d1) + ')  /  ' + e.e2 + ' → ' + (e.e2 + e.d2) + ' (' + sg(e.d2) + ')' : '-', 'r'); td(tr, e.status === 'rated' ? '+' + e.xp1 + ' / +' + e.xp2 : '-', 'r'); td(tr, e.ms ? (e.ms / 1000).toFixed(1) + '초' : '-', 'r');
-    const last = document.createElement('td'); last.className = 'r';
-    if(e.status === 'rated') last.append(el('button', { className:'danger', textContent:'취소', style:'padding:3px 10px', onclick: async () => { if(!confirm(e.p1 + ' vs ' + e.p2 + ' 경기를 취소하고 점수·전적을 되돌릴까요?')) return; try{ const x = await admin('voidmatch', { id:e.id }); if(x.ok){ say('경기를 취소하고 점수를 되돌렸습니다', true); load(); } else say(ERR[x.error] || x.error || '거절되었습니다'); }catch(err){ say(err.message); } } }));
-    tr.append(last); body.append(tr); }
+  if(!r.list.length){ const tr = document.createElement('tr'); const c = td(tr, '대전 기록이 없습니다', 'empty'); c.colSpan = 5; body.append(tr); }
+  for(const e of r.list){ const tr = document.createElement('tr'); tr.style.cursor = 'default'; td(tr, fmtDate(e.at)); td(tr, e.p1); td(tr, e.p2); td(tr, e.winner || '-'); const c = td(tr, e.status === 'agreed' ? '일치' : '불일치'); if(e.status !== 'agreed') c.style.color = 'var(--red)'; body.append(tr); }
   $('mpinfo').textContent = r.list.length ? (P.off + 1) + '–' + (P.off + r.list.length) : '';
   $('mprev').disabled = P.off === 0; $('mnext').disabled = r.list.length < P.n;
 }
@@ -246,10 +232,9 @@ async function loadLog(){
 }
 const pager = (kind, prev, next) => { $(prev).addEventListener('click', () => { PAGE[kind].off = Math.max(0, PAGE[kind].off - PAGE[kind].n); load(); }); $(next).addEventListener('click', () => { PAGE[kind].off += PAGE[kind].n; load(); }); };
 pager('users', 'uprev', 'unext'); pager('rank', 'rprev', 'rnext'); pager('matches', 'mprev', 'mnext'); pager('log', 'lprev', 'lnext');
-$('uref').addEventListener('click', () => { PAGE.users.off = 0; load(); }); $('rref').addEventListener('click', load); $('mref').addEventListener('click', load); $('mstatus').addEventListener('change', () => { PAGE.matches.off = 0; load(); }); $('lref').addEventListener('click', load);
+$('uref').addEventListener('click', () => { PAGE.users.off = 0; load(); }); $('rref').addEventListener('click', load); $('mref').addEventListener('click', load); $('lref').addEventListener('click', load);
 $('uq').addEventListener('keydown', e => { if(e.key === 'Enter'){ PAGE.users.off = 0; load(); } });
 $('usort').addEventListener('change', () => { PAGE.users.off = 0; load(); });
-$('rsort').addEventListener('change', () => { PAGE.rank.off = 0; load(); });
 
 /* ---------- 유저 상세 / 관리 ---------- */
 function el(tag, props, ...kids){ const e = document.createElement(tag); Object.assign(e, props || {}); for(const k of kids) e.append(k); return e; }
@@ -261,20 +246,17 @@ async function openUser(id){
   box.append(el('button', { className:'close', textContent:'닫기', onclick: () => $('modal').classList.add('hidden') }), el('h2', { textContent: u.id }));
   const sub = el('div', { className:'sub' }); sub.textContent = (u.banned ? '정지된 계정' : u.admin ? '관리자 계정' : '일반 계정'); box.append(sub);
   const dl = el('dl'); const row = (k, v) => dl.append(el('dt', { textContent:k }), el('dd', { textContent:v }));
-  row('캐릭터', u.char); row('베스트 스테이지', u.best + (u.rank ? '  (현재 랭킹 ' + u.rank + '위)' : '')); row('전적', u.wins + '승 ' + u.losses + '패'); { const L = levelOf(u.xp); row('레벨', 'LV ' + L.level + '  (' + L.into + ' / ' + L.need + ' XP, 누적 ' + u.xp + ')'); }
-  row('랭크전', tierName(u.elo) + '  ' + u.elo + '  ·  ' + (u.pvp_rank ? u.pvp_rank + '위  ·  ' : '') + u.pvp_w + '승 ' + u.pvp_l + '패'); row('일반전', u.n_w + '승 ' + u.n_l + '패'); row('가입일', fmtDate(u.created)); row('로그인 중인 기기', u.sessions + '대');
+  row('캐릭터', u.char); row('베스트 스테이지', u.best + (u.rank ? '  (현재 랭킹 ' + u.rank + '위)' : '')); row('전적', u.wins + '승 ' + u.losses + '패'); row('가입일', fmtDate(u.created)); row('로그인 중인 기기', u.sessions + '대');
   row('마지막 스테이지 시작', u.stage_at ? 'STAGE ' + u.stage_lv + ' · ' + fmtDate(u.stage_at) : '-');
   box.append(dl);
   const msg = el('div', { className:'msg' }); const done = async (p, okText) => { try{ const x = await p; if(x.ok){ say(okText, true); $('modal').classList.add('hidden'); load(); } else msg.textContent = ERR[x.error] || x.error || '거절되었습니다'; }catch(e){ msg.textContent = e.message; } };
   if(u.admin){ box.append(el('div', { className:'small', textContent:'관리자 계정은 서버가 변경을 막고 있습니다 (보기만 가능).' })); }
   else {
     const num = (v, w) => el('input', { type:'number', min:0, value:v, className: w || '' });
-    const elo = num(u.elo), pw = num(u.pvp_w), pl = num(u.pvp_l), xp = num(u.xp), best = num(u.best), wins = num(u.wins), losses = num(u.losses), npw = el('input', { type:'text', className:'w', placeholder:'새 임시 비밀번호', maxLength:100, autocomplete:'off' }), reason = el('input', { type:'text', className:'w', placeholder:'사유(선택)', maxLength:100 }), conf = el('input', { type:'text', className:'w', placeholder:'아이디를 그대로 입력', autocomplete:'off' });
+    const best = num(u.best), wins = num(u.wins), losses = num(u.losses), npw = el('input', { type:'text', className:'w', placeholder:'새 임시 비밀번호', maxLength:100, autocomplete:'off' }), reason = el('input', { type:'text', className:'w', placeholder:'사유(선택)', maxLength:100 }), conf = el('input', { type:'text', className:'w', placeholder:'아이디를 그대로 입력', autocomplete:'off' });
     const act = (label, input, btn) => box.append(el('div', { className:'act' }, el('label', { textContent:label }), ...input, btn));
     act('베스트 스테이지', [best], el('button', { className:'gold', textContent:'변경', onclick: () => done(admin('setbest', { target:u.id, best:best.value }), '베스트 스테이지를 바꿨습니다') }));
     act('전적', [wins, el('span', { textContent:'승', className:'small' }), losses, el('span', { textContent:'패', className:'small' })], el('button', { className:'gold', textContent:'변경', onclick: () => done(admin('setrecord', { target:u.id, wins:wins.value, losses:losses.value }), '전적을 바꿨습니다') }));
-    act('경험치', [xp], el('span', { textContent:'XP — 아래 랭크 레이팅 줄의 변경 버튼으로 함께 저장됩니다', className:'small' }));
-    act('랭크 레이팅', [elo, pw, el('span', { textContent:'승', className:'small' }), pl, el('span', { textContent:'패', className:'small' })], el('button', { className:'gold', textContent:'변경', onclick: () => done(admin('setelo', { target:u.id, elo:elo.value, pvp_w:pw.value, pvp_l:pl.value, xp:xp.value }), '레이팅과 경험치를 바꿨습니다') }));
     act('비밀번호 초기화', [npw], el('button', { textContent:'초기화', onclick: () => { if(npw.value.length < 4) return msg.textContent = ERR.short_pw; done(admin('resetpw', { target:u.id, npw:npw.value }), '비밀번호를 바꾸고 모든 기기에서 로그아웃시켰습니다'); } }));
     act(u.banned ? '정지 해제' : '정지', u.banned ? [] : [reason], el('button', { className: u.banned ? '' : 'danger', textContent: u.banned ? '해제' : '정지', onclick: () => done(admin('ban', { target:u.id, banned:!u.banned, reason:reason.value }), u.banned ? '정지를 풀었습니다' : '정지했습니다 (모든 기기에서 로그아웃, 랭킹에서 제외)') }));
     act('계정 삭제', [conf], el('button', { className:'danger', textContent:'영구 삭제', onclick: () => { if(conf.value.toLowerCase() !== u.id.toLowerCase()) return msg.textContent = '확인을 위해 아이디를 정확히 입력해 주세요'; done(admin('delete', { target:u.id }), '계정을 삭제했습니다'); } }));
