@@ -36,7 +36,7 @@
   #menu .sub #continueBtn{grid-column:1/-1}
   #menu .sub [hidden]{display:none}
   #menu .sub .ghost{padding:calc(var(--u)*9) 0;border-radius:calc(var(--u)*8);letter-spacing:calc(var(--u)*1);white-space:nowrap;text-align:center}
-  #menu .tag{position:absolute;left:0;right:0;bottom:calc(var(--u)*24);text-align:center;font-size:max(10px,calc(var(--u)*9.5));letter-spacing:calc(var(--u)*3);white-space:nowrap;color:#6d7490;pointer-events:none;border-top:1px solid rgba(255,255,255,.14);padding-top:calc(var(--u)*10)}
+  #menu .tag{position:absolute;left:0;right:0;bottom:calc(var(--u)*58);text-align:center;font-size:max(10px,calc(var(--u)*9.5));letter-spacing:calc(var(--u)*3);white-space:nowrap;color:#6d7490;pointer-events:none;border-top:1px solid rgba(255,255,255,.14);padding-top:calc(var(--u)*10)}
   .ghost{background:rgba(8,10,22,.6);border:1px solid rgba(255,255,255,.2);border-radius:calc(var(--u)*16);padding:calc(var(--u)*7) calc(var(--u)*20);color:#c4c9da;font-family:inherit;font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*2);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
   .ghost:hover,.ghost:focus-visible{color:#fff;border-color:rgba(255,255,255,.55);background:rgba(20,24,44,.75);outline:none}
   .ghost.gold{color:#ffd166;border-color:rgba(255,209,102,.45)}
@@ -112,7 +112,18 @@
   /* ----- 오른쪽 위: 이름 표시 / CrazyGames 로그인 버튼 (게스트일 때만 버튼) ----- */
   #menu .chip{width:auto;min-width:calc(var(--u)*136);max-width:calc(var(--u)*260)}
   #menu .chip.static{pointer-events:none;cursor:default;background:transparent}
-  #menu .privacy{position:absolute;left:0;right:0;bottom:calc(var(--u)*5);text-align:center;font-size:max(10px,calc(var(--u)*7.5));line-height:1.35;color:#596080;pointer-events:none}
+  #menu .privacy{position:absolute;left:0;right:0;bottom:calc(var(--u)*3);text-align:center;font-size:max(10px,calc(var(--u)*7.5));line-height:1.35;color:#69718f;pointer-events:none}
+  #menu .privacy button{pointer-events:auto;cursor:pointer;background:none;border:0;padding:0;margin:0;font:inherit;color:#9aa6d0;text-decoration:underline;text-underline-offset:2px}
+  #menu .privacy button:hover,#menu .privacy button:focus-visible{color:#fff;outline:none}
+  #priv{position:absolute;inset:0;font-family:system-ui,'Segoe UI',Arial,sans-serif;color:#f2f2f2;background:rgba(2,3,10,.72);pointer-events:auto;animation:menuIn .25s ease both}
+  #priv.hidden{display:none}
+  #priv .panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(var(--u)*610);max-width:96%;max-height:94%;box-sizing:border-box;display:flex;flex-direction:column;padding:calc(var(--u)*18) calc(var(--u)*24) calc(var(--u)*14);background:rgba(6,8,20,.95);border:1px solid rgba(255,255,255,.16);border-radius:calc(var(--u)*14);box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.6)}
+  #priv h2{margin:0 0 calc(var(--u)*8);font-size:max(14px,calc(var(--u)*19));font-weight:700;letter-spacing:calc(var(--u)*6)}
+  #priv .txt{overflow-y:auto;min-height:0;font-size:max(10.5px,calc(var(--u)*11.5));line-height:1.45;color:#c4c9da;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
+  #priv .txt h3{margin:calc(var(--u)*9) 0 calc(var(--u)*2);font-size:max(10.5px,calc(var(--u)*11.5));color:#fff;letter-spacing:calc(var(--u)*1)}
+  #priv .txt p,#priv .txt ul{margin:0 0 calc(var(--u)*3)} #priv .txt ul{padding-left:1.2em}
+  #priv .foot{display:flex;justify-content:space-between;align-items:center;gap:calc(var(--u)*10);margin-top:calc(var(--u)*10);padding-top:calc(var(--u)*10);border-top:1px solid rgba(255,255,255,.12);font-size:max(10px,calc(var(--u)*9.5));color:#7e849a}
+  #priv .foot .ghost{pointer-events:auto;font-size:max(11px,calc(var(--u)*12));padding:calc(var(--u)*7) calc(var(--u)*18);white-space:nowrap}
   .ghost kbd{display:inline-block;margin-left:calc(var(--u)*8);padding:0 calc(var(--u)*5);border:1px solid currentColor;border-radius:calc(var(--u)*4);font:inherit;font-size:max(9px,.78em);line-height:1.5;opacity:.75}
   /* ----- 결과 화면 버튼 / 일시정지 (캔버스 위 HTML) ----- */
   #over,#pause{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Segoe UI',Arial,sans-serif;color:#f2f2f2}
@@ -151,11 +162,31 @@
       </div>
       <div class="toast" id="toast"></div>
       <div class="tag">FIGHT. CLIMB. BE THE BEST.</div>
-      <div class="privacy" id="privacy"></div>
+      <div class="privacy"><span id="privacy"></span><button id="privBtn" type="button">Privacy</button></div>
     </div>
   </div>
   <!-- 결과 화면 버튼: 승리 → 다음 상대 / 패배 → 이어하기, (가끔) 광고 보고 체력 가득 이어하기, 메인 화면 -->
   <div id="over" class="hidden"><div class="btns" id="overBtns"></div><div class="note" id="overNote"></div></div>
+  <!-- 개인정보 안내 (메인 화면의 Privacy 링크) -->
+  <div id="priv" class="hidden" role="dialog" aria-label="Privacy">
+    <div class="panel">
+      <h2>PRIVACY</h2>
+      <div class="txt" id="privTxt">
+        <p>UPBOX is a single-player game. We keep your data to a minimum.</p>
+        <h3>If you play as a guest</h3>
+        <p>On CrazyGames, nothing about you is stored on our server. Your best round and chosen fighter stay on your device (and are kept by CrazyGames if you are logged in there).</p>
+        <h3>If you log in with CrazyGames</h3>
+        <p>We store, on our server:</p>
+        <ul><li>your CrazyGames user ID and username</li><li>your best round, chosen fighter, and win / loss counts</li></ul>
+        <p>We use this only to keep your progress and to show the ranking. Your username and best round are visible to other players in the ranking. We do not collect your email address or any other profile data.</p>
+        <h3>Other</h3>
+        <ul><li>Ads are shown through the CrazyGames SDK. UPBOX does not run its own ads, analytics or trackers.</li><li>Like any web service, our host (Cloudflare) processes your IP address to deliver requests and prevent abuse.</li></ul>
+        <h3>Deleting your data</h3>
+        <p>To have your account and ranking entry deleted, contact the developer through the UPBOX page on CrazyGames.</p>
+      </div>
+      <div class="foot"><span>Last updated 2026-11-08</span><button class="ghost gold" id="privClose" type="button">CLOSE <kbd>ESC</kbd></button></div>
+    </div>
+  </div>
   <!-- 일시정지 (P) -->
   <div id="pause" class="hidden"><div class="box"><div class="ttl">PAUSED</div><button class="ghost gold" id="resumeBtn" type="button">RESUME <kbd>P</kbd></button><button class="ghost" id="quitBtn" type="button">MAIN MENU <kbd>M</kbd></button></div></div>
   <!-- 랭킹 화면: 베스트 스테이지가 높은 순서. 열려 있는 동안 1.2초마다 서버를 확인해 바뀌면 바로 갱신한다 -->
@@ -2008,6 +2039,10 @@ addEventListener('keydown', e => {
   audio();
   if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code)) e.preventDefault();     // 게임 화면(과 CrazyGames 페이지)이 스크롤되지 않게
   if(game.state === 'auth' || CG.adBusy) return;                     // 광고가 나오는 동안은 아무 키도 받지 않는다
+  if(privOpen()){                                                    // 개인정보 창이 열려 있으면 ESC / Enter 로 닫기만 하고 다른 키는 모두 무시
+    if(e.code === 'Escape' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Backspace'){ e.preventDefault(); if(!e.repeat) setPriv(false); }
+    return;
+  }
   if(game.state === 'charsel'){                         // 캐릭터 선택: ← → (또는 A D)로 고르고, Enter / ESC / Backspace 로 메인 화면 복귀. 게임 키는 모두 무시
     if(e.code === 'ArrowLeft' || e.code === 'KeyA'){ pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 2) % 3]); }
     else if(e.code === 'ArrowRight' || e.code === 'KeyD'){ pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 1) % 3]); }
@@ -2104,7 +2139,7 @@ function showMenu(){
   chip.title = login ? 'Log in to keep your progress on every device and join the ranking' : '';
   const nx = Math.min(99, (game.best || 0) + 1);
   $('continueBtn').hidden = !((game.best || 0) > 0); $('continueBtn').textContent = 'CONTINUE  ·  ROUND ' + nx + '  (HP ' + RUN.cont + ')';
-  $('privacy').textContent = game.token ? 'Your player name and best round are stored on the UPBOX server for the ranking.' : '';
+  $('privacy').textContent = game.token ? 'Your player name and best round are stored on the UPBOX server for the ranking. · ' : '';
   $('menu').classList.remove('hidden');
   if(document.activeElement && document.activeElement !== document.body) document.activeElement.blur();   // Enter 가 마지막에 누른 버튼이 아니라 PLAY 로 가게
   refreshMenuRank();
@@ -2192,6 +2227,7 @@ function closeRank(){ stopRank(); if(game.state === 'ranking') toTitle(); }
 document.addEventListener('visibilitychange', () => { if(!document.hidden) pollRank(true); });   // 탭으로 돌아오면 즉시 최신화
 function hideMenu(){ $('menu').classList.add('hidden'); }
 function toTitle(){
+  if(privOpen()) setPriv(false);
   game.paused = false; game.adWait = false; $('pause').classList.add('hidden'); hideResult();
   P = mk(250, 1, true, 1, game.char); E = mk(710, -1, false, 1, cpuChar(1));   // 메인 화면에서는 두 캐릭터를 멀찍이 세워 가운데에 PLAY 버튼 자리를 만든다 (왼쪽은 내가 고른 캐릭터)
   parts.length = rings.length = texts.length = stars.length = 0; buf = [];
@@ -2203,6 +2239,11 @@ $('continueBtn').addEventListener('click', () => { audio(); if(game.state === 't
 $('rankBtn').addEventListener('click', () => { audio(); openRank(); });
 $('rankBack').addEventListener('click', () => { audio(); closeRank(); });
 $('resumeBtn').addEventListener('click', () => { audio(); setPause(false); });
+const privOpen = () => !$('priv').classList.contains('hidden');
+function setPriv(on){ $('priv').classList.toggle('hidden', !on); if(on){ $('privTxt').scrollTop = 0; $('privClose').focus(); } else if(document.activeElement && document.activeElement !== document.body) document.activeElement.blur(); }
+$('privBtn').addEventListener('click', () => { audio(); if(game.state === 'title') setPriv(true); });
+$('privClose').addEventListener('click', () => { audio(); setPriv(false); });
+$('priv').addEventListener('click', e => { if(e.target === $('priv')) setPriv(false); });
 $('quitBtn').addEventListener('click', () => { audio(); setPause(false); toTitle(); });
 
 /* ---------- 일시정지 ---------- */
