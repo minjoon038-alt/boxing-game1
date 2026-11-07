@@ -2,3 +2,4 @@ users.json
 sessions.json
 worker/node_modules/
 worker/.wrangler/
+dist/

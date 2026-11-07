@@ -1,12 +1,14 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>BOXING</title>
+<title>UPBOX</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- CrazyGames SDK v3: gameplay events, ads, mute setting, CrazyGames account. Outside CrazyGames its environment is 'disabled' and the game does not use it -->
+<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
 <style>
   html,body{margin:0;height:100%;background:#0b0b0f;overflow:hidden}
-  body{display:flex;align-items:center;justify-content:center}
+  body{display:flex;align-items:center;justify-content:center;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   :root{--cw:min(100vw,calc(100vh*16/9));--u:calc(var(--cw)/960)}   /* --u: 캔버스 폭 1/960 (메인 화면 글자/버튼을 화면 크기에 맞춰 키우고 줄이는 단위) */
   #wrap{position:relative;width:var(--cw);aspect-ratio:16/9;background:#0e0e13}
   canvas{width:100%;height:100%;display:block}
@@ -29,8 +31,10 @@
   #menu .play:hover,#menu .play:focus-visible{filter:brightness(1.35);transform:skewX(-14deg) scale(1.04);box-shadow:0 0 calc(var(--u)*34) rgba(140,120,255,.65);outline:none}
   #menu .play:active{transform:skewX(-14deg) scale(.98)}
   #menu .enter{position:absolute;left:0;right:0;top:calc(var(--u)*304);text-align:center;font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*3);color:#8d93a8;pointer-events:none}
-  #menu .sub{position:absolute;left:0;right:0;top:calc(var(--u)*338);display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*8)}
-  #menu .sub #matchBtn{grid-column:1/-1}
+  #menu .sub{position:absolute;left:0;right:0;top:calc(var(--u)*338);display:grid;grid-template-columns:repeat(6,1fr);gap:calc(var(--u)*8)}
+  #menu .sub .ghost{grid-column:span 3}
+  #menu .sub #continueBtn{grid-column:1/-1}
+  #menu .sub [hidden]{display:none}
   #menu .sub .ghost{padding:calc(var(--u)*9) 0;border-radius:calc(var(--u)*8);letter-spacing:calc(var(--u)*1);white-space:nowrap;text-align:center}
   #menu .tag{position:absolute;left:0;right:0;bottom:calc(var(--u)*24);text-align:center;font-size:calc(var(--u)*9.5);letter-spacing:calc(var(--u)*3);white-space:nowrap;color:#6d7490;pointer-events:none;border-top:1px solid rgba(255,255,255,.14);padding-top:calc(var(--u)*10)}
   .ghost{background:rgba(8,10,22,.6);border:1px solid rgba(255,255,255,.2);border-radius:calc(var(--u)*16);padding:calc(var(--u)*7) calc(var(--u)*20);color:#c4c9da;font-family:inherit;font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*2);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
@@ -100,85 +104,25 @@
   #chars .stat.p .bar i{background:#ff5a5f} #chars .stat.s .bar i{background:#8de0c4} #chars .stat.r .bar i{background:#ffd166}
   #chars .mv{margin-top:calc(var(--u)*7);font-size:calc(var(--u)*10.5);color:#9aa0b4;line-height:1.5}
   #chars .mv b{color:#e6e9f5;font-weight:700}
-  /* ----- 스테이지 선택 창 (랭킹 창과 같은 모양) ----- */
-  #stages{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .4s ease both}
-  #stages.hidden{display:none}
-  #stages .panel{pointer-events:auto;position:absolute;left:50%;top:calc(var(--u)*108);transform:translateX(-50%);width:calc(var(--u)*400);height:calc(var(--u)*388);box-sizing:border-box;padding:calc(var(--u)*16) calc(var(--u)*18) calc(var(--u)*14);background:rgba(6,8,20,.86);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);-webkit-backdrop-filter:blur(calc(var(--u)*5));backdrop-filter:blur(calc(var(--u)*5));box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55);display:flex;flex-direction:column}
-  #stages .head{display:flex;align-items:center;justify-content:space-between}
-  #stages .ttl{font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*8);padding-left:calc(var(--u)*2)}
-  #stages .sub{font-size:calc(var(--u)*11);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166}
-  #stages .grid{flex:1;min-height:0;margin-top:calc(var(--u)*12);padding:calc(var(--u)*4) calc(var(--u)*2);display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:calc(var(--u)*46);gap:calc(var(--u)*8);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
-  #stages .stb{font-family:inherit;font-size:calc(var(--u)*17);font-weight:700;border-radius:calc(var(--u)*10);cursor:pointer;color:#e6e9f5;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);transition:background .15s,border-color .15s,transform .12s}
-  #stages .stb.clear:hover,#stages .stb.clear:focus-visible{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.55);outline:none;transform:translateY(calc(var(--u)*-1))}
-  #stages .stb.next{color:#241a00;background:#ffd166;border-color:#ffd166;box-shadow:0 0 calc(var(--u)*14) rgba(255,209,102,.35)}
-  #stages .stb.next:hover,#stages .stb.next:focus-visible{background:#ffe29a;outline:none;transform:translateY(calc(var(--u)*-1))}
-  #stages .stb.lock{cursor:default;color:#4a5068;background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.07)}
-  #stages .foot{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*10);margin-top:calc(var(--u)*10);padding-top:calc(var(--u)*10);border-top:1px solid rgba(255,255,255,.12)}
-  #stages .foot .ghost{flex:none;white-space:nowrap}
-  #stages .mine{font-size:calc(var(--u)*11.5);color:#9aa0b4;line-height:1.5;min-width:0;flex:1}
-  /* ----- 멀티플레이 창 / 안내 문구 ----- */
+  /* ----- 안내 문구 (메인 화면) ----- */
   #menu .toast{position:absolute;left:0;right:0;top:calc(var(--u)*430);text-align:center;font-size:calc(var(--u)*13);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;opacity:0;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.9);transition:opacity .4s}
   #menu .toast.on{opacity:1}
-  #mp{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .4s ease both}
-  #mp.hidden{display:none}
-  #mp .hide{display:none !important}
-  #mp .panel{pointer-events:auto;position:absolute;left:50%;top:calc(var(--u)*128);transform:translateX(-50%);width:calc(var(--u)*400);box-sizing:border-box;padding:calc(var(--u)*18) calc(var(--u)*22) calc(var(--u)*16);background:rgba(6,8,20,.88);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);-webkit-backdrop-filter:blur(calc(var(--u)*5));backdrop-filter:blur(calc(var(--u)*5));box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55)}
-  #mp .head{display:flex;align-items:center;justify-content:space-between}
-  #mp .ttl{font-size:calc(var(--u)*17);font-weight:700;letter-spacing:calc(var(--u)*6)}
-  #mp .live{font-size:calc(var(--u)*10);font-weight:700;letter-spacing:calc(var(--u)*2);color:#7e849a}
-  #mp .body{display:flex;flex-direction:column;align-items:center;margin-top:calc(var(--u)*20)}
-  #mp .lbl{font-size:calc(var(--u)*12);color:#aab0c4;letter-spacing:calc(var(--u)*1)}
-  #mp input{margin-top:calc(var(--u)*12);width:calc(var(--u)*230);box-sizing:border-box;text-align:center;padding:calc(var(--u)*10) 0 calc(var(--u)*10) calc(var(--u)*14);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.22);border-radius:calc(var(--u)*10);color:#fff;font-family:inherit;font-size:calc(var(--u)*30);font-weight:700;letter-spacing:calc(var(--u)*14);outline:none}
-  #mp input:focus{border-color:#ffd166}
-  #mp input::placeholder{color:#3d4256}
-  #mp .code{margin-top:calc(var(--u)*12);font-size:calc(var(--u)*40);font-weight:800;letter-spacing:calc(var(--u)*12);padding-left:calc(var(--u)*12);color:#ffd166;text-shadow:0 0 calc(var(--u)*16) rgba(255,209,102,.35);user-select:all}
-  #mp .go{margin-top:calc(var(--u)*14)}
-  #mp .status{min-height:calc(var(--u)*34);margin-top:calc(var(--u)*14);text-align:center;font-size:calc(var(--u)*12.5);line-height:1.5;color:#c4c9da}
-  #mp .status.err{color:#ff7b80}
-  #mp .foot{display:flex;justify-content:center;margin-top:calc(var(--u)*6);padding-top:calc(var(--u)*12);border-top:1px solid rgba(255,255,255,.12)}
-  #auth{position:fixed;inset:0;display:flex;align-items:center;justify-content:flex-start;padding-left:calc(50vw - var(--cw)/2 + var(--u)*44);box-sizing:border-box;transition:opacity .45s ease;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2}
-  #auth.hidden{display:none}
-  #auth.fade{opacity:0;pointer-events:none}
-  #auth .box{width:300px;max-width:86vw}
-  #auth h1{margin:0 0 28px;text-align:center;font-weight:200;font-size:44px;letter-spacing:14px;padding-left:14px}
-  #auth .tabs{display:flex;margin-bottom:18px;border-bottom:1px solid #2a2a35}
-  #auth .tab{flex:1;padding:10px 0;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;color:#5f5f6e;font-weight:600;font-size:13px;font-family:inherit;letter-spacing:2px;cursor:pointer}
-  #auth .tab.on{color:#f2f2f2;border-bottom-color:#f2f2f2}
-  #auth label{display:block;font-size:11px;letter-spacing:2px;color:#5f5f6e;margin:14px 0 6px}
-  #auth input{width:100%;box-sizing:border-box;padding:10px 12px;background:transparent;border:1px solid #2a2a35;border-radius:6px;color:#f2f2f2;font-size:14px;font-family:inherit;outline:none}
-  #auth input:focus{border-color:#f2f2f2}
-  #auth .submit{width:100%;margin-top:22px;padding:11px;background:#f2f2f2;color:#0e0e13;border:0;border-radius:6px;font-weight:700;font-size:13px;font-family:inherit;letter-spacing:3px;cursor:pointer}
-  #auth .submit:hover{background:#fff}
-  #auth .msg{min-height:20px;margin-top:14px;font-size:13px;font-weight:600;text-align:center;color:#ff5a5f}
-  #auth .msg.ok{color:#ffd166}
-  #auth .hint{margin-top:6px;font-size:11px;color:#5f5f6e;text-align:center}
-  /* ----- 프로필 창: 메인 화면 오른쪽 위의 아이디 칩을 누르면 열린다 ----- */
   #menu .chip{pointer-events:auto;cursor:pointer;background:rgba(8,10,22,.55);font-family:inherit;transition:border-color .15s,background .15s,color .15s}
   #menu .chip:hover,#menu .chip:focus-visible{border-color:rgba(255,255,255,.6);background:rgba(20,24,44,.8);color:#fff;outline:none}
-  #profile{position:absolute;inset:0;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .3s ease both;background:rgba(2,3,10,.55)}
-  #profile.hidden{display:none}
-  #profile .panel{position:absolute;left:50%;top:calc(var(--u)*52);transform:translateX(-50%);width:calc(var(--u)*400);box-sizing:border-box;padding:calc(var(--u)*16) calc(var(--u)*22) calc(var(--u)*14);background:rgba(6,8,20,.92);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55)}
-  #profile .ttl{display:flex;align-items:center;justify-content:space-between;font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*8);padding-left:calc(var(--u)*2);padding-bottom:calc(var(--u)*12);border-bottom:1px solid rgba(255,255,255,.12)}
-  #profile .row{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*12);min-height:calc(var(--u)*37);border-bottom:1px solid rgba(255,255,255,.07)}
-  #profile .k{flex:none;width:calc(var(--u)*92);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a}
-  #profile .v{flex:1;min-width:0;font-size:calc(var(--u)*15);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  #profile .v.pw{font-family:Consolas,'Courier New',monospace;letter-spacing:calc(var(--u)*2)}
-  #profile .v.gold{color:#ffd166}
-  #profile .ghost{flex:none;white-space:nowrap;padding:calc(var(--u)*5) calc(var(--u)*12);font-size:calc(var(--u)*11)}
-  #profile [hidden]{display:none !important}
-  #profile .v.dim{color:#8d93a8;font-weight:500;font-size:calc(var(--u)*12)}
-  #profile .foot{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*8);margin-top:calc(var(--u)*6);padding-top:calc(var(--u)*12);border-top:1px solid rgba(255,255,255,.12)}
-  #profile .foot .acts{display:flex;gap:calc(var(--u)*8)}
-  #profile .ghost.danger{color:#ff8a8f;border-color:rgba(255,90,95,.45)}
-  #profile .ghost.danger:hover,#profile .ghost.danger:focus-visible{color:#fff;border-color:#ff5a5f;background:rgba(90,16,22,.7)}
-  #profile .pfmsg{min-height:calc(var(--u)*18);margin-top:calc(var(--u)*6);font-size:calc(var(--u)*11.5);font-weight:600;line-height:1.4;color:#ff5a5f}
-  #profile .pfmsg.ok{color:#ffd166}
-  #profile form label{display:block;margin-top:calc(var(--u)*10);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a}
-  #profile form input{display:block;width:100%;box-sizing:border-box;margin-top:calc(var(--u)*5);padding:calc(var(--u)*9) calc(var(--u)*11);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:calc(var(--u)*8);color:#fff;font:inherit;font-size:calc(var(--u)*14);outline:none}
-  #profile form input:focus{border-color:#7da2ff;background:rgba(255,255,255,.09)}
-  #profile form .note{margin-top:calc(var(--u)*10);font-size:calc(var(--u)*11.5);line-height:1.6;color:#c4c9da}
-  #profile form .note b{color:#ff8a8f}
-  #profile form .foot{justify-content:flex-end}
+  /* ----- 오른쪽 위: 이름 표시 / CrazyGames 로그인 버튼 (게스트일 때만 버튼) ----- */
+  #menu .chip{width:auto;min-width:calc(var(--u)*136);max-width:calc(var(--u)*260)}
+  #menu .chip.static{pointer-events:none;cursor:default;background:transparent}
+  #menu .privacy{position:absolute;left:0;right:0;bottom:calc(var(--u)*5);text-align:center;font-size:calc(var(--u)*7.5);line-height:1.35;color:#596080;pointer-events:none}
+  .ghost kbd{display:inline-block;margin-left:calc(var(--u)*8);padding:0 calc(var(--u)*5);border:1px solid currentColor;border-radius:calc(var(--u)*4);font:inherit;font-size:.78em;line-height:1.5;opacity:.75}
+  /* ----- 결과 화면 버튼 / 일시정지 (캔버스 위 HTML) ----- */
+  #over,#pause{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Segoe UI',Arial,sans-serif;color:#f2f2f2}
+  #over.hidden,#pause.hidden{display:none}
+  #over .btns{position:absolute;left:0;right:0;top:calc(var(--u)*312);display:flex;justify-content:center;gap:calc(var(--u)*12)}
+  #over .ghost,#pause .ghost{pointer-events:auto;font-size:calc(var(--u)*13);padding:calc(var(--u)*10) calc(var(--u)*18);min-width:calc(var(--u)*170);border-radius:calc(var(--u)*10);white-space:nowrap}
+  #over .note{position:absolute;left:0;right:0;top:calc(var(--u)*366);text-align:center;font-size:calc(var(--u)*11.5);color:#9aa0b4}
+  #pause{background:rgba(2,3,10,.62);pointer-events:auto}
+  #pause .box{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*12)}
+  #pause .ttl{font-size:calc(var(--u)*34);font-weight:200;letter-spacing:calc(var(--u)*12);padding-left:calc(var(--u)*12);margin-bottom:calc(var(--u)*8)}
   /* ----- 첫 로딩 화면: 그림/캐릭터가 모두 불러와지기 전에는 게임 화면(뼈대 캐릭터 등)이 보이지 않도록 덮어 둔다 ----- */
   #boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#05060d;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;transition:opacity .5s ease}
   #boot.out{opacity:0;pointer-events:none}
@@ -189,140 +133,60 @@
 </style>
 </head>
 <body>
-<div id="boot"><h1>BOXING</h1><div class="bar"><i></i></div><div class="msg">LOADING</div></div>
+<div id="boot"><h1>UPBOX</h1><div class="bar"><i></i></div><div class="msg">LOADING</div></div>
 <div id="wrap">
   <canvas id="c" width="960" height="540"></canvas>
-  <!-- 메인 화면: 로그인 후 가장 먼저 보이고, PLAY를 누르면 게임이 시작된다 -->
+  <!-- 메인 화면: 가장 먼저 보이고, PLAY 를 누르면 바로 STAGE 1 이 시작된다 -->
   <div id="menu" class="hidden">
-    <button class="chip" id="menuChip" type="button" title="내 프로필"></button>
+    <button class="chip static" id="menuChip" type="button"></button>
     <div class="col">
-      <div class="logo"><b>BOXING</b></div>
+      <div class="logo"><b>UPBOX</b></div>
       <div class="who"><div class="id" id="menuUser"></div><div class="best" id="menuBest"></div><div class="chr" id="menuChar"></div></div>
       <button class="play" id="playBtn" type="button"><span>▶ PLAY</span></button>
-      <div class="enter">또는 ENTER</div>
+      <div class="enter">or press ENTER</div>
       <div class="sub">
-        <button class="ghost gold" id="matchBtn" type="button">랜덤 매칭</button>
-        <button class="ghost" id="stageBtn" type="button">스테이지</button>
-        <button class="ghost" id="charBtn" type="button">캐릭터</button>
-        <button class="ghost gold" id="rankBtn" type="button">랭킹</button>
-        <button class="ghost" id="hostBtn" type="button">방 만들기</button>
-        <button class="ghost" id="joinBtn" type="button">멀티플레이</button>
-        <button class="ghost" id="logoutBtn" type="button">로그아웃</button>
+        <button class="ghost gold" id="continueBtn" type="button" hidden>CONTINUE</button>
+        <button class="ghost" id="charBtn" type="button">CHARACTER</button>
+        <button class="ghost gold" id="rankBtn" type="button">RANKING</button>
       </div>
-      <div class="toast" id="mpToast"></div>
+      <div class="toast" id="toast"></div>
       <div class="tag">FIGHT. CLIMB. BE THE BEST.</div>
+      <div class="privacy" id="privacy"></div>
     </div>
   </div>
-  <!-- 프로필 창: 아이디, 비밀번호(기본은 가려 둠 → '보기'로 확인), 캐릭터, 기록, 전적. 비밀번호 변경 / 계정 삭제 -->
-  <div id="profile" class="hidden">
-    <div class="panel">
-      <div class="ttl">PROFILE<button class="ghost gold" id="pfAdmin" type="button" hidden>관리자 페이지</button></div>
-      <div id="pfView">
-        <div class="row"><span class="k">ID</span><span class="v" id="pfId"></span></div>
-        <div class="row"><span class="k">PASSWORD</span><span class="v pw" id="pfPw"></span><button class="ghost" id="pfPwBtn" type="button">보기</button></div>
-        <div class="row"><span class="k">CHARACTER</span><span class="v" id="pfChar"></span></div>
-        <div class="row"><span class="k">BEST STAGE</span><span class="v gold" id="pfBest"></span></div>
-        <div class="row"><span class="k">RANK</span><span class="v" id="pfRank"></span></div>
-        <div class="row"><span class="k">RECORD</span><span class="v" id="pfRecord"></span></div>
-        <div class="row"><span class="k">JOINED</span><span class="v" id="pfJoined"></span></div>
-        <div class="pfmsg" id="pfMsg"></div>
-        <div class="foot">
-          <div class="acts"><button class="ghost" id="pfChPw" type="button">비밀번호 변경</button><button class="ghost danger" id="pfDel" type="button">계정 삭제</button></div>
-          <button class="ghost" id="pfBack" type="button">← 메인 (ESC)</button>
-        </div>
-      </div>
-      <form id="pfPwForm" hidden autocomplete="off">
-        <label for="pfCur">현재 비밀번호</label><input id="pfCur" type="password" maxlength="100" autocomplete="current-password">
-        <label for="pfNew">새 비밀번호 (4자 이상)</label><input id="pfNew" type="password" maxlength="40" autocomplete="new-password">
-        <label for="pfNew2">새 비밀번호 확인</label><input id="pfNew2" type="password" maxlength="40" autocomplete="new-password">
-        <div class="pfmsg" id="pfPwMsg"></div>
-        <div class="foot"><button class="ghost" id="pfPwCancel" type="button">취소 (ESC)</button><button class="ghost gold" id="pfPwSave" type="submit">변경하기</button></div>
-      </form>
-      <form id="pfDelForm" hidden autocomplete="off">
-        <div class="note"><b>계정을 삭제하면 되돌릴 수 없습니다.</b><br>아이디, 베스트 스테이지, 랭킹 기록, 전적이 모두 사라지고 랭킹에서도 빠집니다.</div>
-        <label for="pfDelPw">비밀번호를 입력해 확인하세요</label><input id="pfDelPw" type="password" maxlength="100" autocomplete="current-password">
-        <div class="pfmsg" id="pfDelMsg"></div>
-        <div class="foot"><button class="ghost" id="pfDelCancel" type="button">취소 (ESC)</button><button class="ghost danger" id="pfDelGo" type="submit">영구 삭제</button></div>
-      </form>
-    </div>
-  </div>
-  <!-- 멀티플레이 창: 방 만들기(6자리 코드 생성) / 멀티플레이(친구의 6자리 코드 입력). 두 PC가 인터넷으로 직접 연결된다 -->
-  <div id="mp" class="hidden">
-    <div class="panel">
-      <div class="head"><span class="ttl" id="mpTtl">MULTIPLAYER</span><span class="live" id="mpLive"></span></div>
-      <div id="mpJoin" class="body">
-        <div class="lbl">친구가 알려 준 방 코드 6자리를 입력하세요</div>
-        <input id="mpCode" inputmode="numeric" maxlength="6" autocomplete="off" spellcheck="false" placeholder="000000">
-        <button class="ghost gold go" id="mpGo" type="button">입장</button>
-      </div>
-      <div id="mpHost" class="body">
-        <div class="lbl">친구에게 이 코드를 알려 주세요</div>
-        <div class="code" id="mpShow">------</div>
-        <button class="ghost go" id="mpCopy" type="button">코드 복사</button>
-      </div>
-      <div class="status" id="mpMsg"></div>
-      <div class="foot"><button class="ghost" id="mpBack" type="button">← 메인 (ESC)</button></div>
-    </div>
-  </div>
+  <!-- 결과 화면 버튼: 승리 → 다음 상대 / 패배 → 이어하기, (가끔) 광고 보고 체력 가득 이어하기, 메인 화면 -->
+  <div id="over" class="hidden"><div class="btns" id="overBtns"></div><div class="note" id="overNote"></div></div>
+  <!-- 일시정지 (P) -->
+  <div id="pause" class="hidden"><div class="box"><div class="ttl">PAUSED</div><button class="ghost gold" id="resumeBtn" type="button">RESUME <kbd>P</kbd></button><button class="ghost" id="quitBtn" type="button">MAIN MENU <kbd>M</kbd></button></div></div>
   <!-- 랭킹 화면: 베스트 스테이지가 높은 순서. 열려 있는 동안 1.2초마다 서버를 확인해 바뀌면 바로 갱신한다 -->
   <div id="rank" class="hidden">
     <div class="panel">
       <div class="head"><span class="ttl">RANKING</span><span class="live" id="rankLive">CONNECTING</span></div>
-      <div class="cols"><span>순위</span><span>아이디</span><span>베스트 스테이지</span></div>
+      <div class="cols"><span>RANK</span><span>PLAYER</span><span>BEST STAGE</span></div>
       <ol id="rankList"></ol>
-      <div class="empty" id="rankEmpty">불러오는 중…</div>
+      <div class="empty" id="rankEmpty">Loading…</div>
       <div class="foot">
         <div class="mine" id="rankMine"></div>
-        <button class="ghost" id="rankBack" type="button">← 메인 (ESC)</button>
-      </div>
-    </div>
-  </div>
-  <!-- 스테이지 선택 창: 깬 스테이지 + 다음 스테이지까지 열려 있고, 누르면 그 스테이지부터 시작 -->
-  <div id="stages" class="hidden">
-    <div class="panel">
-      <div class="head"><span class="ttl">STAGE</span><span class="sub" id="stSub"></span></div>
-      <div class="grid" id="stGrid"></div>
-      <div class="foot">
-        <div class="mine" id="stMine"></div>
-        <button class="ghost" id="stBack" type="button">← 메인 (ESC)</button>
+        <button class="ghost" id="rankBack" type="button">← MENU</button>
       </div>
     </div>
   </div>
   <!-- 캐릭터 선택 창: 카드(또는 ← →)로 고르면 바로 저장되고, 메인 화면의 내 캐릭터가 바뀐다 -->
   <div id="chars" class="hidden">
-    <div class="ttl">CHARACTER<small>카드를 눌러 선택 · ← → 키 · Enter / ESC 로 메인</small></div>
-    <button class="ghost done" id="charsBack" type="button">← 메인 (ESC)</button>
+    <div class="ttl">CHARACTER<small>Click a card or use ← → · ENTER to go back</small></div>
+    <button class="ghost done" id="charsBack" type="button">← MENU</button>
     <div class="card" data-ch="outfighter"></div>
     <div class="card" data-ch="infighter"></div>
     <div class="card" data-ch="slugger"></div>
   </div>
 </div>
-<div id="auth">
-  <form class="box" id="authForm" autocomplete="off">
-    <h1>BOXING</h1>
-    <div class="tabs">
-      <button type="button" class="tab on" data-mode="login">로그인</button>
-      <button type="button" class="tab" data-mode="signup">가입하기</button>
-    </div>
-    <label for="uid">ID</label>
-    <input id="uid" maxlength="12" autocomplete="username" spellcheck="false">
-    <label for="upw">PASSWORD</label>
-    <input id="upw" type="password" maxlength="40" autocomplete="current-password">
-    <div id="pw2wrap" style="display:none">
-      <label for="upw2">PASSWORD 확인</label>
-      <input id="upw2" type="password" maxlength="40" autocomplete="new-password">
-    </div>
-    <div class="msg" id="authMsg"></div>
-    <button class="submit" id="authSubmit" type="submit">로그인</button>
-    <div class="hint" id="authHint">가입한 계정으로 로그인하세요</div>
-  </form>
-</div>
 <script>
-/* 진단용: 게임 스크립트가 실행되지 않거나 오류가 나면 로그인 화면의 메시지 줄에 원인을 표시한다 */
+/* 게임 스크립트가 실행 중 오류로 멈추면, 끝없이 로딩하는 대신 로딩 화면에 원인을 보여 준다 */
 (function(){
-  function show(t){ var m = document.getElementById('authMsg'); if(m) m.textContent = t; }
-  window.addEventListener('error', function(e){ show('오류: ' + e.message + (e.lineno ? ' (줄 ' + e.lineno + ')' : '')); });
-  window.addEventListener('load', function(){ if(!window.__boxingReady) show('게임 스크립트가 실행되지 않았습니다 (' + location.protocol + ')'); });
+  window.addEventListener('error', function(e){
+    if(window.__boxingReady || /crazygames/i.test(e.filename || '')) return;
+    var m = document.querySelector('#boot .msg'); if(m){ m.textContent = 'ERROR: ' + e.message + (e.lineno ? ' (line ' + e.lineno + ')' : ''); m.style.letterSpacing = '1px'; m.style.color = '#ff7b80'; }
+  });
 })();
 </script>
 <script>
@@ -418,8 +282,8 @@ const HIT_FEEL = {
 const SKILL_BASE = { windup:.22, active:.14, recover:.46, dmg:34, stamina:0, stun:1.0, kb:560, glove:'rear', lean:36, name:'skill', cg:0, gm:3, launch:300, pierce:true, style:'skill' };
 const CHARS = {
   outfighter: {                                    // 사정거리가 길고 가볍게 치고 빠지는 타입. 회피는 뒤로 물러남
-    key:'outfighter', name:'아웃파이터', tag:'OUT-FIGHTER', desc:'긴 사정거리로 거리를 재며 싸운다. 회피는 뒤로 물러난다.',
-    hp:93, stunMul:.8, mv:{ f:200, b:170 }, dodge:'back', dodgeCd:.75, labels:['잽','스트레이트','어퍼컷'],
+    key:'outfighter', name:'OUT-FIGHTER', tag:'LONG RANGE', desc:'Keeps the distance with long punches. Dodges by stepping back.',
+    hp:93, stunMul:.8, mv:{ f:200, b:170 }, dodge:'back', dodgeCd:.75, labels:['Jab','Straight','Uppercut'],
     ai:{ retreat:1, strong:.3, upper:0, delay:.3 },
     look:{ crouch:0, lean:6, shR:13.5, hipR:17, headR:21, armW:11, legW:14, gloveS:1, armTh:70, neck:false, sprite:'out',     // sprite: 쓰는 캐릭터 그림 (SPR), sprS: 그림 크기 배율
            lead:{ x:74, y:-155 }, rear:{ x:62, y:-160 }, guard:{ lean:0, crouch:8, lead:{ x:66, y:-184 }, rear:{ x:55, y:-178 } } },   // lead/rear = 그림 속 글러브 위치
@@ -431,8 +295,8 @@ const CHARS = {
     }
   },
   infighter: {                                     // 낮은 자세로 파고들어 짧고 강하게 치는 타입. 회피는 앞으로 더킹하며 돌진
-    key:'infighter', name:'인파이터', tag:'IN-FIGHTER', desc:'낮은 자세로 파고들어 바디·훅·어퍼를 몰아친다. 회피는 앞으로 더킹하며 돌진한다.',
-    hp:97, mv:{ f:215, b:140 }, dodge:'dash', dashV:340, dodgeCd:.85, labels:['바디','훅','어퍼컷'],         // 펀치가 아웃파이터보다 25~30% 강한 대신 체력이 조금 적다 (AI 대 AI 시뮬레이션으로 맞춘 값)
+    key:'infighter', name:'IN-FIGHTER', tag:'CLOSE RANGE', desc:'Gets inside with body shots, hooks and uppercuts. Dodges by ducking forward.',
+    hp:97, mv:{ f:215, b:140 }, dodge:'dash', dashV:340, dodgeCd:.85, labels:['Body','Hook','Uppercut'],         // 펀치가 아웃파이터보다 25~30% 강한 대신 체력이 조금 적다 (AI 대 AI 시뮬레이션으로 맞춘 값)
     ai:{ retreat:.15, strong:.5, upper:.25, delay:1 },
     look:{ crouch:14, lean:16, shR:16.5, hipR:20.5, headR:21, armW:13, legW:15, gloveS:1.04, armTh:46, neck:false, sprite:'in',
            lead:{ x:72, y:-155 }, rear:{ x:25, y:-148 }, guard:{ lean:10, crouch:6, lead:{ x:58, y:-180 }, rear:{ x:44, y:-172 } } },
@@ -444,8 +308,8 @@ const CHARS = {
     }
   },
   slugger: {                                       // 느리지만 한 방이 가장 강한 타입. 회피는 제자리에서 숙이기만 한다
-    key:'slugger', name:'슬러거', tag:'SLUGGER', desc:'펀치가 느리고 텀이 길지만 한 방이 가장 강하다. 회피는 제자리에서 숙인다.',
-    hp:104, mv:{ f:175, b:135 }, dodge:'duck', dodgeCd:.75, labels:['잽','스트레이트','어퍼컷'],
+    key:'slugger', name:'SLUGGER', tag:'HEAVY HITTER', desc:'Slow punches with long recovery, but the hardest hitter. Dodges by ducking in place.',
+    hp:104, mv:{ f:175, b:135 }, dodge:'duck', dodgeCd:.75, labels:['Jab','Straight','Uppercut'],
     ai:{ retreat:.3, strong:.55, upper:.15, delay:1.9 },
     look:{ crouch:0, lean:8, shR:17.5, hipR:20, headR:22, armW:14, legW:16, gloveS:1.16, armTh:70, neck:true, sprite:'slug', sprS:1.04,   // sprite: 쓰는 캐릭터 그림 (SPR), sprS: 그림 크기 배율
            lead:{ x:78, y:-167 }, rear:{ x:27, y:-160 }, guard:{ lean:2, crouch:8, lead:{ x:63, y:-194 }, rear:{ x:48, y:-186 } } },
@@ -465,7 +329,60 @@ const ATTACK_SLOTS = ['jab', 'straight', 'uppercut'];
 const cpuChar = level => CHAR_KEYS[(level - 1) % 3];
 
 const game = { state:'auth', user:null, char:'outfighter', level:1, shake:0, freeze:0, slow:0, flash:0, t:0, introT:0, koT:0, zoom:0, kick:0 };
-const net = { on:false, role:'', panel:false, sub:'', names:['', ''], vote:{ me:false, peer:false }, rematch(){} };      // 멀티플레이 상태 (실제 동작은 맨 아래 멀티플레이 모듈). 평소엔 꺼져 있어 싱글 게임에는 영향이 없다
+/* ---------- CrazyGames SDK ----------
+   CrazyGames 안에서만 켜진다 (environment 'crazygames', 내 PC 의 localhost 시험은 'local'). 다른 곳(GitHub Pages 등)은 'disabled' 라서 아무것도 부르지 않는다.
+   - 게임 진행 신호: 실제로 싸우는 동안만 gameplayStart, 결과 화면 · 메뉴 · 일시정지 · 광고 중에는 gameplayStop
+   - 광고: 상대를 이긴 뒤 다음 상대가 나오기 전(중간 광고 — 너무 잦은 요청은 CrazyGames 가 알아서 무시한다),
+           졌을 때 '광고 보고 체력 가득 이어하기'(보상형, 매번 권하지 않고 3분에 한 번까지). 광고 없이 이어하기(체력 RUN.cont)는 언제나 가능
+   - 소리: CrazyGames 설정의 음소거, 그리고 광고가 실제로 나오는 동안은 소리를 끈다
+   - 계정: CrazyGames 에 로그인한 사람은 자동으로 서버 계정에 연결(랭킹). 게스트는 이 기기(Data 모듈)에만 저장하고 바로 플레이 */
+const CG = { on:false, sdk:null, env:'disabled', muted:false, adMute:false, adBusy:false, adblock:false, loggedIn:false, playing:false, loading:false, assets:false, deaths:0, offeredAt:-9, lastReward:-1e9 };
+CG.call = fn => { if(!CG.on) return; try{ const r = fn(CG.sdk); if(r && r.catch) r.catch(e => console.warn('CrazyGames SDK', e)); }catch(e){ console.warn('CrazyGames SDK', e); } };
+CG.init = async () => {
+  const sdk = window.CrazyGames && window.CrazyGames.SDK;
+  if(!sdk) return;
+  try{
+    await Promise.race([sdk.init(), new Promise((ok, no) => setTimeout(() => no(new Error('timeout')), 8000))]);
+    CG.env = sdk.environment; CG.sdk = sdk;
+    CG.on = CG.env === 'crazygames' || CG.env === 'local';
+  }catch(e){ console.warn('CrazyGames SDK unavailable', e); CG.on = false; }
+  if(!CG.on) return;
+  if(!CG.assets){ CG.loading = true; CG.call(s => s.game.loadingStart()); }
+  const apply = () => { try{ CG.muted = !!(sdk.game.settings && sdk.game.settings.muteAudio); }catch(e){} applyMute(); };
+  apply(); CG.call(s => s.game.addSettingsChangeListener(apply));
+  CG.call(s => s.ad.hasAdblock().then(v => { CG.adblock = !!v; }));
+  CG.call(s => s.user.addAuthListener(u => { if(u && !CG.loggedIn) accountStart(); }));     // 게스트가 플레이 중에 CrazyGames 에 로그인했다
+};
+CG.assetsReady = () => { CG.assets = true; if(CG.loading){ CG.loading = false; CG.call(s => s.game.loadingStop()); } };
+function cgPlaying(on){ if(on === CG.playing) return; CG.playing = on; CG.call(s => on ? s.game.gameplayStart() : s.game.gameplayStop()); }
+function soundOff(){ return CG.muted || CG.adMute; }
+function applyMute(){
+  if(!AC) return;
+  try{ if(soundOff() && AC.state === 'running') AC.suspend(); else if(!soundOff() && AC.state === 'suspended') AC.resume(); }catch(e){}
+}
+// 광고 요청: done(성공 여부, 오류 코드). 소리는 광고가 실제로 시작될 때만 끄고(요청만으로는 끄지 않음), 끝나거나 실패하면 다시 켠다. 그동안 게임은 멈춰 있다
+function requestAd(type, done){
+  if(!CG.on){ done(false, 'off'); return; }
+  CG.adBusy = true;
+  let fin = false, started = false, guard = 0;
+  const end = (ok, err) => { if(fin) return; fin = true; clearTimeout(guard); CG.adBusy = false; CG.adMute = false; applyMute(); done(ok, err); };
+  guard = setTimeout(() => { if(!started) end(false, 'timeout'); }, 12000);          // 광고가 시작도 안 하고 응답이 없으면 그냥 계속한다
+  try{
+    CG.sdk.ad.requestAd(type, {
+      adStarted: () => { started = true; CG.adMute = true; applyMute(); },
+      adFinished: () => end(true),
+      adError: e => end(false, e && e.code || 'other'),
+    });
+  }catch(e){ end(false, 'other'); }
+}
+// 키 이름은 키보드 배열에 맞춰 보여 준다 (예: 프랑스 AZERTY 에서는 A 자리 키가 Q). 판정은 키의 위치(e.code)라서 어느 배열이든 같은 자리의 키로 조작한다
+const KEYLBL = {};
+const keyLabel = code => KEYLBL[code] || (code.startsWith('Key') ? code.slice(3) : code);
+try{
+  if(navigator.keyboard && navigator.keyboard.getLayoutMap) navigator.keyboard.getLayoutMap().then(m => {
+    for(const c of ['KeyA', 'KeyD', 'KeyJ', 'KeyK', 'KeyL', 'KeyU', 'KeyS', 'KeyP', 'KeyM', 'KeyV']){ const v = m.get(c); if(v && /^[a-z]$/i.test(v)) KEYLBL[c] = v.toUpperCase(); }
+  }).catch(() => {});
+}catch(e){}
 let P, E, PV = [];                               // PV: 캐릭터 선택 화면에 세워 두는 미리보기 파이터 3명
 const parts = [], rings = [], texts = [], stars = [];
 
@@ -474,7 +391,7 @@ let AC = null;
 function audio(){
   try{
     if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
-    if(AC.state === 'suspended') AC.resume();
+    applyMute();                                       // 음소거 중이 아니면 (사용자 입력 순간에) 소리를 다시 켠다
   }catch(e){}
 }
 // 모든 소리는 컴프레서를 거쳐 나가서 타격음이 뭉쳐서 묵직하게 들린다
@@ -560,7 +477,7 @@ function sweepNoise(dur, f0, f1, vol, curve=2){               // 필터가 열�
    ① 로우패스 노이즈(몸통 충격) ② 일정한 서브 베이스(무게) ③ 글러브 패딩 중저음 ④ 짧은 '탁' 순간음 ⑤ 몇십 ms 뒤 작은 되울림 ⑥ 강타는 잔향 을 조합한다.
    combo: 연속으로 맞을수록 아주 조금씩 높고 날카로워진다(최대 +7%). */
 function sfx(k, p=1, combo=0){
-  if(!AC) return;
+  if(!AC || soundOff()) return;
   try{
     const j = .94 + Math.random()*.12, cj = 1 + Math.min(5, combo)*.014;
     if(k === 'thud' || k === 'hit') k = 'hit_straight';        // 예전 이름 호환
@@ -654,15 +571,25 @@ function setState(f, s){ f.state = s; f.t = 0; }
 
 // 스테이지가 시작되면 서버에 티켓을 요청한다. 서버는 티켓이 있어야, 그리고 실제 한 판이 걸릴 만한 시간이 지난 뒤에만 클리어/승리를 인정한다 (조작된 요청으로 기록을 올리는 것을 막는다)
 function stageTicket(level){
-  if(net.on || !game.token || game.autoP) return;
+  if(!game.token || game.autoP) return;
   const go = n => api('/api/stage', { token: game.token, level }).catch(() => { if(n > 0) setTimeout(() => go(n - 1), 2000); });   // 접속이 잠깐 끊겼으면 한 번 더 시도
   go(1);
 }
-function start(level){
-  hideMenu(); stageTicket(level);
+/* ---------- 연속 대전 (한 판씩 새로 시작하지 않는다) ----------
+   상대를 쓰러뜨리면 잠시 뒤 다음 상대가 슥 들어온다. 내 체력은 그대로 이어지고(조금만 회복), 스태미나/가드만 새로 찬다.
+   쓰러지면 '이어하기' 로 같은 스테이지를 체력 RUN.cont 로 다시 시작한다. 처음부터 시작하려면 메인 화면의 PLAY. */
+const RUN = { heal: lv => 8, cont: 50 };               // heal: 상대를 이길 때마다 회복하는 체력 / cont: 이어하기 체력 (밸런스 시뮬레이션으로 정한 값)
+function nextOpponent(){ start(Math.min(99, game.level + 1), { hp: P.hp + RUN.heal(game.level), slide: true }); }
+function continueRun(level){ start(level, { hp: RUN.cont, slide: true }); }
+function start(level, opts){
+  opts = opts || {};
+  hideMenu(); hideResult(); stageTicket(level);
+  game.paused = false; game.adWait = false; $('pause').classList.add('hidden');
   game.level = level; game.newBest = false; game.rank = null; game.saveError = null; game.escAt = 0;
   P = mk(310, 1, true, 1, game.char);
+  if(typeof opts.hp === 'number') P.hp = P.lag = Math.max(1, Math.min(P.maxhp, opts.hp));         // 이어지는 체력
   E = mk(650, -1, false, level, cpuChar(level));
+  game.slide = !!opts.slide;                                         // 다음 상대가 오른쪽에서 슥 들어온다
   // 스테이지가 올라가도 CPU의 체력·공격력·이동속도는 그대로(그 캐릭터의 기본값). 달라지는 건 AI의 '실력'뿐이다 (aiProfile 참고)
   E.spd = 1;
   // 10스테이지부터 CPU 체력이 오른다: 10~19 → 110, 20~29 → 120, 30 이상 → 130 (이후 고정). 공격력/속도는 그대로
@@ -876,7 +803,7 @@ function resolve(a, d, k){
 function koCheck(a, d, dir){
   if(d.hp > 0 || d.state === 'ko') return;
   d.hp = 0; setState(d,'ko'); d.vx = dir*420; if(d.player) buf.length = 0;
-  if(!net.on){ if(d.player) reportResult(false); else { recordWin(); reportResult(true); } }
+  if(d.player) reportResult(false); else { recordWin(); reportResult(true); }
   game.state = 'ko'; game.koT = 0; game.slow = 1.5; game.freeze = .22; game.shake = 24; game.flash = .5;
   sfx('ko');
 }
@@ -1097,9 +1024,10 @@ function runAI(f, o, dt){
 
 /* ---------- 업데이트 ---------- */
 function step(dt){
+  if(game.paused || CG.adBusy) return;                 // 일시정지 / 광고 중에는 시간이 멈춘다
   game.t += dt;
   if(game.state === 'ko') game.koT += dt;
-  if(game.state === 'ko' && P.hp <= 0 && game.koT > 3.6 && !net.on){ toTitle(); return; }   // 패배하면 잠시 결과를 보여준 뒤 자동으로 메인 화면으로 (Enter로 바로 넘어갈 수도 있음)
+  if(game.state === 'ko' && E.hp <= 0 && P.hp > 0 && game.koT > 3.2){ advanceRun(); if(game.state !== 'ko') return; }   // 이기면 잠시 뒤 다음 상대가 나온다 (버튼/Enter 로 바로 넘어갈 수도 있음)
   game.shake *= Math.pow(.0008, dt);
   game.flash = Math.max(0, game.flash - dt);
 
@@ -1123,6 +1051,7 @@ function step(dt){
 
   if(game.state === 'intro'){
     game.introT += dt; P.bob += dt*5; E.bob += dt*5;
+    if(game.slide) E.x = lerp(1080, 650, easeOut(Math.min(1, game.introT/.8)));
     if(game.introT > .9 && !game.bell){ game.bell = true; sfx('bell'); }
     if(game.introT > 1.6){ game.state = 'fight'; game.bell = false; }
     return;
@@ -1211,6 +1140,15 @@ const sprVY = f => sprOn(f) ? SPR_VY*(f.cd.look.sprS || 1)*(SPR[f.cd.look.sprite
     const c = document.createElement('canvas');
     c.width = Math.round(img.naturalWidth*BG.scale); c.height = Math.round(img.naturalHeight*BG.scale);
     const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, c.width, c.height);
+    try{                                                       // 그림 속 전광판의 'BOXING' 글자를 'UPBOX' 로 덮어쓴다 (전광판 바탕색을 그림에서 직접 찍어 와서 칠한다)
+      const k = c.width / img.naturalWidth, px = g.getImageData(Math.round(500*k), Math.round(300*k), 1, 1).data;
+      g.save(); g.scale(k, k);
+      g.fillStyle = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')'; g.fillRect(536, 252, 358, 84);
+      g.fillStyle = '#e4e7f4'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '300 68px system-ui, "Segoe UI", Arial, sans-serif';
+      if('letterSpacing' in g) g.letterSpacing = '30px';
+      g.fillText('UPBOX', 722, 294);
+      g.restore();
+    }catch(e){}
     BG.canvas = c;
   };
   img.src = 'ring-bg.webp';
@@ -1822,9 +1760,9 @@ function drawBar(x, w, y, h, f, right){
 }
 
 function drawKeys(){
-  const me = net.on && net.role === 'guest' ? E : P;
+  const me = P, K = keyLabel;
   const lb = me && me.cd ? me.cd.labels : CHARS.outfighter.labels;        // 선택한 캐릭터의 기술 이름 (인파이터는 바디/훅/어퍼컷)
-  const items = [['A','D','이동'],['J',lb[0]],['K',lb[1]],['L',lb[2]],['U','카운터 스킬'],['S','가드'],['SPACE','회피'],['A/D','SPACE','코너 피벗']];
+  const items = [[K('KeyA'),K('KeyD'),'Move'],[K('KeyJ'),lb[0]],[K('KeyK'),lb[1]],[K('KeyL'),lb[2]],[K('KeyU'),'Counter'],[K('KeyS'),'Guard'],['SPACE','Dodge'],[K('KeyP'),'Pause']];
   ctx.font = `500 12px ${FONT}`;
   let total = 0; const widths = items.map(it => {
     const caps = it.slice(0,-1); let w = 0;
@@ -1896,10 +1834,10 @@ function draw(){
 
   // 코너 탈출 안내: 내가 코너에서 펀치가 닿는 거리에 몰려 있고 피벗을 쓸 수 있을 때만 머리 위에 깜빡이는 키 안내를 띄운다
   if(game.state === 'fight' && P && E){
-    const me = net.on && net.role === 'guest' ? E : P, op = me === P ? E : P, pd = me.state === 'idle' ? pivotDir(me, op) : 0;
+    const me = P, op = E, pd = me.state === 'idle' ? pivotDir(me, op) : 0;
     if(pd && pivotReady(me, op)){
       ctx.globalAlpha = .8 + .2*Math.sin(game.t*9);
-      txt((pd > 0 ? 'D ▶' : '◀ A') + '  +  SPACE   피벗', me.x, GY - 222, 14, '#ffe08a', 'center', 800, 2);
+      txt((pd > 0 ? keyLabel('KeyD') + ' ▶' : '◀ ' + keyLabel('KeyA')) + '  +  SPACE   PIVOT', me.x, GY - 222, 14, '#ffe08a', 'center', 800, 2);
       ctx.globalAlpha = 1;
     }
   }
@@ -1959,53 +1897,35 @@ function draw(){
   if(game.state !== 'title' && game.state !== 'auth' && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel' && P && E){
     drawBar(40, 380, 36, 7, P, false);
     drawBar(W-40-380, 380, 36, 7, E, true);
-    const meE = net.on && net.role === 'guest';                // 멀티플레이에서 손님은 오른쪽(E)을 조종한다
-    if(net.on){
-      txt(net.names[0] + '  ·  ' + P.cd.name + (meE ? '' : '  (YOU)'), 40, 20, 14, COL.fg, 'left', 700, 2);
-      txt(net.names[1] + '  ·  ' + E.cd.name + (meE ? '  (YOU)' : ''), W-40, 20, 14, COL.red, 'right', 700, 2);
-      txt('VS', W/2, 22, 13, COL.dim, 'center', 600, 5);
-    } else {
-      txt((game.user || 'YOU') + '  ·  ' + P.cd.name, 40, 20, 14, COL.fg, 'left', 700, 2);
-      txt('CPU  LV ' + game.level + '  ·  ' + E.cd.name, W-40, 20, 14, COL.red, 'right', 700, 2);
-      txt('STAGE ' + game.level, W/2, 22, 13, COL.dim, 'center', 600, 5);
-    }
-    if(P.cg >= 100) txt('COUNTER READY' + (meE ? '' : ' — U'), 40, 86, 13, Math.sin(game.t*14) > 0 ? '#fff' : COL.gold, 'left', 700, 2);
-    if(E.cg >= 100) txt('COUNTER READY' + (meE ? ' — U' : ''), W-40, 86, 13, COL.red, 'right', 700, 2);
+    txt((game.user || 'YOU') + '  ·  ' + P.cd.name, 40, 20, 14, COL.fg, 'left', 700, 2);
+    txt('CPU  LV ' + game.level + '  ·  ' + E.cd.name, W-40, 20, 14, COL.red, 'right', 700, 2);
+    txt('STAGE ' + game.level, W/2, 22, 13, COL.dim, 'center', 600, 5);
+    if(P.cg >= 100) txt('COUNTER READY — ' + keyLabel('KeyU'), 40, 86, 13, Math.sin(game.t*14) > 0 ? '#fff' : COL.gold, 'left', 700, 2);
+    if(E.cg >= 100) txt('COUNTER READY', W-40, 86, 13, COL.red, 'right', 700, 2);
     if(P.combo >= 2) txt('COMBO x' + P.combo, 40, 108, 16, COL.gold, 'left', 700, 2);
     if(E.combo >= 2) txt('COMBO x' + E.combo, W-40, 108, 16, COL.red, 'right', 700, 2);
   }
 
   // 메인 화면의 버튼/계정 정보는 HTML(#menu)이 그린다. 배경 이미지가 없을 때만 제목을 직접 그린다
-  if(game.state === 'title' && !BG.canvas) txt('BOXING', W/2, 110, 70, COL.fg, 'center', 200, 18);
+  if(game.state === 'title' && !BG.canvas) txt('UPBOX', W/2, 110, 70, COL.fg, 'center', 200, 18);
   if(game.state === 'intro'){
-    const s = game.introT < .9 ? (net.on ? 'READY' : 'STAGE ' + game.level) : 'FIGHT!';
+    const s = game.introT < .9 ? 'STAGE ' + game.level : 'FIGHT!';
     txt(s, W/2, 170, game.introT < .9 ? 54 : 74, game.introT < .9 ? COL.fg : COL.gold, 'center', 300, 12);
   }
   if(game.state === 'ko' && game.koT > .15){
     const u = Math.min(1, (game.koT-.15)/.2);
     txt('K.O.', W/2, 160, 110*(1.3 - .3*easeOut(u)), COL.fg, 'center', 800, 8);
-    if(game.koT > 1.8 && net.on){
-      const win = (net.role === 'guest' ? P : E).hp <= 0;       // 멀티플레이: 내 상대가 쓰러졌으면 승리
-      txt(win ? '승리' : '패배', W/2, 245, 22, win ? COL.gold : COL.red, 'center', 600, 8);
-      txt(net.vote.me ? '상대의 수락을 기다리는 중…' : net.vote.peer ? 'ENTER — 재대결 (상대가 기다리고 있어요)' : 'ENTER — 재대결', W/2, 280, 14, '#aab0c4', 'center', 500, 4);
-      txt('C — 캐릭터 변경   ·   R — 랭킹   ·   ESC — 메인 화면', W/2, 306, 12, '#8d93a8', 'center', 500, 3);
-      if(net.peer) txt('나 ' + CHARS[game.char].name + '   ·   상대 ' + CHARS[net.peer.ch].name, W/2, 332, 12, '#8d93a8', 'center', 500, 2);
-    }
-    else if(game.koT > 1.8){
+    if(game.koT > 1.8){                      // 결과 (버튼은 HTML #over)
       const win = E.hp <= 0;
-      txt(win ? '승리' : '패배', W/2, 245, 22, win ? COL.gold : COL.red, 'center', 600, 8);
-      let enterY = 280;
-      if(win && game.saveError){            // 기록이 저장되지 않은 경우를 숨기지 않고 알린다
-        txt(game.saveError === 'session' ? '기록 저장 실패 — 다시 로그인해 주세요' : '서버에 연결할 수 없어 기록을 저장하지 못했습니다 (다음 승리 때 함께 저장)', W/2, 276, 13, COL.red, 'center', 700, 1); enterY = 308;
-      } else if(win && game.newBest){
-        txt(game.rank ? `NEW BEST  STAGE ${game.level}   ·   랭킹 #${game.rank}` : `NEW BEST  STAGE ${game.level}`, W/2, 276, 15, COL.gold, 'center', 700, 2); enterY = 308;
-      }
-      txt(win ? 'ENTER — 다음 상대' : 'ENTER — 메인 화면으로', W/2, enterY, 14, '#aab0c4', 'center', 500, 4);
-      if(win) txt('ESC — 메인 화면', W/2, enterY + 26, 12, '#8d93a8', 'center', 500, 3);
+      txt(win ? 'YOU WIN' : 'YOU LOSE', W/2, 236, 22, win ? COL.gold : COL.red, 'center', 600, 8);
+      let info = '', col = COL.gold;
+      if(win && game.saveError){ info = game.saveError === 'session' ? 'Record not saved — please reload the game' : 'Could not reach the server — the record will be saved with your next win'; col = COL.red; }
+      else if(win && game.newBest) info = 'NEW BEST  STAGE ' + game.level + (game.rank ? '   ·   RANK #' + game.rank : '');
+      if(info) txt(info, W/2, 266, 14, col, 'center', 700, 2);
+      if(win) txt('HP ' + Math.round(P.hp) + ' → ' + Math.round(Math.min(P.maxhp, P.hp + RUN.heal(game.level))) + '   ·   the next opponent is coming', W/2, 290, 12, '#aab0c4', 'center', 500, 2);
+      else txt('Continue from STAGE ' + game.level, W/2, 290, 12, '#aab0c4', 'center', 500, 2);
     }
   }
-  if((game.state === 'fight' || game.state === 'intro') && game.escAt && performance.now() - game.escAt < 2000)
-    txt('ESC 한 번 더 — 메인 화면으로 나가기', W/2, 150, 14, COL.gold, 'center', 700, 2);
   if(game.state !== 'auth' && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel' && !titleArt) drawKeys();
 }
 
@@ -2013,62 +1933,46 @@ function draw(){
 addEventListener('keydown', e => {
   if(e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
   audio();
-  if(game.state === 'auth') return;
-  if(!$('profile').classList.contains('hidden')){        // 프로필 창이 열려 있으면 ESC / Enter / Backspace 로 닫기만 하고 다른 키는 모두 무시
-    if(e.code === 'Escape'){ e.preventDefault(); if(PF.mode === 'view') closeProfile(); else pfMode('view'); }
-    else if(PF.mode === 'view' && (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Backspace')){ e.preventDefault(); if(!(e.target && e.target.tagName === 'BUTTON' && e.code !== 'Backspace')) closeProfile(); }
-    return;
-  }
-  if(net.panel || net.sub) return;                      // 멀티플레이 창(또는 방 안의 캐릭터/랭킹 창)이 열려 있으면 메인 화면 단축키(Enter/R/ESC)를 막는다 (창의 키는 멀티플레이 모듈이 처리)
+  if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code)) e.preventDefault();     // 게임 화면(과 CrazyGames 페이지)이 스크롤되지 않게
+  if(game.state === 'auth' || CG.adBusy) return;                     // 광고가 나오는 동안은 아무 키도 받지 않는다
   if(game.state === 'charsel'){                         // 캐릭터 선택: ← → (또는 A D)로 고르고, Enter / ESC / Backspace 로 메인 화면 복귀. 게임 키는 모두 무시
-    if(e.code === 'ArrowLeft' || e.code === 'KeyA'){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 2) % 3]); }
-    else if(e.code === 'ArrowRight' || e.code === 'KeyD'){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 1) % 3]); }
+    if(e.code === 'ArrowLeft' || e.code === 'KeyA'){ pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 2) % 3]); }
+    else if(e.code === 'ArrowRight' || e.code === 'KeyD'){ pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 1) % 3]); }
     else if(e.code === 'Escape' || e.code === 'Enter' || e.code === 'Backspace'){ e.preventDefault(); closeChars(); }
-    return;
-  }
-  if(game.state === 'stagesel'){                         // 스테이지 선택: Enter = 도전 가능한 가장 높은 스테이지 시작, ESC / Backspace = 메인 화면 복귀. 게임 키는 모두 무시
-    if(e.code === 'Escape' || e.code === 'Backspace'){ e.preventDefault(); closeStages(); }
-    else if(e.code === 'Enter' && !(e.target && e.target.tagName === 'BUTTON')){ e.preventDefault(); startStage((game.best || 0) + 1); }
     return;
   }
   if(game.state === 'ranking'){                          // 랭킹 화면: ESC / Enter / Backspace 로 메인 화면 복귀, 게임 키는 모두 무시
     if(e.code === 'Escape' || e.code === 'Enter' || e.code === 'Backspace'){ e.preventDefault(); closeRank(); }
     return;
   }
-  // ESC = 메인 화면으로. 결과 화면(승리/패배)에서는 바로, 전투 중에는 실수로 나가지 않도록 2초 안에 한 번 더 눌러야 한다
-  if(e.code === 'Escape' && (game.state === 'ko' || game.state === 'fight' || game.state === 'intro')){
-    e.preventDefault();
+  // 일시정지: P (ESC 도 됨 — ESC 는 브라우저 전체 화면도 끄므로 안내는 P 로 한다). 일시정지 중: P / ESC / Enter = 계속, M = 메인 화면
+  if(game.paused){
     if(e.repeat) return;
-    if(game.state === 'ko'){ toTitle(); return; }
-    const now = performance.now();
-    if(game.escAt && now - game.escAt < 2000){ game.escAt = 0; toTitle(); } else game.escAt = now;
+    if(e.code === 'KeyP' || e.code === 'Escape' || e.code === 'Enter'){ e.preventDefault(); setPause(false); }
+    else if(e.code === 'KeyM'){ setPause(false); toTitle(); }
     return;
   }
-  if(e.code === 'KeyR' && game.state === 'title'){ openRank(); return; }
-  if(e.code === 'Escape' && game.state === 'title'){ logout(); return; }
-  if(['Space','ArrowLeft','ArrowRight','ArrowDown','ArrowUp'].includes(e.code)) e.preventDefault();
+  if((game.state === 'fight' || game.state === 'intro') && (e.code === 'KeyP' || e.code === 'Escape')){ e.preventDefault(); if(!e.repeat) setPause(true); return; }
+  if(game.state === 'ko' && (e.code === 'KeyM' || e.code === 'Escape')){ e.preventDefault(); if(!e.repeat) toTitle(); return; }
+  if(game.state === 'title' && e.code === 'KeyR'){ openRank(); return; }
   if(e.repeat) return;
   keys[e.code] = true;
   if(game.state === 'fight'){
     if(ACTION_KEYS[e.code]) pushInput(ACTION_KEYS[e.code]);
     else if(GUARD_KEYS.includes(e.code)) pushInput('guard');
   }
-  if(e.code === 'Enter'){
-    if(game.state === 'title') start(1);
-    else if(game.state === 'ko' && game.koT > 1.8){
-      if(net.on) net.rematch();                        // 멀티플레이: 양쪽이 Enter를 누르면 재대결
-      else if(E.hp <= 0) start(game.level + 1);
-      else toTitle();                  // 패배하면 메인 화면으로 (PLAY로 STAGE 1부터 재도전)
-    }
+  if(game.state === 'ko' && game.koT > 1.8){
+    if(e.code === 'Enter' || e.code === 'NumpadEnter'){ e.preventDefault(); resultAction('main'); }
+    else if(e.code === 'KeyV') resultAction('ad');
   }
+  if((e.code === 'Enter' || e.code === 'NumpadEnter') && game.state === 'title' && !(e.target && e.target.tagName === 'BUTTON')) start(1);
 });
 
-/* ---------- 계정 (server.ps1 서버의 users.json에 저장 → 어떤 브라우저에서든 같은 계정) ---------- */
+/* ---------- 서버 (계정 · 랭킹) ---------- */
 const $ = id => document.getElementById(id);
-let authMode = 'login';
-// 계정/랭킹 서버 주소. 순서: window.BOXING_API(시험용 덮어쓰기) → 파일로 직접 연 경우 내 PC 서버 → GitHub Pages 에서는 Cloudflare 서버 → 그 밖에는 같은 주소(server.ps1)
+// 서버 주소: window.BOXING_API(시험용) → 파일로 직접 연 경우 내 PC 서버 → 내 PC(localhost)에서는 같은 주소 → 그 밖(GitHub Pages, CrazyGames)은 Cloudflare 서버
 const API_CLOUD = 'https://boxing-api.boxing-api.workers.dev';                // Cloudflare Workers 계정/랭킹 서버 (worker/ 폴더)
-const API = window.BOXING_API || (location.protocol === 'file:' ? 'http://localhost:8123' : /\.github\.io$/.test(location.hostname) && API_CLOUD ? API_CLOUD : '');
+const API = window.BOXING_API || (location.protocol === 'file:' ? 'http://localhost:8123' : /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? '' : API_CLOUD);
 async function api(path, body){
   let res;
   try{
@@ -2077,145 +1981,76 @@ async function api(path, body){
   if(!res.ok) throw new Error('server');
   return res.json();
 }
-const ERR = {
-  invalid_id: '아이디는 3~12자 (한글/영문/숫자/_)만 가능합니다',
-  short_pw: '비밀번호는 4자 이상이어야 합니다',
-  taken: '이미 사용 중인 아이디입니다',
-  bad_credentials: '아이디 또는 비밀번호가 올바르지 않습니다',
-  too_many: '시도가 너무 많습니다. 잠시 후 다시 해 주세요',
-  bad_password: '현재 비밀번호가 올바르지 않습니다',
-  bad_token: '로그인이 만료되었습니다. 다시 로그인해 주세요',
-  not_found: '이 서버에서는 지원하지 않는 기능입니다',
-  banned: '이용이 정지된 계정입니다'
+// 저장: CrazyGames 안에서는 Data 모듈(게스트는 이 기기, 로그인하면 CrazyGames 계정에 저장되어 기기 사이에 이어진다), 밖에서는 이 브라우저(localStorage)
+const LS = {
+  get(k){ try{ if(CG.on && CG.sdk.data) return CG.sdk.data.getItem(k); }catch(e){} try{ return window.localStorage.getItem(k); }catch(e){ return null; } },
+  set(k, v){ try{ if(CG.on && CG.sdk.data){ CG.sdk.data.setItem(k, v); return; } }catch(e){} try{ window.localStorage.setItem(k, v); }catch(e){} },
 };
-function authMsg(m, ok){ const el = $('authMsg'); el.textContent = m || ''; el.className = 'msg' + (ok ? ' ok' : ''); }
-function setMode(m){
-  authMode = m; authMsg('');
-  document.querySelectorAll('#auth .tab').forEach(t => t.classList.toggle('on', t.dataset.mode === m));
-  $('pw2wrap').style.display = m === 'signup' ? 'block' : 'none';
-  $('authSubmit').textContent = m === 'signup' ? '가입하기' : '로그인';
-  $('authHint').textContent = m === 'signup' ? '아이디 3~12자 (한글/영문/숫자/_), 비밀번호 4자 이상' : '가입한 계정으로 로그인하세요';
-  $('upw').autocomplete = m === 'signup' ? 'new-password' : 'current-password';
-}
-document.querySelectorAll('#auth .tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
+const localBest = () => Math.max(0, Math.min(99, parseInt(LS.get('upbox.best'), 10) || 0));
 
-function enterGame(u){
-  game.user = u.id; game.token = u.token; game.best = u.best || 0; game.admin = !!u.admin;     // admin: 서버가 알려 준 값 (화면에 관리자 버튼을 보일지만 정한다. 실제 권한은 서버가 매 요청마다 검사한다)
-  game.char = CHARS[u.char] ? u.char : 'outfighter';      // 계정에 저장된 캐릭터 (없으면 아웃파이터)
-  $('auth').classList.add('fade'); setTimeout(() => { if(game.user) $('auth').classList.add('hidden'); $('auth').classList.remove('fade'); }, 480);
-  $('upw').value = ''; $('upw2').value = ''; game.profile = null;
-  if(document.activeElement) document.activeElement.blur();
-  toTitle();                           // 로그인(또는 가입) 직후 가장 먼저 메인 화면
+// 계정 정하기 (시작할 때, 그리고 게스트가 CrazyGames 에 로그인했을 때)
+//  · CrazyGames + 로그인: 사용자 토큰을 서버가 확인 → CrazyGames 계정에 묶인 서버 계정 (처음이면 자동으로 만들고, 이 기기의 게스트 기록을 넘겨받는다)
+//  · CrazyGames + 게스트: 서버 계정 없이 이 기기에만 저장 (랭킹은 보기만). 오른쪽 위 'LOG IN WITH CRAZYGAMES' 로 로그인할 수 있다 (자동으로 띄우지 않는다)
+//  · CrazyGames 밖(우리 웹사이트): 예전처럼 이 브라우저에 기억하는 서버 게스트 계정 (guestStart)
+let acctBusy = null;
+function accountStart(){
+  if(!acctBusy) acctBusy = (async () => {
+    if(!CG.on) return guestStart();
+    let token = null, name = 'Guest';
+    try{ if(CG.sdk.user.isUserAccountAvailable) token = await CG.sdk.user.getUserToken({ signingKeyType:'IN_GAME_AUTH' }); }catch(e){ token = null; }   // 로그인하지 않음(userNotAuthenticated) → 게스트
+    if(token){
+      CG.loggedIn = true;
+      try{
+        const r = await api('/api/cg', { cg: token, best: localBest(), char: LS.get('upbox.char') || '' });
+        if(r.ok){ const later = game.state !== 'auth'; enterGame(r); if(later) toast('Logged in as ' + r.id); return; }
+        console.warn('CrazyGames login refused:', r.error);
+      }catch(e){ console.warn('UPBOX server unreachable'); }
+      try{ const u = await CG.sdk.user.getUser(); if(u && u.username) name = u.username; }catch(e){}
+    }
+    enterGame({ id: name, token: null, best: localBest(), char: LS.get('upbox.char') || 'outfighter' });
+  })().finally(() => { acctBusy = null; });
+  return acctBusy;
 }
+function enterGame(u){
+  game.user = u.id; game.token = u.token || null; game.best = u.best || 0;
+  game.char = CHARS[u.char] ? u.char : 'outfighter';      // 계정에 저장된 캐릭터 (없으면 아웃파이터)
+  if(game.best > localBest()) LS.set('upbox.best', String(game.best));
+  if(game.state === 'auth' || game.state === 'title') toTitle();     // 경기 중에 로그인했으면 지금 경기는 그대로 두고, 메인 화면으로 돌아갈 때 반영된다
+}
+const canLogin = () => CG.on && !CG.loggedIn && !!(CG.sdk.user && CG.sdk.user.isUserAccountAvailable);
+function toast(t){ const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove('on'), 2600); }
 
 /* ---------- 메인 화면 ---------- */
 function showMenu(){
   $('menuUser').textContent = game.user || '';
   $('menuChar').textContent = '● ' + CHARS[game.char].name;
   $('menuBest').textContent = 'BEST STAGE ' + (game.best || 0);
-  $('menuChip').textContent = '👤 ' + (game.user || '');
+  const login = canLogin(), chip = $('menuChip');
+  chip.classList.toggle('static', !login);
+  chip.textContent = login ? 'LOG IN WITH CRAZYGAMES' : '👤 ' + (game.user || '');
+  chip.title = login ? 'Log in to keep your progress on every device and join the ranking' : '';
+  const nx = Math.min(99, (game.best || 0) + 1);
+  $('continueBtn').hidden = !((game.best || 0) > 0); $('continueBtn').textContent = 'CONTINUE  ·  STAGE ' + nx + '  (HP ' + RUN.cont + ')';
+  $('privacy').textContent = game.token ? 'Your player name and best stage are stored on the UPBOX server for the ranking.' : '';
   $('menu').classList.remove('hidden');
+  if(document.activeElement && document.activeElement !== document.body) document.activeElement.blur();   // Enter 가 마지막에 누른 버튼이 아니라 PLAY 로 가게
   refreshMenuRank();
 }
 // 메인 화면의 내 순위 표시 (서버에서 가져온다. 실패해도 메인 화면은 그대로 쓸 수 있다)
 async function refreshMenuRank(){
   const who = game.user;
+  if(!game.token){ if(canLogin()) $('menuBest').textContent = 'BEST STAGE ' + (game.best || 0) + ' · GUEST'; return; }
   try{
     const r = await api('/api/ranking', { token: game.token, limit: 0 });
     if(game.state !== 'title' || game.user !== who || !r.me) return;       // 그 사이 화면/계정이 바뀌었으면 무시
     game.best = Math.max(game.best || 0, r.me.best);
     $('menuBest').textContent = 'BEST STAGE ' + r.me.best + (r.me.rank ? ' · RANK #' + r.me.rank + '/' + r.total : ' · UNRANKED');
-    game.myRank = r.me.rank ? '#' + r.me.rank + ' / ' + r.total : 'UNRANKED';
-    if(!$('profile').classList.contains('hidden')) renderProfile();     // 프로필 창이 열려 있는 중에 도착했으면 바로 반영
   }catch(e){}
 }
-
-/* ---------- 프로필 창 ---------- */
-// 비밀번호는 서버에 해시로만 저장되어 서버에서 다시 꺼낼 수 없다. 그래서 이번 접속에서 로그인/가입/변경할 때 입력한 값만 메모리(game.pw)에 들고 있다가 '보기'를 누를 때만 보여준다 (저장·전송하지 않고, 로그아웃/새로고침하면 사라진다)
-let pwShown = false;
-const PF = { mode:'view', busy:false };
-const pfDate = ms => { const d = new Date(ms); return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0'); };
-function pfSay(id, text, ok){ const el = $(id); el.textContent = text || ''; el.classList.toggle('ok', !!ok); }
-function renderProfile(){
-  $('pfId').textContent = game.user || '';
-  const has = typeof game.pw === 'string' && game.pw.length > 0;
-  const pe = $('pfPw'); pe.textContent = !has ? '이번 접속에서는 확인할 수 없음' : pwShown ? game.pw : '●'.repeat(Math.min(game.pw.length, 20)); pe.classList.toggle('dim', !has);
-  $('pfPwBtn').hidden = !has; $('pfPwBtn').textContent = pwShown ? '숨기기' : '보기';
-  $('pfChar').textContent = CHARS[game.char] ? CHARS[game.char].name : '';
-  $('pfBest').textContent = 'STAGE ' + (game.best || 0);
-  $('pfRank').textContent = game.myRank || '불러오는 중…';
-  $('pfAdmin').hidden = !game.admin;
-  const p = game.profile, rec = $('pfRecord'), jn = $('pfJoined');
-  if(!p){ rec.textContent = jn.textContent = '불러오는 중…'; return; }
-  if(p.failed){ rec.textContent = jn.textContent = '확인할 수 없음 (서버 업데이트 필요)'; rec.classList.add('dim'); jn.classList.add('dim'); return; }
-  rec.classList.remove('dim'); jn.classList.remove('dim');
-  const n = (p.wins || 0) + (p.losses || 0);
-  rec.textContent = n ? p.wins + '승 ' + p.losses + '패 · 승률 ' + Math.round(p.wins*100/n) + '%' : '아직 경기 기록이 없습니다';
-  jn.textContent = p.created ? pfDate(p.created) : '-';
-}
-function pfMode(m){                                      // 'view' 기본 화면 / 'pw' 비밀번호 변경 / 'del' 계정 삭제
-  PF.mode = m;
-  $('pfView').hidden = m !== 'view'; $('pfPwForm').hidden = m !== 'pw'; $('pfDelForm').hidden = m !== 'del';
-  for(const id of ['pfCur', 'pfNew', 'pfNew2', 'pfDelPw']) $(id).value = '';
-  pfSay('pfPwMsg', ''); pfSay('pfDelMsg', '');
-  if(m === 'pw') $('pfCur').focus(); else if(m === 'del') $('pfDelPw').focus(); else if(document.activeElement) document.activeElement.blur();
-}
-async function loadProfile(){                            // 가입일·전적·순위는 서버에서 가져온다 (실패해도 창은 그대로 쓸 수 있다)
-  const who = game.user;
-  try{
-    const r = await api('/api/profile', { token: game.token });
-    if(game.user !== who) return;
-    if(!r.ok){ game.profile = { failed:true }; if(!$('profile').classList.contains('hidden')) renderProfile(); return; }     // 이 서버가 프로필 기능을 모른다 (아직 업데이트 전)
-    game.profile = r; game.best = Math.max(game.best || 0, r.best || 0); game.admin = !!r.admin;
-    game.myRank = r.rank ? '#' + r.rank + ' / ' + r.total : 'UNRANKED';
-    if(!$('profile').classList.contains('hidden')) renderProfile();
-  }catch(e){ if(game.user === who){ game.profile = { failed:true }; if(!$('profile').classList.contains('hidden')) renderProfile(); } }
-}
-function openProfile(){
-  if(game.state !== 'title' || net.panel || net.sub) return;
-  pwShown = false; pfMode('view'); pfSay('pfMsg', ''); renderProfile(); $('profile').classList.remove('hidden');
-  $('pfBack').focus(); loadProfile();
-}
-function closeProfile(){ pwShown = false; PF.mode = 'view'; $('profile').classList.add('hidden'); if(document.activeElement) document.activeElement.blur(); }
-$('menuChip').addEventListener('click', () => { audio(); openProfile(); });
-$('pfPwBtn').addEventListener('click', () => { pwShown = !pwShown; renderProfile(); });
-$('pfBack').addEventListener('click', closeProfile);
-$('pfAdmin').addEventListener('click', () => window.open('admin.html', '_blank', 'noopener'));
-$('pfChPw').addEventListener('click', () => { pfSay('pfMsg', ''); pfMode('pw'); });
-$('pfDel').addEventListener('click', () => { pfSay('pfMsg', ''); pfMode('del'); });
-$('pfPwCancel').addEventListener('click', () => pfMode('view'));
-$('pfDelCancel').addEventListener('click', () => pfMode('view'));
-$('profile').addEventListener('keydown', e => { if(e.code === 'Escape' && e.target && e.target.tagName === 'INPUT'){ e.preventDefault(); pfMode('view'); } });   // 입력칸 안에서도 ESC 로 취소
-$('pfPwForm').addEventListener('submit', async ev => {
-  ev.preventDefault();
-  if(PF.busy) return;
-  const cur = $('pfCur').value, n1 = $('pfNew').value, n2 = $('pfNew2').value;
-  if(!cur) return pfSay('pfPwMsg', '현재 비밀번호를 입력해 주세요');
-  if(n1.length < 4) return pfSay('pfPwMsg', ERR.short_pw);
-  if(n1 !== n2) return pfSay('pfPwMsg', '새 비밀번호 확인이 일치하지 않습니다');
-  if(n1 === cur) return pfSay('pfPwMsg', '현재와 다른 비밀번호를 입력해 주세요');
-  PF.busy = true; $('pfPwSave').disabled = true;
-  try{
-    const r = await api('/api/password', { token: game.token, pw: cur, npw: n1 });
-    if(!r.ok) pfSay('pfPwMsg', ERR[r.error] || '요청이 거절되었습니다');
-    else { game.pw = n1; pwShown = false; pfMode('view'); renderProfile(); pfSay('pfMsg', '비밀번호가 변경되었습니다. 다른 기기에서는 새 비밀번호로 다시 로그인해야 합니다', true); }
-  }catch(e){ pfSay('pfPwMsg', '서버에 연결할 수 없습니다'); }
-  finally{ PF.busy = false; $('pfPwSave').disabled = false; }
+$('menuChip').addEventListener('click', async () => {                  // 'Login with CrazyGames' (게스트에게만 보인다)
+  audio(); if(!canLogin() || game.state !== 'title') return;
+  try{ const u = await CG.sdk.user.showAuthPrompt(); if(u) accountStart(); }catch(e){}       // 닫으면(user_cancelled) 그대로 게스트
 });
-$('pfDelForm').addEventListener('submit', async ev => {
-  ev.preventDefault();
-  if(PF.busy) return;
-  const pw = $('pfDelPw').value;
-  if(!pw) return pfSay('pfDelMsg', '비밀번호를 입력해 주세요');
-  PF.busy = true; $('pfDelGo').disabled = true;
-  try{
-    const r = await api('/api/delete', { token: game.token, pw });
-    if(!r.ok) pfSay('pfDelMsg', ERR[r.error] || '요청이 거절되었습니다');
-    else { logout(); authMsg('계정이 삭제되었습니다', true); }
-  }catch(e){ pfSay('pfDelMsg', '서버에 연결할 수 없습니다'); }
-  finally{ PF.busy = false; $('pfDelGo').disabled = false; }
-});
-$('profile').addEventListener('click', e => { if(e.target === $('profile')) closeProfile(); });      // 바깥(어두운 곳)을 누르면 닫기
 
 /* ---------- 랭킹 화면 ---------- */
 const RANK_POLL_MS = 3000;                              // 랭킹 화면이 열려 있는 동안 순위가 바뀌었는지 확인하는 간격 (서버 무료 한도를 아끼려고 3초)
@@ -2224,12 +2059,12 @@ function setLive(on){
   const el = $('rankLive'); el.textContent = on ? 'LIVE' : 'OFFLINE'; el.classList.toggle('on', on);
 }
 function renderRank(r){
-  const ol = $('rankList'), keep = ol.scrollTop, meKey = (game.user || '').toLowerCase(), next = new Map();
+  const ol = $('rankList'), keep = ol.scrollTop, next = new Map();
   ol.textContent = '';
   for(const it of r.list){
     const li = document.createElement('li'), sig = it.rank + '|' + it.best;
     next.set(it.id, sig);
-    li.className = (it.rank <= 3 ? 'r' + it.rank : '') + (it.id.toLowerCase() === meKey ? ' me' : '');
+    li.className = (it.rank <= 3 ? 'r' + it.rank : '') + (it.me ? ' me' : '');          // it.me: 서버가 표시 (이름이 같은 사람이 있어도 내 줄만)
     if(!RANK.first && RANK.prev.get(it.id) !== sig) li.classList.add('flash');   // 새로 들어왔거나 순위/기록이 바뀐 줄만 반짝
     const no = document.createElement('span'), nm = document.createElement('span'), st = document.createElement('span');
     no.className = 'no'; no.textContent = it.rank; nm.className = 'nm'; nm.textContent = it.id; st.className = 'st'; st.textContent = 'STAGE ' + it.best;
@@ -2238,16 +2073,16 @@ function renderRank(r){
   ol.scrollTop = keep;
   RANK.prev = next; RANK.first = false;
   const empty = $('rankEmpty'); empty.hidden = r.list.length > 0; ol.hidden = r.list.length === 0;
-  if(!r.list.length) empty.innerHTML = '아직 랭킹에 오른 사람이 없습니다.<br>스테이지를 클리어하면 가장 먼저 이름을 올릴 수 있어요!';
+  if(!r.list.length) empty.innerHTML = 'No one is on the board yet.<br>Clear a stage to be the first!';
   const me = r.me, mine = $('rankMine');
   mine.textContent = '';
   if(me && me.rank){
     const a = document.createElement('div'), b = document.createElement('b');
-    b.textContent = me.id; a.append('내 순위  ', Object.assign(document.createElement('span'), { className:'gold', textContent:'#' + me.rank }), ' / ' + r.total + '명');
+    b.textContent = me.id; a.append('YOUR RANK  ', Object.assign(document.createElement('span'), { className:'gold', textContent:'#' + me.rank }), ' / ' + r.total);
     const c = document.createElement('div'); c.textContent = 'BEST STAGE ' + me.best;
     mine.append(a, c);
   } else {
-    mine.textContent = '아직 기록이 없어요. 스테이지 1을 클리어하면 등록됩니다.';
+    mine.textContent = !game.token ? (canLogin() ? 'Log in with CrazyGames to join the ranking.' : 'Playing offline — your best stage is saved on this device.') : 'Not ranked yet. Clear stage 1 to get on the board.';
   }
 }
 async function pollRank(force){
@@ -2266,14 +2101,14 @@ async function pollRank(force){
   }catch(e){
     if(!RANK.open) return;
     setLive(false);
-    if(RANK.version === null){ $('rankEmpty').hidden = false; $('rankList').hidden = true; $('rankEmpty').textContent = '서버에 연결할 수 없습니다. 연결되면 자동으로 다시 불러옵니다.'; }
+    if(RANK.version === null){ $('rankEmpty').hidden = false; $('rankList').hidden = true; $('rankEmpty').textContent = 'Cannot reach the server. Retrying automatically…'; }
   }finally{ RANK.busy = false; }
 }
 function openRank(){
   if(game.state !== 'title') return;
   hideMenu(); game.state = 'ranking'; P.x = 150; E.x = 810;     // 가운데 패널이 두 캐릭터를 가리지 않도록 양옆으로 물러선다
   RANK.open = true; RANK.version = null; RANK.first = true; RANK.prev = new Map();
-  $('rankList').textContent = ''; $('rankList').hidden = true; $('rankEmpty').hidden = false; $('rankEmpty').textContent = '불러오는 중…'; $('rankMine').textContent = '';
+  $('rankList').textContent = ''; $('rankList').hidden = true; $('rankEmpty').hidden = false; $('rankEmpty').textContent = 'Loading…'; $('rankMine').textContent = '';
   setLive(false); $('rankLive').textContent = 'CONNECTING';
   $('rank').classList.remove('hidden');
   pollRank(true);
@@ -2284,15 +2119,80 @@ function closeRank(){ stopRank(); if(game.state === 'ranking') toTitle(); }
 document.addEventListener('visibilitychange', () => { if(!document.hidden) pollRank(true); });   // 탭으로 돌아오면 즉시 최신화
 function hideMenu(){ $('menu').classList.add('hidden'); }
 function toTitle(){
+  game.paused = false; game.adWait = false; $('pause').classList.add('hidden'); hideResult();
   P = mk(250, 1, true, 1, game.char); E = mk(710, -1, false, 1, cpuChar(1));   // 메인 화면에서는 두 캐릭터를 멀찍이 세워 가운데에 PLAY 버튼 자리를 만든다 (왼쪽은 내가 고른 캐릭터)
   parts.length = rings.length = texts.length = stars.length = 0; buf = [];
   game.state = 'title'; game.slow = 0; game.freeze = 0; game.flash = 0; game.shake = 0;
   showMenu();
 }
 $('playBtn').addEventListener('click', () => { audio(); if(game.state === 'title') start(1); });
-$('logoutBtn').addEventListener('click', () => { audio(); if(game.state === 'title') logout(); });
+$('continueBtn').addEventListener('click', () => { audio(); if(game.state === 'title' && (game.best || 0) > 0) continueRun(Math.min(99, game.best + 1)); });
 $('rankBtn').addEventListener('click', () => { audio(); openRank(); });
 $('rankBack').addEventListener('click', () => { audio(); closeRank(); });
+$('resumeBtn').addEventListener('click', () => { audio(); setPause(false); });
+$('quitBtn').addEventListener('click', () => { audio(); setPause(false); toTitle(); });
+
+/* ---------- 일시정지 ---------- */
+function setPause(on){
+  if(on && !(game.state === 'fight' || game.state === 'intro')) return;
+  game.paused = !!on; $('pause').classList.toggle('hidden', !game.paused);
+  for(const k in keys) keys[k] = false; buf.length = 0;
+  if(document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+}
+
+/* ---------- 결과 화면 버튼 ----------
+   승리: 다음 상대 (가만히 있어도 곧 나온다). 그 사이 CrazyGames 중간 광고를 요청한다 (쉬는 시간이 안 됐으면 바로 다음 상대).
+   패배: 이어하기(체력 RUN.cont, 광고 없음) / 가끔 '광고 보고 체력 가득 이어하기' / 메인 화면 */
+const RES = { shown:false, offerAd:false };
+function adOffer(){                                     // 보상형 광고 권하기: 광고 차단 중이면 X, 마지막 보상 뒤 3분 이내면 X, 바로 전 패배 때 권했으면 X (매번 권하지 않는다)
+  CG.deaths++;
+  if(!CG.on || CG.adblock) return false;
+  if(performance.now() - CG.lastReward < 180000) return false;
+  if(CG.deaths - CG.offeredAt < 2) return false;
+  CG.offeredAt = CG.deaths; return true;
+}
+function showResult(){
+  RES.shown = true;
+  const win = E.hp <= 0, box = $('overBtns'); box.textContent = '';
+  const btn = (label, key, fn) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'ghost gold';
+    b.append(label); if(key){ const k = document.createElement('kbd'); k.textContent = key; b.append(k); }
+    b.addEventListener('click', () => { audio(); fn(); b.blur(); }); box.append(b); return b;
+  };
+  if(win) btn('NEXT OPPONENT', 'ENTER', () => resultAction('main'));
+  else {
+    RES.offerAd = adOffer();
+    btn('CONTINUE · HP ' + RUN.cont, 'ENTER', () => resultAction('main'));
+    if(RES.offerAd) btn('▶ WATCH AD · FULL HP', keyLabel('KeyV'), () => resultAction('ad')).dataset.ad = '1';      // 광고 버튼과 광고 없는 버튼은 같은 크기·모양
+  }
+  btn('MAIN MENU', keyLabel('KeyM'), () => toTitle());
+  $('overNote').textContent = !win && CG.on && CG.adblock ? 'Ad rewards are unavailable while an ad blocker is on.' : '';
+  $('over').classList.remove('hidden');
+}
+function hideResult(){ RES.shown = false; $('over').classList.add('hidden'); $('overBtns').textContent = ''; $('overNote').textContent = ''; }
+function resultAction(kind){
+  if(game.state !== 'ko' || CG.adBusy || game.adWait || game.koT < 1.8) return;
+  if(E.hp <= 0 && P.hp > 0){ if(kind === 'main') advanceRun(); return; }
+  if(kind === 'ad'){
+    if(!RES.offerAd) return;
+    requestAd('rewarded', (ok, err) => {
+      if(game.state !== 'ko') return;
+      if(ok){ CG.lastReward = performance.now(); start(game.level, { hp: 9999, slide: true }); addText(P.x, GY - 260, 'FULL HP!', COL.gold, 24); }
+      else {                                            // 광고가 없으면 보상도 없다 (광고 없는 이어하기는 그대로 쓸 수 있다)
+        RES.offerAd = false;
+        [...$('overBtns').children].forEach(b => { if(b.dataset.ad) b.remove(); });
+        $('overNote').textContent = err === 'adblock' ? 'Ad rewards are unavailable while an ad blocker is on.' : 'No ad is available right now — you can still continue with HP ' + RUN.cont + '.';
+      }
+    });
+    return;
+  }
+  continueRun(game.level);
+}
+function advanceRun(){                                  // 승리 → (CrazyGames 중간 광고) → 다음 상대
+  if(game.adWait || CG.adBusy) return;
+  game.adWait = true;
+  requestAd('midgame', () => { game.adWait = false; if(game.state === 'ko' && E.hp <= 0) nextOpponent(); });
+}
 
 /* ---------- 캐릭터 선택 창 ---------- */
 // 능력치 막대는 실제 공격 데이터에서 계산한다: 공격력 = 세 기술 평균 대미지, 속도 = 한 번 치는 데 걸리는 평균 시간의 역수, 사정거리 = 평균 사정거리.
@@ -2310,9 +2210,9 @@ function charStats(){
   return out;
 }
 const CHAR_DESC = {
-  outfighter: ['긴 사정거리로 거리를 재며 싸운다', '회피 — 뒤로 물러난다'],
-  infighter:  ['낮은 자세로 파고들어 짧고 강하게', '회피 — 앞으로 더킹하며 돌진'],
-  slugger:    ['느리지만 한 방이 가장 강하다', '회피 — 제자리에서 숙이기만 한다']
+  outfighter: ['Keeps the distance with long punches', 'Dodge — steps back'],
+  infighter:  ['Gets inside, short and powerful', 'Dodge — ducks forward'],
+  slugger:    ['Slow, but hits the hardest', 'Dodge — ducks in place']
 };
 function buildChars(){
   const st = charStats();
@@ -2320,10 +2220,10 @@ function buildChars(){
     const key = card.dataset.ch, c = CHARS[key], s = st[key], bar = (cls, label, v) =>
       `<div class="stat ${cls}"><span>${label}</span><div class="bar"><i style="width:${Math.round(v*100)}%"></i></div></div>`;
     card.innerHTML =
-      `<span class="badge">✓ 선택됨</span>` +
+      `<span class="badge">✓ SELECTED</span>` +
       `<div class="ct"><div class="nm">${c.name}</div><div class="tg">${c.tag}</div><div class="ds">${CHAR_DESC[key][0]}<br>${CHAR_DESC[key][1]}</div></div>` +
-      `<div class="cb">${bar('p','공격력',s.pow)}${bar('s','속도',s.spd)}${bar('r','사정거리',s.rng)}` +
-      `<div class="mv"><b>J</b> ${c.labels[0]} · <b>K</b> ${c.labels[1]} · <b>L</b> ${c.labels[2]}</div></div>`;
+      `<div class="cb">${bar('p','POWER',s.pow)}${bar('s','SPEED',s.spd)}${bar('r','REACH',s.rng)}` +
+      `<div class="mv"><b>${keyLabel('KeyJ')}</b> ${c.labels[0]} · <b>${keyLabel('KeyK')}</b> ${c.labels[1]} · <b>${keyLabel('KeyL')}</b> ${c.labels[2]}</div></div>`;
     card.onclick = () => { audio(); pickChar(key); };
   });
 }
@@ -2331,6 +2231,7 @@ function refreshCards(){ document.querySelectorAll('#chars .card').forEach(c => 
 function pickChar(key){
   if(!CHARS[key] || game.char === key) return;
   game.char = key; refreshCards();
+  LS.set('upbox.char', key);
   if(game.token) api('/api/char', { token: game.token, char: key }).catch(() => {});     // 계정에 저장 (실패해도 이번 접속에서는 계속 사용)
 }
 function openChars(){
@@ -2342,66 +2243,33 @@ function openChars(){
 }
 function stopChars(){ $('chars').classList.add('hidden'); PV = []; }
 function closeChars(){ stopChars(); if(game.state === 'charsel') toTitle(); }
-/* ---------- 스테이지 선택 창 ----------
-   깬 스테이지(game.best)까지와 바로 다음 스테이지(best+1)의 버튼이 열려 있고, 그 뒤 몇 개는 잠긴 채 보인다. 열린 버튼을 누르면 그 스테이지부터 시작한다.
-   기록(랭킹)은 예전과 똑같이 '지금까지의 최고 기록을 넘긴 스테이지'를 깼을 때만 올라간다. */
-function buildStages(){
-  const best = game.best || 0, next = best + 1, grid = $('stGrid');
-  grid.textContent = '';
-  for(let n = 1; n <= next + 4; n++){
-    const b = document.createElement('button');
-    b.type = 'button'; b.textContent = n;
-    b.className = 'stb ' + (n <= best ? 'clear' : n === next ? 'next' : 'lock');
-    if(n <= next){ b.title = 'STAGE ' + n + ' 부터 시작'; b.addEventListener('click', () => { audio(); startStage(n); }); }
-    else { b.disabled = true; b.title = '아직 열리지 않았습니다'; }
-    grid.append(b);
-  }
-  $('stSub').textContent = best ? '클리어 ' + best + '  ·  도전 가능 ' + next : '아직 깬 스테이지가 없어요';
-  $('stMine').textContent = '열린 스테이지를 눌러 그 스테이지부터 시작하세요. (Enter: 스테이지 ' + next + ')';
-  const nb = grid.querySelector('.next'); if(nb) nb.scrollIntoView({ block:'center' });
-}
-function openStages(){
-  if(game.state !== 'title') return;
-  hideMenu(); game.state = 'stagesel'; P.x = 150; E.x = 810;       // 가운데 창이 두 캐릭터를 가리지 않도록 양옆으로 물러선다
-  $('stages').classList.remove('hidden'); buildStages();
-}
-function stopStages(){ $('stages').classList.add('hidden'); }
-function closeStages(){ stopStages(); if(game.state === 'stagesel') toTitle(); }
-function startStage(n){
-  if(game.state !== 'stagesel') return;
-  n = Math.max(1, Math.min(n, (game.best || 0) + 1));              // 열려 있는 스테이지까지만
-  stopStages(); start(n);
-}
-$('stageBtn').addEventListener('click', () => { audio(); openStages(); });
-$('stBack').addEventListener('click', () => { audio(); closeStages(); });
 $('charBtn').addEventListener('click', () => { audio(); openChars(); });
 $('charsBack').addEventListener('click', () => { audio(); closeChars(); });
-$('authForm').addEventListener('submit', async ev => {
-  ev.preventDefault();
+// CrazyGames 밖(우리 웹사이트)에서의 게스트: 처음 한 번 서버에 임시 계정을 만들어 이 브라우저에 기억해 두고, 다음부터는 그 계정으로 자동 로그인한다.
+// 서버에 닿지 못하면 기록을 이 브라우저에만 저장하는 오프라인 게스트로 시작한다.
+async function guestStart(){
+  let g = null; try{ g = JSON.parse(LS.get('upbox.guest') || 'null'); }catch(e){}
   try{
-    const id = $('uid').value.trim(), pw = $('upw').value;
-    if(!id) return authMsg('아이디를 입력해 주세요');
-    if(authMode === 'signup'){
-      if(!/^[A-Za-z0-9_가-힣]{3,12}$/.test(id)) return authMsg(ERR.invalid_id);
-      if(pw.length < 4) return authMsg(ERR.short_pw);
-      if(pw !== $('upw2').value) return authMsg('비밀번호 확인이 일치하지 않습니다');
+    if(g && g.id && g.pw){
+      const r = await api('/api/login', { id:g.id, pw:g.pw });
+      if(r.ok){ game.pw = g.pw; return enterGame(r); }
+      if(r.error !== 'bad_credentials') throw new Error('server');            // 계정이 사라진 경우(bad_credentials)에만 새로 만든다
     }
-    const r = await api(authMode === 'signup' ? '/api/signup' : '/api/login', { id, pw });   // 중복 검사·비밀번호 확인은 서버가 처리
-    if(!r.ok) return authMsg(ERR[r.error] || '요청이 거절되었습니다');
-    game.pw = pw; game.myRank = null;       // 프로필 창의 '보기'용 (이번 접속 동안 메모리에만)
-    enterGame(r);   // 가입 직후 바로 로그인
-  }catch(err){
-    authMsg(err && err.message === 'server'
-      ? '서버에 연결할 수 없습니다. start-server.bat 을 실행한 뒤 다시 시도하세요'
-      : '오류가 발생했습니다: ' + (err && err.message ? err.message : err));
-  }
-});
-function logout(){
-  stopRank(); stopChars(); stopStages(); closeProfile(); game.user = null; game.token = null; game.pw = null; game.myRank = null; game.profile = null; game.admin = false; game.char = 'outfighter'; game.state = 'auth'; hideMenu();
-  $('auth').classList.remove('hidden', 'fade'); setMode('login'); $('uid').focus();
+    for(let i = 0; i < 4; i++){
+      const id = 'Guest' + String(Math.floor(Math.random()*1e7)).padStart(7, '0');
+      const pw = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join('');
+      const r = await api('/api/signup', { id, pw });
+      if(r.ok){ LS.set('upbox.guest', JSON.stringify({ id, pw })); game.pw = pw; return enterGame(r); }
+      if(r.error !== 'taken') break;
+    }
+  }catch(e){}
+  const best = parseInt(LS.get('upbox.best'), 10) || 0;                           // 서버 없이: 이 브라우저에만 저장
+  enterGame({ id: g && g.id || 'Guest', token: null, best, char: LS.get('upbox.char') || 'outfighter' });
 }
 // 스테이지를 깨면 서버에 기록한다. 서버가 순위를 바로 다시 계산하므로, 랭킹 화면을 열어 둔 다른 사람 화면도 2초 안에 바뀐다
 async function recordWin(){
+  if(game.level > (game.best || 0) && game.level % 10 === 0) CG.call(s => s.game.happytime());          // 10, 20, 30 … 스테이지를 처음 깼을 때만 CrazyGames 축하 연출
+  if(!game.token && game.level > (game.best || 0)){ game.best = game.level; game.newBest = true; LS.set('upbox.best', String(game.best)); return; }   // 게스트 (이 기기에 저장)
   if(!game.token || game.level <= (game.best || 0)) return;
   game.newBest = true; game.rank = null; game.saveError = null;
   try{
@@ -2411,7 +2279,7 @@ async function recordWin(){
     for(let lv = (game.best || 0) + 1; lv <= game.level; lv++){
       last = await api('/api/best', { token: game.token, level: lv });
       if(!last.ok) break;
-      game.best = last.best;
+      game.best = last.best; LS.set('upbox.best', String(game.best));
     }
     if(last && last.ok) game.rank = last.rank || null;
     else if(last && last.error === 'bad_token') game.saveError = 'session';   // 서버가 이 로그인을 모름 (예: sessions.json 삭제) → 다시 로그인 필요
@@ -2421,19 +2289,23 @@ async function recordWin(){
 }
 // 한 판이 끝나면 승/패를 서버에 알린다 (프로필의 전적에만 쓰이고 랭킹과는 무관). 멀티플레이 대전은 세지 않는다
 function reportResult(won){
-  if(net.on || !game.token || game.autoP) return;
+  if(!game.token || game.autoP) return;
   api('/api/result', { token: game.token, won }).then(r => { if(r.ok && game.profile) game.profile[won ? 'wins' : 'losses']++; }).catch(() => {});
 }
-setMode('login');
+(async () => { await CG.init(); accountStart(); })();
 addEventListener('keyup', e => { keys[e.code] = false; });
-addEventListener('blur', () => { for(const k in keys) keys[k] = false; });
+addEventListener('blur', () => { for(const k in keys) keys[k] = false; if(game.state === 'fight') setPause(true); });     // 다른 곳을 누르면(창 밖, 탭 전환) 일시정지
 
 P = mk(250, 1, true); E = mk(710, -1, false, 1);
 let last = performance.now();
 function frame(now){
+  requestAnimationFrame(frame);                         // 먼저 다음 프레임을 예약한다: 한 프레임에서 오류가 나도 게임이 멈춰 버리지 않게
   const dt = Math.min(.033, (now - last)/1000); last = now;
-  step(dt); draw();
-  requestAnimationFrame(frame);
+  try{
+    step(dt); draw();
+    if(game.state === 'ko' && game.koT > 1.8 && !RES.shown) showResult();
+    cgPlaying((game.state === 'intro' || game.state === 'fight') && !game.paused && !CG.adBusy);     // CrazyGames: 실제로 싸우는 동안만 '플레이 중'
+  }catch(e){ if(!frame.err || now - frame.err > 5000){ frame.err = now; console.error('frame error', e && e.stack || e); } }
 }
 requestAnimationFrame(frame);
 
@@ -2453,568 +2325,16 @@ requestAnimationFrame(frame);
     bar.style.width = Math.max(6, Math.round(100*done/total)) + '%';
     const late = performance.now() - t0 > BOOT_MAX_MS;
     if(done >= total || late){
-      boot.classList.add('out'); setTimeout(() => boot.remove(), 600);
-      if(late && done < total) console.warn('일부 그림을 불러오지 못했지만 게임을 엽니다 (' + done + '/' + total + ')');
+      boot.classList.add('out'); setTimeout(() => boot.remove(), 600); CG.assetsReady();
+      if(late && done < total) console.warn('Some images failed to load; opening the game anyway (' + done + '/' + total + ')');
       return;
     }
-    if(performance.now() - t0 > 6000) msg.textContent = 'LOADING… (연결이 느립니다)';
+    if(performance.now() - t0 > 6000) msg.textContent = 'LOADING… (slow connection)';
     setTimeout(check, 60);
   };
   check();
 })();
 window.__boxingReady = true;
-</script>
-<script>
-/* ============================================================================================
-   멀티플레이 모듈 (위 게임 코드는 건드리지 않고, 필요한 함수만 감싸서 끼워 넣는다)
-   - 방 만들기: 랜덤 6자리 코드 = 방 번호. 코드가 곧 PeerJS 접속 ID(fistbox-코드)라서 별도 서버 없이 방이 만들어진다.
-   - 연결: PeerJS 클라우드가 두 PC의 "소개"만 해 주고(WebRTC), 그 뒤 게임 데이터는 두 PC가 직접 주고받는다. 어떤 네트워크든(집/학교/모바일) 코드만 있으면 접속된다.
-   - 대전: 방장(HOST)이 전투를 계산하는 기준이다. 손님(GUEST)은 키 입력을 보내고, 방장이 보내 주는 화면 상태를 그대로 그린다. 방장=왼쪽(파랑), 손님=오른쪽(빨강).
-   - 대전 기록은 랭킹에 반영되지 않는다.
-   ============================================================================================ */
-(function(){
-'use strict';
-const PEER_URLS = ['https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js', 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'];
-const ID_PREFIX = 'fistbox-';
-const ACTS = ['jab', 'straight', 'uppercut', 'skill', 'dodge', 'guard'];
-const FKEYS = ['x','vx','face','state','t','hp','lag','st','gd','gdBroken','gdT','cg','z','vz','squash','hitPow','hitKind','flash','counter','combo','comboT','stun','connected','sw','recoilV','dodgeInv','counterAtk','pivotCd'];
-const rnd = v => typeof v === 'number' ? Math.round(v*100)/100 : v;
-const cleanName = s => String(s == null ? '' : s).replace(/[^\w가-힣 ]/g, '').slice(0, 14) || 'PLAYER';
-
-Object.assign(net, { link:null, peerObj:null, peer:null, ready:false, fx:[], rbuf:[], r:{ move:0, guard:0, at:0 }, rdt:1/60,
-                     lastRx:0, ping:0, code:'', busy:false, sess:0, toastT:0, lastIn:'', lastInAt:0, isBC:false, disp:null });
-
-/* ---------- 연결 도구 ---------- */
-function loadPeer(){
-  if(window.Peer) return Promise.resolve();
-  return new Promise((res, rej) => {
-    let i = 0;
-    const next = () => {
-      if(i >= PEER_URLS.length){ rej(new Error('load')); return; }
-      const s = document.createElement('script'); let done = false;
-      const fail = () => { if(done) return; done = true; s.remove(); next(); };
-      s.src = PEER_URLS[i++]; s.onload = () => { if(done) return; done = true; window.Peer ? res() : next(); }; s.onerror = fail;
-      setTimeout(fail, 10000); document.head.appendChild(s);
-    };
-    next();
-  });
-}
-function wrapConn(conn){
-  const l = { send(o){ try{ if(conn.open) conn.send(o); }catch(e){} }, close(){ try{ conn.close(); }catch(e){} },
-              buffered(){ try{ return conn.dataChannel ? conn.dataChannel.bufferedAmount : 0; }catch(e){ return 0; } } };
-  conn.on('data', d => { if(l.onmessage) l.onmessage(d); });
-  conn.on('close', () => { if(l.onclose) l.onclose(); });
-  conn.on('error', () => { if(l.onclose) l.onclose(); });
-  return l;
-}
-// (개발/테스트용) 같은 브라우저의 두 창을 BroadcastChannel로 잇는다: window.__NET_LOCAL = true 일 때만 사용되고, 평소엔 PeerJS(인터넷)를 쓴다
-function bcLink(ch, me, other){
-  const l = { send(o){ try{ ch.postMessage({ to:other, from:me, d:o }); }catch(e){} }, close(){ try{ ch.postMessage({ to:other, from:me, d:{ k:'__close' } }); ch.close(); }catch(e){} }, buffered(){ return 0; } };
-  ch.onmessage = ev => { const m = ev.data; if(!m || m.to !== me) return; if(m.d && m.d.k === '__close'){ if(l.onclose) l.onclose(); return; } if(l.onmessage) l.onmessage(m.d); };
-  return l;
-}
-
-/* ---------- 화면(창) ---------- */
-const $m = id => document.getElementById(id);
-function setMsg(t, err){ const e = $m('mpMsg'); e.textContent = t || ''; e.className = 'status' + (err ? ' err' : ''); }
-function toast(t){
-  const e = $m('mpToast'); e.textContent = t; e.classList.add('on');
-  clearTimeout(net.toastT); net.toastT = setTimeout(() => e.classList.remove('on'), 4500);
-}
-function showPanel(mode){
-  $m('mp').classList.remove('hidden'); net.panel = true; hideMenu();
-  $m('mpJoin').classList.toggle('hide', mode !== 'join'); $m('mpHost').classList.toggle('hide', mode !== 'host');
-  $m('mpTtl').textContent = mode === 'host' ? 'CREATE ROOM' : mode === 'match' ? 'RANDOM MATCH' : 'MULTIPLAYER';
-  $m('mpLive').textContent = ''; setMsg('');
-}
-function hidePanelUI(){ $m('mp').classList.add('hidden'); net.panel = false; }
-function closePanel(){                                   // 창 닫기 = 아직 대전이 시작되지 않았다면 방/연결도 정리
-  if(!net.on){ teardown(true); net.role = ''; }
-  hidePanelUI();
-  if(game.state === 'title') showMenu();
-}
-function openPanel(mode){
-  if(game.state !== 'title' || net.on || net.panel) return;
-  teardown(false); net.role = mode === 'host' ? 'host' : mode === 'match' ? '' : 'guest'; showPanel(mode);
-  if(mode === 'host') hostRoom(); else if(mode === 'match') startRandom(); else { $m('mpCode').value = ''; setTimeout(() => $m('mpCode').focus(), 50); }
-}
-
-/* ---------- 연결 정리 ---------- */
-function teardown(sendBye){
-  const L = net.link, PR = net.peerObj;
-  net.sess++;                                            // 진행 중이던 연결 시도의 늦은 콜백은 이 번호가 달라져서 무시된다
-  net.link = null; net.peerObj = null; net.peer = null; net.ready = false; net.busy = false; net.code = ''; net.rep = null; net.mode = '';
-  net.rbuf.length = 0; net.fx.length = 0; net.vote.me = net.vote.peer = false;
-  if(L){ if(sendBye) L.send({ k:'bye' }); L.onmessage = L.onclose = null; setTimeout(() => L.close(), 250); }
-  if(PR){ PR.__bye = true; setTimeout(() => { try{ PR.destroy(); }catch(e){} }, 300); }   // __bye: 일부러 닫는 중 → 자동 재접속 금지 (방 코드가 서버에 남지 않게)
-}
-function leaveMatch(sendBye){
-  net.on = false; net.role = '';
-  teardown(sendBye);
-}
-// 상대가 나갔거나 연결이 끊김
-function peerGone(msg){
-  const inMatch = net.on;
-  if(net.panel && !inMatch){ teardown(false); setMsg(msg, true); return; }
-  leaveMatch(false);
-  if(game.state !== 'title') toTitle();
-  toast(msg);
-}
-
-/* ---------- 랜덤 매칭 (서버 대기열) ----------
-   Cloudflare 서버의 대기열(/ws/lobby)에 줄을 서면 서버가 두 명을 짝지어 방(/ws/room/..)을 만들어 준다. 서버는 대기열·방 배정·승패 기록만 맡는다.
-   실제 대전은 두 PC 가 직접 연결(P2P, PeerJS)해서 한다 — 한국에서는 무료 서버 경로가 로스앤젤레스를 거쳐 왕복 0.4초 안팎이라 실시간 대전에 쓸 수 없기 때문이다.
-   P2P 가 12초 안에 안 되면(회사/학교 네트워크 등) 서버 중계로 자동 전환한다. 그때는 무료 한도를 아끼려고 방장의 화면 상태를 30번/초로 보내고, 손님 쪽은 그 사이를 이동 속도로 이어 그린다.
-   어느 쪽이든 그 뒤의 대전 코드(방장이 전투를 계산, 손님은 입력만 보냄)는 방 코드 방식과 똑같다. */
-const WS_BASE = (typeof API === 'string' && API ? API : location.origin).replace(/^http/, 'ws');
-function wsLink(ws){                                       // 서버 중계 모드의 연결 (방 코드 방식의 연결과 같은 규격)
-  const l = { half:true,                                   // half: 방장 화면 상태를 격프레임으로만 보낸다
-    send(o){ try{ if(ws.readyState === 1) ws.send(JSON.stringify(o)); }catch(e){} },
-    close(){ try{ ws.close(1000, 'bye'); }catch(e){} },
-    buffered(){ try{ return ws.bufferedAmount; }catch(e){ return 0; } } };
-  ws.onmessage = ev => {
-    let d; try{ d = JSON.parse(ev.data); }catch(e){ return; }
-    if(d && d.k === 'rtt'){ net.srv = Math.round(performance.now() - d.t); return; }                // 서버까지의 왕복 시간
-    if(l.onmessage) l.onmessage(d);
-  };
-  ws.onclose = ws.onerror = () => { if(l.onclose) l.onclose(); };
-  return l;
-}
-function startRandom(){
-  if(net.busy) return;
-  if(!game.token){ setMsg('로그인이 필요합니다.', true); return; }
-  net.busy = true; net.srv = 0; net.mode = ''; setMsg('서버에 연결하는 중…'); $m('mpLive').textContent = 'CONNECTING';
-  const sess = net.sess, stale = () => sess !== net.sess;
-  let lobby = null, room = null, peer = null, tick = 0, timer = 0, mode = '';
-  const drop = x => { if(x){ x.onopen = x.onmessage = x.onclose = x.onerror = null; try{ x.close(); }catch(e){} } };
-  const cleanup = () => { clearInterval(tick); clearTimeout(timer); if(peer){ peer.__bye = true; try{ peer.destroy(); }catch(e){} peer = null; } drop(lobby); drop(room); lobby = room = null; net.rep = null; };
-  net.peerObj = { destroy: cleanup };                      // 창을 닫거나 대전이 끝나 연결을 정리할 때(teardown) 이것도 같이 정리된다 — PeerJS 가 있던 자리를 같이 쓴다
-  const fail = msg => { if(stale()) return; cleanup(); net.busy = false; net.peerObj = null; net.role = ''; $m('mpLive').textContent = ''; setMsg(msg, true); };
-  const json = ev => { try{ return JSON.parse(ev.data); }catch(e){ return null; } };
-  try{ lobby = new WebSocket(WS_BASE + '/ws/lobby'); }catch(e){ return fail('서버에 연결할 수 없습니다. 방 코드로 친구와 대전할 수 있습니다.'); }
-  lobby.onopen = () => lobby && lobby.send(JSON.stringify({ k:'auth', token:game.token }));
-  lobby.onerror = lobby.onclose = () => fail('서버에 연결하지 못했습니다. 잠시 후 다시 시도하거나, 방 코드로 친구와 대전해 보세요.');
-  lobby.onmessage = ev => {
-    if(stale()) return;
-    const m = json(ev); if(!m) return;
-    if(m.k === 'ready'){
-      lobby.send(JSON.stringify({ k:'queue', ch:game.char }));
-      const t0 = performance.now(); $m('mpLive').textContent = 'SEARCHING'; setMsg('상대를 찾는 중… 0초');
-      tick = setInterval(() => {
-        const sec = Math.floor((performance.now() - t0)/1000);
-        if(sec >= 60){ try{ lobby.send(JSON.stringify({ k:'cancel' })); }catch(e){} fail('상대를 찾지 못했습니다. 잠시 후 다시 시도하거나, 방 코드로 친구와 대전해 보세요.'); }
-        else setMsg('상대를 찾는 중… ' + sec + '초  (ESC 로 취소)');
-      }, 1000);
-    }
-    else if(m.k === 'err') fail(m.error === 'bad_token' ? '로그인이 만료되었습니다. 다시 로그인해 주세요.' : m.error === 'replaced' ? '다른 창에서 매칭을 시작해서 이 창의 매칭은 취소되었습니다.' : '매칭 서버가 바쁩니다. 잠시 후 다시 시도해 주세요.');
-    else if(m.k === 'matched') enterRoom(m);
-  };
-
-  function enterRoom(m){
-    clearInterval(tick); drop(lobby); lobby = null;
-    net.role = m.role === 'host' ? 'host' : 'guest';
-    net.peer = { name:cleanName(m.opp && m.opp.name), ch:CHARS[m.opp && m.opp.ch] ? m.opp.ch : 'outfighter' };
-    $m('mpLive').textContent = 'MATCHED'; setMsg('상대를 찾았습니다! 연결하는 중…');
-    try{ room = new WebSocket(WS_BASE + '/ws/room/' + m.room); }catch(e){ return fail('상대와 연결하지 못했습니다.'); }
-    const rsend = o => { try{ if(room && room.readyState === 1) room.send(JSON.stringify(o)); }catch(e){} };
-    net.rep = rsend;                                       // 서버로 가는 길: 승패 보고와 서버 왕복 측정. 대전이 P2P 여도 이 길로 보낸다
-    const usep2p = link => { if(mode){ try{ link.close(); }catch(e){} return; } mode = 'p2p'; net.mode = 'p2p'; clearTimeout(timer); net.busy = false; attach(link); };
-    const useRelay = () => {                               // P2P 가 안 될 때: 서버가 두 사람 사이의 메시지를 전달한다
-      if(mode === 'relay' || net.on || !room) return;
-      const old = net.link; if(old && mode === 'p2p'){ old.onmessage = old.onclose = null; old.close(); net.link = null; }
-      mode = 'relay'; net.mode = 'relay'; clearTimeout(timer);
-      if(peer){ peer.__bye = true; try{ peer.destroy(); }catch(e){} peer = null; }
-      net.busy = false; attach(wsLink(room));
-    };
-    const hostP2P = async () => {                          // 방장: 방 번호로 PeerJS 자리를 열고, 준비되면 서버를 통해 손님에게 알린다
-      try{ await loadPeer(); }catch(e){ return; }
-      if(stale() || mode || !room) return;
-      const p = new window.Peer(ID_PREFIX + m.room, { debug:0 }); peer = p;
-      p.on('open', () => rsend({ k:'rdy' }));
-      p.on('connection', conn => conn.on('open', () => { if(stale() || mode){ try{ conn.close(); }catch(e){} return; } usep2p(wrapConn(conn)); }));
-      p.on('error', () => {});                             // 안 되면 아래 타이머가 서버 중계로 넘어간다
-    };
-    const guestP2P = async () => {                         // 손님: 방장이 준비됐다는 알림을 받으면 그 자리로 연결한다
-      try{ await loadPeer(); }catch(e){ return; }
-      if(stale() || mode || !room || peer) return;
-      const p = new window.Peer({ debug:0 }); peer = p;
-      p.on('open', () => {
-        if(stale() || mode) return;
-        const conn = p.connect(ID_PREFIX + m.room, { reliable:true, serialization:'json' });
-        conn.on('open', () => { if(stale() || mode){ try{ conn.close(); }catch(e){} return; } usep2p(wrapConn(conn)); });
-      });
-      p.on('error', () => {});
-    };
-    room.onopen = () => rsend({ k:'auth', token:game.token });
-    room.onerror = room.onclose = () => { if(stale()) return; if(!mode) fail('상대와 연결하지 못했습니다. 다시 시도해 주세요.'); else if(mode === 'p2p') net.rep = null; };
-    room.onmessage = ev => {
-      if(stale()) return;
-      const d = json(ev); if(!d) return;
-      if(d.k === 'go'){                                    // 두 사람이 모두 방에 들어왔다
-        setMsg('상대와 직접 연결하는 중…');
-        timer = setTimeout(() => { if(!mode){ rsend({ k:'relay' }); useRelay(); } }, window.__NET_NO_P2P ? 50 : 12000);
-        if(!window.__NET_NO_P2P && net.role === 'host') hostP2P();
-      }
-      else if(d.k === 'rdy'){ if(net.role === 'guest' && !mode && !window.__NET_NO_P2P) guestP2P(); }
-      else if(d.k === 'relay') useRelay();
-      else if(d.k === 'rtt') net.srv = Math.round(performance.now() - d.t);
-      else if(d.k === 'bye'){ if(mode === 'p2p') peerGone('상대가 방을 나갔습니다'); else if(!mode) fail('상대가 방을 나갔습니다.'); }
-      else if(d.k === 'err') fail('이 방에 들어갈 수 없습니다.');
-    };
-  }
-}
-
-/* ---------- 방 만들기 (방장) ---------- */
-async function hostRoom(){
-  if(net.busy) return; net.busy = true;
-  const sess = net.sess, stale = () => sess !== net.sess;
-  setMsg('방을 만드는 중…');
-  try{
-    if(window.__NET_LOCAL){ hostBC(); return; }
-    await loadPeer();
-  }catch(e){ if(stale()) return; net.busy = false; setMsg('연결 도구(PeerJS)를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.', true); return; }
-  let tries = 0;
-  const attempt = () => {
-    if(stale() || !net.panel || net.role !== 'host') return;
-    const code = String(100000 + Math.floor(Math.random()*900000));
-    const p = new window.Peer(ID_PREFIX + code, { debug:0 });
-    net.peerObj = p;
-    p.on('open', () => {
-      if(stale()){ p.__bye = true; try{ p.destroy(); }catch(e){} return; }
-      net.code = code; net.busy = false; $m('mpShow').textContent = code; $m('mpLive').textContent = 'WAITING';
-      setMsg('친구가 코드를 입력하기를 기다리는 중…');
-    });
-    p.on('connection', conn => {
-      if(net.link){ try{ conn.on('open', () => { conn.send({ k:'full' }); setTimeout(() => conn.close(), 200); }); }catch(e){} return; }   // 이미 상대가 있으면 거절
-      conn.on('open', () => { if(net.link || stale()){ return; } attach(wrapConn(conn)); });
-    });
-    // 중개 서버와 잠깐 끊겨도 방은 유지. 단, 우리가 방을 닫는 중이면(destroy가 먼저 이 이벤트를 부른다) 다시 붙지 않는다
-    p.on('disconnected', () => { if(p.__bye || stale()) return; setTimeout(() => { if(!p.__bye && !stale() && !p.destroyed){ try{ p.reconnect(); }catch(e){} } }, 1000); });
-    p.on('error', err => {
-      if(stale()) return;
-      if(err && err.type === 'unavailable-id' && tries++ < 6){ p.__bye = true; try{ p.destroy(); }catch(e){} attempt(); return; }   // 코드가 겹치면 새 코드로
-      if(net.on) return;
-      net.busy = false;
-      setMsg(err && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed')
-        ? '연결 중개 서버에 접속할 수 없습니다. 인터넷 연결을 확인해 주세요.' : '방을 만들지 못했습니다. 다시 시도해 주세요.', true);
-    });
-  };
-  attempt();
-}
-function hostBC(){
-  const code = String(100000 + Math.floor(Math.random()*900000));
-  const ch = new BroadcastChannel(ID_PREFIX + code); net.code = code; net.isBC = true; net.busy = false;
-  net.peerObj = { destroy(){ try{ ch.close(); }catch(e){} } };
-  $m('mpShow').textContent = code; $m('mpLive').textContent = 'WAITING'; setMsg('친구가 코드를 입력하기를 기다리는 중…');
-  ch.onmessage = ev => {
-    const m = ev.data;
-    if(!m || m.to !== 'H' || !m.d || m.d.k !== '__join' || net.link) return;
-    ch.postMessage({ to:m.from, from:'H', d:{ k:'__ok' } });
-    attach(bcLink(ch, 'H', m.from));
-  };
-}
-
-/* ---------- 입장 (손님) ---------- */
-async function joinRoom(){
-  if(net.busy) return;
-  const code = $m('mpCode').value.trim();
-  if(!/^\d{6}$/.test(code)){ setMsg('방 코드는 숫자 6자리입니다.', true); return; }
-  net.busy = true; setMsg('방을 찾는 중…'); $m('mpLive').textContent = '';
-  const sess = net.sess, stale = () => sess !== net.sess;
-  try{
-    if(window.__NET_LOCAL){ joinBC(code); return; }
-    await loadPeer();
-  }catch(e){ if(stale()) return; net.busy = false; setMsg('연결 도구(PeerJS)를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.', true); return; }
-  if(stale()) return;
-  const p = new window.Peer({ debug:0 }); net.peerObj = p;
-  let opened = false;
-  const timer = setTimeout(() => { if(!opened && !stale()){ net.busy = false; teardown(false); setMsg('연결 시간이 초과되었습니다. 코드를 확인하고 다시 시도해 주세요.', true); } }, 18000);
-  p.on('open', () => {
-    if(stale()) return;
-    const conn = p.connect(ID_PREFIX + code, { reliable:true, serialization:'json' });
-    conn.on('open', () => { if(stale()){ try{ conn.close(); }catch(e){} return; } opened = true; clearTimeout(timer); net.busy = false; attach(wrapConn(conn)); });
-    conn.on('error', () => { if(!opened && !stale()){ clearTimeout(timer); net.busy = false; teardown(false); setMsg('방에 연결하지 못했습니다.', true); } });
-  });
-  p.on('error', err => {
-    if(opened || stale()) return;
-    clearTimeout(timer); net.busy = false; teardown(false);
-    setMsg(err && err.type === 'peer-unavailable' ? '해당 코드의 방을 찾을 수 없습니다. 코드를 다시 확인해 주세요.'
-         : err && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error') ? '연결 중개 서버에 접속할 수 없습니다. 인터넷 연결을 확인해 주세요.' : '방에 연결하지 못했습니다.', true);
-  });
-}
-function joinBC(code){
-  const ch = new BroadcastChannel(ID_PREFIX + code), me = 'G' + Math.random().toString(36).slice(2, 8); net.isBC = true;
-  net.peerObj = { destroy(){ try{ ch.close(); }catch(e){} } };
-  const timer = setTimeout(() => { if(net.busy){ net.busy = false; teardown(false); setMsg('해당 코드의 방을 찾을 수 없습니다. 코드를 다시 확인해 주세요.', true); } }, 2500);
-  ch.onmessage = ev => {
-    const m = ev.data;
-    if(!m || m.to !== me || !m.d || m.d.k !== '__ok') return;
-    clearTimeout(timer); net.busy = false; attach(bcLink(ch, me, m.from));
-  };
-  ch.postMessage({ to:'H', from:me, d:{ k:'__join' } });
-}
-
-/* ---------- 연결된 뒤: 인사 → (방장) 대전 시작 ---------- */
-function attach(link){
-  net.link = link; net.lastRx = performance.now(); net.ping = 0; net.round = 0; net.repR = -1; net.tick = false;
-  link.onmessage = onMsg;
-  link.onclose = () => peerGone('연결이 끊어졌습니다');
-  link.send({ k:'hi', name:cleanName(game.user), ch:game.char, v:1 });
-  $m('mpLive').textContent = 'CONNECTED'; setMsg('연결되었습니다! 잠시 후 시작합니다…');
-}
-function onMsg(m){
-  if(!m || typeof m !== 'object') return;
-  net.lastRx = performance.now();
-  switch(m.k){
-    case 'hi':
-      net.peer = { name:cleanName(m.name), ch:CHARS[m.ch] ? m.ch : 'outfighter' };
-      if(net.role === 'host' && !net.on) startMatch();
-      break;
-    case 'char': if(net.peer && CHARS[m.ch]) net.peer.ch = m.ch; break;                 // 상대가 방 안에서 캐릭터를 바꿈 → 다음 경기부터 반영
-    case 'full': teardown(false); setMsg('이미 다른 사람이 들어와 있는 방입니다.', true); break;
-    case 'start': if(net.role === 'guest') beginGuest(m); break;
-    case 'snap': if(net.role === 'guest' && net.ready) applySnap(m); break;
-    case 'in': if(net.role === 'host' && net.on) applyRemoteIn(m); break;
-    case 'vote': if(net.on){ net.vote.peer = true; if(net.role === 'host' && net.vote.me) startMatch(); } break;
-    case 'ping': if(net.link) net.link.send({ k:'pong', t:m.t }); break;
-    case 'pong': net.ping = Math.round(performance.now() - m.t); break;
-    case 'bye': peerGone('상대가 방을 나갔습니다'); break;
-  }
-}
-function startMatch(){                                   // 방장: 새 경기 (첫 경기 / 재대결)
-  net.vote.me = net.vote.peer = false;
-  net.on = true; net.ready = true; net.role = 'host';
-  closeSub(); hidePanelUI(); start(1);                              // 기존 시작 루틴(상태 초기화)을 쓰고, 파이터만 사람 둘로 바꾼다
-  P = mk(310, 1, true, 1, game.char); E = mk(650, -1, false, 1, net.peer.ch); E.human = true; E.spd = 1;
-  net.names = [cleanName(game.user), net.peer.name];
-  net.fx.length = 0; net.rbuf.length = 0; net.r = { move:0, guard:0, at:performance.now() };
-  net.round = (net.round || 0) + 1;                                 // 몇 번째 경기인지 (서버에 승패를 보고할 때 같은 경기를 가리키는 번호)
-  net.link.send({ k:'start', hc:game.char, gc:net.peer.ch, hn:net.names[0], gn:net.names[1], r:net.round });
-  game.state = 'intro';
-}
-function beginGuest(m){                                  // 손님: 방장의 시작 신호를 받아 같은 파이터를 세운다
-  net.vote.me = net.vote.peer = false;
-  net.on = true; net.ready = true; net.role = 'guest';
-  closeSub(); hidePanelUI(); start(1);
-  P = mk(310, 1, true, 1, CHARS[m.hc] ? m.hc : 'outfighter'); E = mk(650, -1, false, 1, CHARS[m.gc] ? m.gc : 'outfighter'); E.human = true; E.spd = 1;
-  net.names = [cleanName(m.hn), cleanName(m.gn)]; net.round = m.r | 0;
-  game.state = 'intro'; net.lastInAt = 0; net.lastIn = '';
-}
-net.rematch = function(){                                // 결과 화면에서 Enter: 양쪽이 모두 누르면 재대결
-  if(!net.on || net.vote.me) return;
-  net.vote.me = true; net.link && net.link.send({ k:'vote' });
-  if(net.role === 'host' && net.vote.peer) startMatch();
-};
-
-/* ---------- 방장: 손님 입력 받기 / 화면 상태 보내기 ---------- */
-function applyRemoteIn(m){
-  const r = net.r; r.at = performance.now();
-  r.move = m.m > 0 ? 1 : m.m < 0 ? -1 : 0; r.guard = !!m.g;
-  if(Array.isArray(m.a)) for(const a of m.a.slice(0, 4)){
-    if(!ACTS.includes(a)) continue;
-    net.rbuf = [{ a, age:0 }];                                                         // 입력 버퍼(1칸, 최신 입력으로 교체) — 방장 쪽 입력과 같은 규칙
-  }
-}
-function takeRemote(f){
-  if(!canAct(f) || !net.rbuf.length) return null;
-  const i = net.rbuf.findIndex(b => !(f.atkCd[b.a] > 0));
-  return i < 0 ? null : net.rbuf.splice(i, 1)[0].a;
-}
-function remoteCtl(f, dt){                               // 손님 파이터(E)를 조종: CPU 두뇌 대신 손님의 입력을 쓴다
-  const r = net.r, c = f.ctrl;
-  if(performance.now() - r.at > 700){ r.move = 0; r.guard = false; }               // 입력이 끊기면(탭 정지 등) 멈춰 세운다
-  c.move = r.move; c.act = null;
-  f.guardForce = Math.max(0, f.guardForce - dt);
-  let a;
-  while((a = takeRemote(f))){ if(a === 'guard') f.guardForce = .18; else { c.act = a; break; } }
-  c.guard = !!r.guard || f.guardForce > 0;
-  for(const b of net.rbuf) b.age += dt;
-  net.rbuf = net.rbuf.filter(b => b.age < bufWindow(b.a) - 1e-6);
-  if(f.state === 'hit' || f.state === 'ko') net.rbuf.length = 0;                   // 맞으면 저장된 입력은 비운다
-}
-function packF(f){
-  const a = FKEYS.map(k => rnd(f[k]));
-  a.push(f.atk ? f.atk.name : '', !!f.ctrl.guard, f.ctrl.move | 0);
-  return a;
-}
-function sendSnap(){
-  if(!net.link || net.link.buffered() > 200000) return;                              // 회선이 밀리면 이번 프레임은 건너뛴다
-  const g = [game.state, rnd(game.introT), rnd(game.koT), rnd(game.flash), rnd(game.shake), rnd(game.slow), rnd(game.freeze), rnd(game.kick)];
-  net.link.send({ k:'snap', g, p:packF(P), e:packF(E), x:net.fx });
-  net.fx = [];
-}
-
-/* ---------- 손님: 화면 상태 받기 / 입력 보내기 ---------- */
-function unpackF(f, a){
-  for(let i = 0; i < FKEYS.length; i++) f[FKEYS[i]] = a[i];
-  const n = FKEYS.length, nm = a[n];
-  f.atk = nm ? (Object.values(f.chATK).find(k => k.name === nm) || null) : null;
-  f.ctrl.guard = !!a[n+1]; f.ctrl.move = a[n+2] | 0;
-}
-const orig = { burst, dust, ring, addText, sfx, starsPush: stars.push };
-function replay(e){
-  switch(e[0]){
-    case 'burst': orig.burst(...e.slice(1)); break;
-    case 'dust': orig.dust(...e.slice(1)); break;
-    case 'ring': orig.ring(...e.slice(1)); break;
-    case 'text': orig.addText(...e.slice(1)); break;
-    case 'sfx': orig.sfx(...e.slice(1)); break;
-    case 'star': orig.starsPush.call(stars, e[1]); break;
-  }
-}
-function applySnap(m){
-  if(!m.g || !m.p || !m.e) return;
-  net.fresh = true;
-  const g = m.g;
-  game.state = g[0]; game.introT = g[1]; game.koT = g[2]; game.flash = g[3]; game.shake = g[4]; game.slow = g[5]; game.freeze = g[6]; game.kick = g[7];
-  unpackF(P, m.p); unpackF(E, m.e);
-  if(Array.isArray(m.x)) for(const e of m.x) replay(e);
-}
-function guestStep(dt){                                  // 손님 쪽 한 프레임: 전투 계산은 하지 않고 입자/글자 같은 연출만 진행
-  game.t += dt;
-  game.shake *= Math.pow(.0008, dt); game.flash = Math.max(0, game.flash - dt); game.kick = Math.max(0, game.kick - dt*.35);
-  if(game.freeze > 0){ game.freeze -= dt; return; }
-  let ts = 1;
-  if(game.slow > 0){ game.slow -= dt; ts = game.state === 'ko' ? .2 : .3; }
-  dt *= ts;
-  if(net.link && net.link.half){                         // 서버 연결: 화면 상태가 격프레임으로 오므로, 새 상태가 없는 프레임에는 이동 속도만큼 이어서 그린다 (다음 상태가 오면 바로잡힌다)
-    if(!net.fresh && game.state === 'fight') for(const f of [P, E]) if(f.state !== 'ko') f.x = Math.max(100, Math.min(860, f.x + f.vx*dt));
-    net.fresh = false;
-  }
-  for(const p of parts){ p.life -= dt; p.vy += 1100*dt; p.x += p.vx*dt; p.y += p.vy*dt; }
-  for(const r of rings) r.life -= dt;
-  for(const s of stars) s.life -= dt;
-  for(const t of texts){ t.life -= dt; t.y -= 38*dt; }
-  for(let i = parts.length-1; i >= 0; i--) if(parts[i].life <= 0) parts.splice(i, 1);
-  for(let i = rings.length-1; i >= 0; i--) if(rings[i].life <= 0) rings.splice(i, 1);
-  for(let i = stars.length-1; i >= 0; i--) if(stars[i].life <= 0) stars.splice(i, 1);
-  for(let i = texts.length-1; i >= 0; i--) if(texts[i].life <= 0) texts.splice(i, 1);
-  P.bob += dt*5; E.bob += dt*5; P.t += dt; E.t += dt;
-}
-function sendIn(force){
-  if(!net.link) return;
-  const mv = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), gd = GUARD_KEYS.some(k => keys[k]) ? 1 : 0, s = mv + ':' + gd, now = performance.now();
-  if(!force && s === net.lastIn && now - net.lastInAt < 150) return;                 // 바뀐 때와 0.15초마다(끊김 감지용)만 보낸다
-  net.lastIn = s; net.lastInAt = now; net.link.send({ k:'in', m:mv, g:gd });
-}
-addEventListener('keydown', e => {                       // 손님의 공격/회피/가드 입력은 눌린 순간 바로 방장에게 보낸다 (방장 쪽 버퍼가 처리)
-  if(!net.on || net.role !== 'guest' || game.state !== 'fight' || e.repeat || net.panel) return;
-  const a = ACTION_KEYS[e.code] || (GUARD_KEYS.includes(e.code) ? 'guard' : null);
-  if(!a || !net.link) return;
-  const mv = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), gd = GUARD_KEYS.some(k => keys[k]) ? 1 : 0;
-  net.lastIn = mv + ':' + gd; net.lastInAt = performance.now();
-  net.link.send({ k:'in', m:mv, g:gd, a:[a] });
-});
-
-/* ---------- 방 안에서 캐릭터 변경 / 랭킹 보기 (결과 화면에서 C / R) ----------
-   연결과 방은 그대로 두고, 기존 캐릭터 창(#chars)과 랭킹 창(#rank)을 그 위에 띄운다. 경기 상태(game.state)는 건드리지 않고,
-   그리는 순간에만 메인 화면과 같은 장면(캐릭터 세 명 / 양옆에 선 두 명)으로 바꿔 보여 준다. */
-function openSub(kind){
-  if(!net.on || net.sub || net.panel || game.state !== 'ko' || game.koT < 1.8) return;
-  net.sub = kind;
-  if(kind === 'chars'){
-    PV = CHAR_KEYS.map((k, i) => mk([190, 480, 770][i], 1, true, 1, k));
-    buildChars(); refreshCards(); $m('chars').classList.remove('hidden');
-  } else {
-    net.disp = [mk(150, 1, true, 1, game.char), mk(810, -1, false, 1, net.peer ? net.peer.ch : 'outfighter')];
-    RANK.open = true; RANK.version = null; RANK.first = true; RANK.prev = new Map();
-    $m('rankList').textContent = ''; $m('rankList').hidden = true; $m('rankEmpty').hidden = false; $m('rankEmpty').textContent = '불러오는 중…'; $m('rankMine').textContent = '';
-    setLive(false); $m('rankLive').textContent = 'CONNECTING'; $m('rank').classList.remove('hidden');
-    pollRank(true); clearInterval(RANK.timer); RANK.timer = setInterval(() => pollRank(false), RANK_POLL_MS);
-  }
-}
-function closeSub(){
-  if(!net.sub) return;
-  if(net.sub === 'chars') stopChars(); else stopRank();
-  net.sub = ''; net.disp = null;
-}
-const _pickChar = pickChar;
-pickChar = function(key){                                // 방 안에서 캐릭터를 바꾸면 상대에게도 알린다 (다음 경기부터 적용)
-  const before = game.char; _pickChar(key);
-  if(net.on && net.link && game.char !== before) net.link.send({ k:'char', ch:game.char });
-};
-$m('charsBack').addEventListener('click', closeSub);
-$m('rankBack').addEventListener('click', closeSub);
-addEventListener('keydown', e => {
-  if(!net.on || net.panel || e.repeat) return;
-  if(net.sub){
-    if(e.code === 'Escape' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'Backspace'){ e.preventDefault(); closeSub(); }
-    else if(net.sub === 'chars' && (e.code === 'ArrowLeft' || e.code === 'KeyA')){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 2) % 3]); }
-    else if(net.sub === 'chars' && (e.code === 'ArrowRight' || e.code === 'KeyD')){ e.preventDefault(); pickChar(CHAR_KEYS[(CHAR_KEYS.indexOf(game.char) + 1) % 3]); }
-    return;
-  }
-  if(game.state === 'ko' && game.koT >= 1.8){
-    if(e.code === 'KeyC'){ e.preventDefault(); audio(); openSub('chars'); }
-    else if(e.code === 'KeyR'){ e.preventDefault(); audio(); openSub('rank'); }
-  }
-});
-
-/* ---------- 기존 함수 감싸기 ---------- */
-const _step = step, _runAI = runAI, _toTitle = toTitle, _draw = draw, _recordWin = recordWin;
-step = function(dt){
-  if(net.sub){ for(const f of net.disp || []) f.bob += dt*5; for(const v of PV) v.bob += dt*5; }
-  if(!net.on || !net.ready) return _step(dt);
-  if(net.role === 'guest'){ guestStep(dt); sendIn(false); matchResult(); return; }
-  net.rdt = dt; _step(dt);
-  if(!net.link || !net.link.half || (net.tick = !net.tick)) sendSnap();               // 서버 연결이면 2프레임에 한 번 (무료 한도 절약), 방 코드(P2P)는 매 프레임
-  matchResult();
-};
-// 경기가 끝나면 두 사람이 각자 승자를 서버에 알린다. 서버는 둘이 일치할 때만 대전 기록으로 남긴다 (랜덤 매칭일 때만)
-function matchResult(){
-  if(!net.rep || game.state !== 'ko' || net.repR === net.round) return;
-  net.repR = net.round;
-  net.rep({ k:'result', r:net.round, w: P.hp <= 0 ? 'guest' : 'host' });       // P = 방장(왼쪽), E = 손님(오른쪽)
-}
-runAI = function(f, o, dt){
-  if(net.on && net.role === 'host' && f === E){ remoteCtl(E, net.rdt); return; }
-  return _runAI(f, o, dt);
-};
-toTitle = function(){ closeSub(); if(net.on) leaveMatch(true); return _toTitle(); };         // ESC 등으로 메인으로 나가면 상대에게도 알리고 연결을 닫는다
-recordWin = async function(){ if(net.on) return; return _recordWin(); };
-draw = function(){
-  if(net.on && net.sub){                                 // 캐릭터/랭킹 창이 떠 있는 동안: 메인 화면과 같은 장면으로 잠깐 바꿔서 그린다
-    const rp = P, re = E, rs = game.state;
-    if(net.sub === 'rank' && net.disp){ P = net.disp[0]; E = net.disp[1]; game.state = 'ranking'; } else game.state = 'charsel';
-    try{ _draw(); } finally { P = rp; E = re; game.state = rs; }
-    return;
-  }
-  _draw();
-  if(net.on && net.ready){
-    ctx.setTransform(1,0,0,1,0,0);
-    txt((net.role === 'host' ? 'HOST' : 'GUEST') + (net.role === 'guest' ? '  ·  PING ' + net.ping + 'ms' : '') + (net.mode === 'p2p' ? '  ·  P2P' : net.mode === 'relay' ? '  ·  RELAY' + (net.srv ? ' ' + net.srv + 'ms' : '') : ''), W/2, 44, 11, COL.dim, 'center', 600, 3);
-  }
-};
-// 방장은 화면에 보이는 모든 연출(입자/글자/소리)을 손님에게도 전달한다
-[['burst', burst], ['dust', dust], ['ring', ring]].forEach(([n, fn]) => { window[n] = function(...a){ if(net.on && net.role === 'host') net.fx.push([n, ...a]); return fn.apply(this, a); }; });
-addText = function(...a){ if(net.on && net.role === 'host') net.fx.push(['text', ...a]); return orig.addText.apply(this, a); };
-sfx = function(...a){ if(net.on && net.role === 'host') net.fx.push(['sfx', ...a]); return orig.sfx.apply(this, a); };
-stars.push = function(...a){ if(net.on && net.role === 'host' && a[0]) net.fx.push(['star', a[0]]); return orig.starsPush.apply(this, a); };
-
-/* ---------- 연결 상태 점검 (핑 / 끊김 감지) ---------- */
-setInterval(() => {
-  if(!net.link) return;
-  net.link.send({ k:'ping', t:performance.now() });
-  if(net.rep && net.mode === 'relay' && (net.rttTick = !net.rttTick)) net.rep({ k:'rtt', t:performance.now() });     // 서버 중계일 때만, 2초마다 서버까지의 왕복 시간 측정
-  if(performance.now() - net.lastRx > 8000) peerGone('상대와의 연결이 끊어졌습니다');
-}, 1000);
-
-/* ---------- 버튼 / 키 ---------- */
-$m('matchBtn').addEventListener('click', () => { audio(); openPanel('match'); });
-$m('hostBtn').addEventListener('click', () => { audio(); openPanel('host'); });
-$m('joinBtn').addEventListener('click', () => { audio(); openPanel('join'); });
-$m('mpBack').addEventListener('click', () => { audio(); closePanel(); });
-$m('mpGo').addEventListener('click', () => { audio(); joinRoom(); });
-$m('mpCode').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6); });
-$m('mpCopy').addEventListener('click', async () => {
-  if(!net.code) return;
-  try{ await navigator.clipboard.writeText(net.code); setMsg('코드를 복사했습니다: ' + net.code); }catch(e){ setMsg('코드: ' + net.code + ' (직접 알려 주세요)'); }
-});
-addEventListener('keydown', e => {
-  if(!net.panel) return;
-  if(e.code === 'Escape'){ e.preventDefault(); closePanel(); }
-  else if((e.code === 'Enter' || e.code === 'NumpadEnter') && !$m('mpJoin').classList.contains('hide')){ e.preventDefault(); joinRoom(); }
-});
-})();
 </script>
 </body>
 </html>

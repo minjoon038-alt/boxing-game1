@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
   stage_res INTEGER NOT NULL DEFAULT 0      -- 1 once this ticket's win/loss has been counted
 );
 CREATE INDEX IF NOT EXISTS users_rank ON users (best DESC, best_at ASC, key ASC);
+CREATE INDEX IF NOT EXISTS users_name ON users (lower(id));   -- CrazyGames accounts: key = 'cg:<userId>', id = CrazyGames username, no password
 
 CREATE TABLE IF NOT EXISTS sessions (
   token   TEXT PRIMARY KEY,

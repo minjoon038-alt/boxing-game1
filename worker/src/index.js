@@ -1,9 +1,8 @@
-// BOXING accounts + ranking API for Cloudflare Workers + D1.
-// Same endpoints and JSON shapes as server.ps1 (the local server), so boxing.html works with either:
+// UPBOX accounts + ranking API for Cloudflare Workers + D1.
+//   POST /api/cg      log in with a CrazyGames account (the game sends the SDK's user token; the account is created on the first visit)
 //   POST /api/signup  /api/login  /api/char  /api/stage  /api/best  /api/ranking  /api/profile  /api/result  /api/password  /api/delete     (GET /api/health for a quick check)
 //   POST /api/admin/*  (stats, users, user, ban, setbest, setrecord, resetpw, delete, log) - only for accounts whose role is 'admin' in the database
-
-export { Lobby, Room } from './online.js';      // Durable Objects: random matchmaking + match rooms (WebSocket)
+// CrazyGames accounts are stored with key 'cg:<userId>' (the CrazyGames user id never changes; the username can) and have no password.
 
 const CHARS = ['outfighter', 'infighter', 'slugger'];
 const ID_RE = /^[A-Za-z0-9_가-힣]{3,12}$/;           // 3-12 chars: letters, digits, _, Hangul
@@ -18,6 +17,8 @@ const ADMIN_SESSION_MS = 12 * 3600 * 1000;                   // admin actions ne
 // Stage ticket: the game asks for a ticket when a stage starts; a clear / win is only accepted with a ticket that is at least
 // MIN_CLEAR_MS old (a real fight takes longer than that) and at most TICKET_MAX_MS old. Overridable with the MIN_CLEAR_MS variable (tests).
 const MIN_CLEAR_MS = 6000, TICKET_MAX_MS = 6 * 3600 * 1000;
+const CG_KEY_RE = /^cg:[A-Za-z0-9_-]{1,64}$/;
+const targetKey = t => ID_RE.test(t) ? t.toLowerCase() : CG_KEY_RE.test(t) ? t : null;   // an admin target: a normal id or a CrazyGames account key
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -43,6 +44,51 @@ function sameText(a, b) {                                    // constant-time co
   return d === 0;
 }
 const field = (data, name) => (data && data[name] != null ? String(data[name]) : '');
+
+// ---------- CrazyGames user token (JWT, RS256) ----------
+// The game gets the token from the CrazyGames SDK (user.getUserToken) and sends it here; it is checked against CrazyGames' published keys.
+// CG_GAME_ID (optional variable): when set, tokens issued for another game are refused.
+// CG_DEV_INSECURE=1 (local tests ONLY, never in production): accepts the SDK's local demo tokens, which are not signed by CrazyGames.
+const CG_JWKS_URL = 'https://userportal.crazygames.com/.well-known/jwks.json';
+const JWKS = { keys: null, at: 0, tried: 0 };
+const b64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - s.length % 4) % 4)), c => c.charCodeAt(0));
+async function cgKeys(refresh) {
+  const now = Date.now();
+  if (JWKS.keys && !refresh && now - JWKS.at < 3600 * 1000) return JWKS.keys;
+  if (refresh && now - JWKS.tried < 5 * 60 * 1000) return JWKS.keys || [];        // re-fetch for an unknown key at most every 5 minutes
+  JWKS.tried = now;
+  const r = await fetch(CG_JWKS_URL, { cf: { cacheTtl: 3600 } });
+  if (!r.ok) throw new Error('jwks ' + r.status);
+  const j = await r.json();
+  JWKS.keys = Array.isArray(j.keys) ? j.keys : []; JWKS.at = now;
+  return JWKS.keys;
+}
+async function verifyCg(token, env) {
+  const p = String(token || '').split('.');
+  if (p.length !== 3 || String(token).length > 8192) return null;
+  let head, body;
+  try { head = JSON.parse(new TextDecoder().decode(b64u(p[0]))); body = JSON.parse(new TextDecoder().decode(b64u(p[1]))); } catch { return null; }
+  let ok = false;
+  if (head && head.alg === 'RS256') {
+    for (const refresh of [false, true]) {
+      let keys = [];
+      try { keys = await cgKeys(refresh); } catch (e) { console.error('jwks', e && e.message || e); }
+      const jwk = keys.find(k => k.kid === head.kid && k.kty === 'RSA');
+      if (!jwk) continue;
+      try {
+        const key = await crypto.subtle.importKey('jwk', { kty: 'RSA', n: jwk.n, e: jwk.e, alg: 'RS256', ext: true }, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+        ok = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64u(p[2]), enc.encode(p[0] + '.' + p[1]));
+      } catch { ok = false; }
+      if (ok) break;
+    }
+  }
+  if (!ok && env.CG_DEV_INSECURE !== '1') return null;
+  if (!body || body.userId == null || !/^[A-Za-z0-9_-]{1,64}$/.test(String(body.userId))) return null;
+  if (ok && !(typeof body.exp === 'number' && body.exp * 1000 > Date.now() - 60 * 1000)) return null;     // expired (one minute of clock leeway)
+  if (env.CG_GAME_ID && String(body.gameId) !== String(env.CG_GAME_ID)) return null;
+  const name = String(body.username || '').replace(/[^A-Za-z0-9._]/g, '').slice(0, 20) || 'Player';
+  return { userId: String(body.userId), name };
+}
 
 // ---------- rate limiting ----------
 async function isLimited(db, k, rule, now) {
@@ -117,12 +163,13 @@ async function handleAdmin(act, data, env) {
   const page = (maxLimit) => { const l = num('limit', maxLimit) || 20, o = num('offset', 1e9) || 0; return [l, o]; };
   const tid = field(data, 'target');
   const NO_TARGET = ['stats', 'users', 'log', 'matches'];
-  const target = NO_TARGET.includes(act) ? null : (ID_RE.test(tid) ? await db.prepare('SELECT * FROM users WHERE key = ?').bind(tid.toLowerCase()).first() : null);
+  const tk = targetKey(tid);
+  const target = NO_TARGET.includes(act) ? null : (tk ? await db.prepare('SELECT * FROM users WHERE key = ?').bind(tk).first() : null);
   if (!NO_TARGET.includes(act)) {
     if (!target) return { ok: false, error: 'no_such_user' };
     if (target.role === 'admin' && act !== 'user') return { ok: false, error: 'protected' };     // admin accounts cannot be changed through the API
   }
-  const pub = u => ({ id: u.id, char: u.char, best: u.best, wins: u.wins, losses: u.losses, created: u.created, banned: !!u.banned, admin: u.role === 'admin' });
+  const pub = u => ({ key: u.key, cg: u.key.startsWith('cg:'), id: u.id, char: u.char, best: u.best, wins: u.wins, losses: u.losses, created: u.created, banned: !!u.banned, admin: u.role === 'admin' });
 
   switch (act) {
     case 'stats': {
@@ -134,8 +181,8 @@ async function handleAdmin(act, data, env) {
       const q = field(data, 'q').toLowerCase().replace(/[\\%_]/g, c => '\\' + c).slice(0, 20);
       const order = { best: 'best DESC, best_at ASC, key ASC', wins: 'wins DESC, key ASC', name: 'key ASC' }[field(data, 'sort')] || 'created DESC, key ASC';
       const [rows, total] = await Promise.all([
-        db.prepare(`SELECT * FROM users WHERE key LIKE ?1 ESCAPE '\\' ORDER BY ${order} LIMIT ?2 OFFSET ?3`).bind('%' + q + '%', limit, offset).all(),
-        db.prepare("SELECT COUNT(*) AS c FROM users WHERE key LIKE ?1 ESCAPE '\\'").bind('%' + q + '%').first(),
+        db.prepare(`SELECT * FROM users WHERE (key LIKE ?1 ESCAPE '\\' OR lower(id) LIKE ?1 ESCAPE '\\') ORDER BY ${order} LIMIT ?2 OFFSET ?3`).bind('%' + q + '%', limit, offset).all(),
+        db.prepare("SELECT COUNT(*) AS c FROM users WHERE (key LIKE ?1 ESCAPE '\\' OR lower(id) LIKE ?1 ESCAPE '\\')").bind('%' + q + '%').first(),
       ]);
       return { ok: true, total: total.c, list: rows.results.map(pub) };
     }
@@ -199,6 +246,36 @@ async function handle(path, data, env, ip) {
   const id = field(data, 'id'), pw = field(data, 'pw'), key = id.toLowerCase();
 
   switch (path) {
+    // CrazyGames account: verified user token -> our account (created on the first visit, username kept up to date). Guests never come here.
+    // best / char: the guest progress saved on this device before the player logged in; it is carried over once, when the account is created.
+    case '/api/cg': {
+      const cg = await verifyCg(field(data, 'cg'), env);
+      if (!cg) return { ok: false, error: 'bad_cg_token' };
+      const ckey = 'cg:' + cg.userId;
+      let u = await db.prepare('SELECT * FROM users WHERE key = ?').bind(ckey).first();
+      if (!u) {
+        const imp = Math.max(0, Math.min(MAX_LEVEL, parseInt(field(data, 'best'), 10) || 0));
+        const ch = CHARS.includes(field(data, 'char')) ? field(data, 'char') : 'outfighter';
+        const r = await db.prepare("INSERT OR IGNORE INTO users (key, id, salt, hash, iter, created, best, best_at, char) VALUES (?, ?, '', '', 0, ?, ?, ?, ?)")
+          .bind(ckey, cg.name, now, imp, imp ? now : 0, ch).run();
+        if (r.meta.changes && imp) {
+          await db.batch([
+            db.prepare("INSERT INTO audit (at, admin, action, target, detail) VALUES (?, 'system', 'import', ?, ?)").bind(now, cg.name + ' (' + ckey + ')', JSON.stringify({ best: imp })),
+            db.prepare("UPDATE meta SET v = v + 1 WHERE k = 'rank_version'"),
+          ]);
+        }
+        u = await db.prepare('SELECT * FROM users WHERE key = ?').bind(ckey).first();
+      } else if (u.id !== cg.name && !u.banned) {
+        await db.prepare('UPDATE users SET id = ? WHERE key = ?').bind(cg.name, ckey).run();
+        if (u.best >= 1) await db.prepare("UPDATE meta SET v = v + 1 WHERE k = 'rank_version'").run();
+        u.id = cg.name;
+      }
+      if (!u) return { ok: false, error: 'server_error' };
+      if (u.banned) return { ok: false, error: 'banned' };
+      await housekeeping(db, now);
+      return { ok: true, id: u.id, best: u.best, char: CHARS.includes(u.char) ? u.char : 'outfighter', token: await newToken(db, u.key, now) };
+    }
+
     case '/api/signup': {
       if (!ID_RE.test(id)) return { ok: false, error: 'invalid_id' };
       if (pw.length < 4 || pw.length > 100) return { ok: false, error: 'short_pw' };
@@ -326,13 +403,13 @@ async function handle(path, data, env, ip) {
       const ls = field(data, 'limit');
       if (ls !== '') { const l = parseInt(ls, 10); if (l >= 0 && l <= 50) limit = l; }
       const [rows, total, version] = await Promise.all([
-        limit ? db.prepare('SELECT id, best FROM users WHERE best >= 1 AND banned = 0 ORDER BY best DESC, best_at ASC, key ASC LIMIT ?').bind(limit).all() : { results: [] },
+        limit ? db.prepare('SELECT key, id, best FROM users WHERE best >= 1 AND banned = 0 ORDER BY best DESC, best_at ASC, key ASC LIMIT ?').bind(limit).all() : { results: [] },
         db.prepare('SELECT COUNT(*) AS c FROM users WHERE best >= 1 AND banned = 0').first(),
         rankVersion(db),
       ]);
-      const list = rows.results.map((r, i) => ({ rank: i + 1, id: r.id, best: r.best }));
-      let me = null;
       const u = await userByToken(db, field(data, 'token'), now);
+      const list = rows.results.map((r, i) => ({ rank: i + 1, id: r.id, best: r.best, ...(u && r.key === u.key ? { me: true } : {}) }));
+      let me = null;
       if (u) me = { rank: await rankOf(db, u), id: u.id, best: u.best };
       return { ok: true, version, total: total.c, list, me };
     }
@@ -346,15 +423,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
-    // WebSocket routes: the matchmaking lobby (one global object) and the match rooms (one object per room id)
-    if (url.pathname === '/ws/lobby' || url.pathname.startsWith('/ws/room/')) {
-      if (request.headers.get('Upgrade') !== 'websocket') return json({ ok: false, error: 'expected_websocket' }, 426);
-      if (url.pathname === '/ws/lobby') return env.LOBBY.get(env.LOBBY.idFromName('main')).fetch(request);
-      const room = url.pathname.slice('/ws/room/'.length);
-      if (!/^[0-9a-f]{32}$/.test(room)) return json({ ok: false, error: 'not_found' }, 404);
-      return env.ROOM.get(env.ROOM.idFromName(room)).fetch(request);
-    }
-    if (request.method === 'GET' && url.pathname === '/api/health') return json({ ok: true, service: 'boxing-api' });
+    if (request.method === 'GET' && url.pathname === '/api/health') return json({ ok: true, service: 'upbox-api' });
     if (request.method !== 'POST' || !url.pathname.startsWith('/api/')) return json({ ok: false, error: 'not_found' }, 404);
     try {
       const raw = await request.text();

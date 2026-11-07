@@ -206,7 +206,7 @@ async function loadUsers(kind){
     const tr = document.createElement('tr');
     if(rank){ td(tr, P.off + i + 1, 'r'); const c = td(tr, u.id); tags(c, u); td(tr, u.best, 'r'); td(tr, u.wins, 'r'); td(tr, u.losses, 'r'); }
     else { const c = td(tr, u.id); tags(c, u); td(tr, u.best, 'r'); td(tr, u.wins, 'r'); td(tr, u.losses, 'r'); td(tr, fmtDate(u.created)); }
-    tr.addEventListener('click', () => openUser(u.id)); body.append(tr);
+    tr.addEventListener('click', () => openUser(u.key || u.id)); body.append(tr);
   });
   const p = rank ? 'r' : 'u';
   $(p + 'pinfo').textContent = r.total ? (P.off + 1) + '–' + Math.min(P.off + P.n, r.total) + ' / ' + r.total : '';
@@ -242,9 +242,9 @@ async function openUser(id){
   say('');
   const r = await admin('user', { target: id }).catch(e => ({ error: e.message }));
   if(!r.ok) return say(ERR[r.error] || r.error || '불러오지 못했습니다');
-  const u = r.user, box = $('box'); box.textContent = '';
+  const u = r.user, T = u.key || u.id, box = $('box'); box.textContent = '';     // T: 계정 키 (CrazyGames 계정은 cg:<userId>)
   box.append(el('button', { className:'close', textContent:'닫기', onclick: () => $('modal').classList.add('hidden') }), el('h2', { textContent: u.id }));
-  const sub = el('div', { className:'sub' }); sub.textContent = (u.banned ? '정지된 계정' : u.admin ? '관리자 계정' : '일반 계정'); box.append(sub);
+  const sub = el('div', { className:'sub' }); sub.textContent = (u.banned ? '정지된 계정' : u.admin ? '관리자 계정' : u.cg ? 'CrazyGames 계정 · ' + u.key : '일반 계정'); box.append(sub);
   const dl = el('dl'); const row = (k, v) => dl.append(el('dt', { textContent:k }), el('dd', { textContent:v }));
   row('캐릭터', u.char); row('베스트 스테이지', u.best + (u.rank ? '  (현재 랭킹 ' + u.rank + '위)' : '')); row('전적', u.wins + '승 ' + u.losses + '패'); row('가입일', fmtDate(u.created)); row('로그인 중인 기기', u.sessions + '대');
   row('마지막 스테이지 시작', u.stage_at ? 'STAGE ' + u.stage_lv + ' · ' + fmtDate(u.stage_at) : '-');
@@ -255,11 +255,11 @@ async function openUser(id){
     const num = (v, w) => el('input', { type:'number', min:0, value:v, className: w || '' });
     const best = num(u.best), wins = num(u.wins), losses = num(u.losses), npw = el('input', { type:'text', className:'w', placeholder:'새 임시 비밀번호', maxLength:100, autocomplete:'off' }), reason = el('input', { type:'text', className:'w', placeholder:'사유(선택)', maxLength:100 }), conf = el('input', { type:'text', className:'w', placeholder:'아이디를 그대로 입력', autocomplete:'off' });
     const act = (label, input, btn) => box.append(el('div', { className:'act' }, el('label', { textContent:label }), ...input, btn));
-    act('베스트 스테이지', [best], el('button', { className:'gold', textContent:'변경', onclick: () => done(admin('setbest', { target:u.id, best:best.value }), '베스트 스테이지를 바꿨습니다') }));
-    act('전적', [wins, el('span', { textContent:'승', className:'small' }), losses, el('span', { textContent:'패', className:'small' })], el('button', { className:'gold', textContent:'변경', onclick: () => done(admin('setrecord', { target:u.id, wins:wins.value, losses:losses.value }), '전적을 바꿨습니다') }));
-    act('비밀번호 초기화', [npw], el('button', { textContent:'초기화', onclick: () => { if(npw.value.length < 4) return msg.textContent = ERR.short_pw; done(admin('resetpw', { target:u.id, npw:npw.value }), '비밀번호를 바꾸고 모든 기기에서 로그아웃시켰습니다'); } }));
-    act(u.banned ? '정지 해제' : '정지', u.banned ? [] : [reason], el('button', { className: u.banned ? '' : 'danger', textContent: u.banned ? '해제' : '정지', onclick: () => done(admin('ban', { target:u.id, banned:!u.banned, reason:reason.value }), u.banned ? '정지를 풀었습니다' : '정지했습니다 (모든 기기에서 로그아웃, 랭킹에서 제외)') }));
-    act('계정 삭제', [conf], el('button', { className:'danger', textContent:'영구 삭제', onclick: () => { if(conf.value.toLowerCase() !== u.id.toLowerCase()) return msg.textContent = '확인을 위해 아이디를 정확히 입력해 주세요'; done(admin('delete', { target:u.id }), '계정을 삭제했습니다'); } }));
+    act('베스트 스테이지', [best], el('button', { className:'gold', textContent:'변경', onclick: () => done(admin('setbest', { target:T, best:best.value }), '베스트 스테이지를 바꿨습니다') }));
+    act('전적', [wins, el('span', { textContent:'승', className:'small' }), losses, el('span', { textContent:'패', className:'small' })], el('button', { className:'gold', textContent:'변경', onclick: () => done(admin('setrecord', { target:T, wins:wins.value, losses:losses.value }), '전적을 바꿨습니다') }));
+    act('비밀번호 초기화', [npw], el('button', { textContent:'초기화', onclick: () => { if(npw.value.length < 4) return msg.textContent = ERR.short_pw; done(admin('resetpw', { target:T, npw:npw.value }), '비밀번호를 바꾸고 모든 기기에서 로그아웃시켰습니다'); } }));
+    act(u.banned ? '정지 해제' : '정지', u.banned ? [] : [reason], el('button', { className: u.banned ? '' : 'danger', textContent: u.banned ? '해제' : '정지', onclick: () => done(admin('ban', { target:T, banned:!u.banned, reason:reason.value }), u.banned ? '정지를 풀었습니다' : '정지했습니다 (모든 기기에서 로그아웃, 랭킹에서 제외)') }));
+    act('계정 삭제', [conf], el('button', { className:'danger', textContent:'영구 삭제', onclick: () => { if(conf.value.toLowerCase() !== u.id.toLowerCase()) return msg.textContent = '확인을 위해 아이디를 정확히 입력해 주세요'; done(admin('delete', { target:T }), '계정을 삭제했습니다'); } }));
   }
   box.append(msg); $('modal').classList.remove('hidden');
 }
