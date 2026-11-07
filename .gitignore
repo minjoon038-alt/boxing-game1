@@ -3,3 +3,4 @@ sessions.json
 worker/node_modules/
 worker/.wrangler/
 dist/
+.claude/settings.local.json

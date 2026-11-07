@@ -17,26 +17,26 @@
   #menu>*{pointer-events:auto}
   @keyframes menuIn{from{opacity:0;transform:translateY(calc(var(--u)*10))}to{opacity:1;transform:none}}
   /* 메인 화면: 배경은 캔버스에 그린 title-bg.jpg. 왼쪽 열(제목/계정/버튼)은 HTML이 그리고, 그림에 박혀 있는 기본 글자/버튼/아이디는 캔버스에서 어두운 막으로 덮는다 (draw 의 titleArt) */
-  #menu .chip{position:absolute;right:calc(var(--u)*14);top:calc(var(--u)*14);width:calc(var(--u)*136);height:calc(var(--u)*36);line-height:calc(var(--u)*36);box-sizing:border-box;padding:0 calc(var(--u)*14);text-align:center;font-size:calc(var(--u)*11);font-weight:700;letter-spacing:calc(var(--u)*1);color:#e6e9f5;border:1px solid rgba(255,255,255,.22);border-radius:calc(var(--u)*14);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #menu .chip{position:absolute;right:calc(var(--u)*14);top:calc(var(--u)*14);width:calc(var(--u)*136);height:calc(var(--u)*36);line-height:calc(var(--u)*36);box-sizing:border-box;padding:0 calc(var(--u)*14);text-align:center;font-size:max(10px,calc(var(--u)*11));font-weight:700;letter-spacing:calc(var(--u)*1);color:#e6e9f5;border:1px solid rgba(255,255,255,.22);border-radius:calc(var(--u)*14);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #menu .col{position:absolute;left:calc(var(--u)*48);top:0;bottom:0;width:calc(var(--u)*252);pointer-events:none}
   #menu .col>*{pointer-events:auto}
   #menu .logo{position:absolute;left:0;right:0;top:calc(var(--u)*58);text-align:center;pointer-events:none;border-top:1px solid rgba(255,255,255,.22);border-bottom:1px solid rgba(255,255,255,.22);padding:calc(var(--u)*16) 0 calc(var(--u)*14)}
   #menu .logo b{display:block;font-size:calc(var(--u)*42);font-weight:200;letter-spacing:calc(var(--u)*9);padding-left:calc(var(--u)*9);white-space:nowrap;line-height:1;text-shadow:0 0 calc(var(--u)*18) rgba(120,150,255,.45)}
-  #menu .logo i{display:block;margin-top:calc(var(--u)*10);font-style:normal;font-size:calc(var(--u)*9.5);letter-spacing:calc(var(--u)*5);color:#7e86a8}
+  #menu .logo i{display:block;margin-top:calc(var(--u)*10);font-style:normal;font-size:max(10px,calc(var(--u)*9.5));letter-spacing:calc(var(--u)*5);color:#7e86a8}
   #menu .who{position:absolute;left:0;right:0;top:calc(var(--u)*158);text-align:center;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.85)}
   #menu .who .id{font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  #menu .who .best{margin-top:calc(var(--u)*6);font-size:calc(var(--u)*11);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;white-space:nowrap}
+  #menu .who .best{margin-top:calc(var(--u)*6);font-size:max(10px,calc(var(--u)*11));font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;white-space:nowrap}
   #menu .play{position:absolute;left:0;top:calc(var(--u)*236);width:100%;height:calc(var(--u)*62);border:2px solid transparent;border-radius:calc(var(--u)*4);transform:skewX(-14deg);background:linear-gradient(#0b0f2c,#0b0f2c) padding-box,linear-gradient(90deg,#4f7dff,#ff4d6a) border-box;color:#f2f2f2;font-family:inherit;font-size:calc(var(--u)*24);font-weight:800;font-style:italic;letter-spacing:calc(var(--u)*8);cursor:pointer;box-shadow:0 0 calc(var(--u)*22) rgba(90,110,255,.35);transition:transform .15s,box-shadow .15s,filter .15s}
   #menu .play span{display:inline-block;transform:skewX(14deg)}
   #menu .play:hover,#menu .play:focus-visible{filter:brightness(1.35);transform:skewX(-14deg) scale(1.04);box-shadow:0 0 calc(var(--u)*34) rgba(140,120,255,.65);outline:none}
   #menu .play:active{transform:skewX(-14deg) scale(.98)}
-  #menu .enter{position:absolute;left:0;right:0;top:calc(var(--u)*304);text-align:center;font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*3);color:#8d93a8;pointer-events:none}
+  #menu .enter{position:absolute;left:0;right:0;top:calc(var(--u)*304);text-align:center;font-size:max(10px,calc(var(--u)*10));letter-spacing:calc(var(--u)*3);color:#8d93a8;pointer-events:none}
   #menu .sub{position:absolute;left:0;right:0;top:calc(var(--u)*338);display:grid;grid-template-columns:repeat(6,1fr);gap:calc(var(--u)*8)}
   #menu .sub .ghost{grid-column:span 3}
   #menu .sub #continueBtn{grid-column:1/-1}
   #menu .sub [hidden]{display:none}
   #menu .sub .ghost{padding:calc(var(--u)*9) 0;border-radius:calc(var(--u)*8);letter-spacing:calc(var(--u)*1);white-space:nowrap;text-align:center}
-  #menu .tag{position:absolute;left:0;right:0;bottom:calc(var(--u)*24);text-align:center;font-size:calc(var(--u)*9.5);letter-spacing:calc(var(--u)*3);white-space:nowrap;color:#6d7490;pointer-events:none;border-top:1px solid rgba(255,255,255,.14);padding-top:calc(var(--u)*10)}
+  #menu .tag{position:absolute;left:0;right:0;bottom:calc(var(--u)*24);text-align:center;font-size:max(10px,calc(var(--u)*9.5));letter-spacing:calc(var(--u)*3);white-space:nowrap;color:#6d7490;pointer-events:none;border-top:1px solid rgba(255,255,255,.14);padding-top:calc(var(--u)*10)}
   .ghost{background:rgba(8,10,22,.6);border:1px solid rgba(255,255,255,.2);border-radius:calc(var(--u)*16);padding:calc(var(--u)*7) calc(var(--u)*20);color:#c4c9da;font-family:inherit;font-size:calc(var(--u)*12);font-weight:600;letter-spacing:calc(var(--u)*2);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
   .ghost:hover,.ghost:focus-visible{color:#fff;border-color:rgba(255,255,255,.55);background:rgba(20,24,44,.75);outline:none}
   .ghost.gold{color:#ffd166;border-color:rgba(255,209,102,.45)}
@@ -48,12 +48,12 @@
   #rank .panel{pointer-events:auto;position:absolute;left:50%;top:calc(var(--u)*108);transform:translateX(-50%);width:calc(var(--u)*400);height:calc(var(--u)*388);box-sizing:border-box;padding:calc(var(--u)*16) calc(var(--u)*18) calc(var(--u)*14);background:rgba(6,8,20,.86);border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);-webkit-backdrop-filter:blur(calc(var(--u)*5));backdrop-filter:blur(calc(var(--u)*5));box-shadow:0 calc(var(--u)*14) calc(var(--u)*40) rgba(0,0,0,.55);display:flex;flex-direction:column}
   #rank .head{display:flex;align-items:center;justify-content:space-between}
   #rank .ttl{font-size:calc(var(--u)*19);font-weight:700;letter-spacing:calc(var(--u)*8);padding-left:calc(var(--u)*2)}
-  #rank .live{display:flex;align-items:center;gap:calc(var(--u)*6);font-size:calc(var(--u)*10);font-weight:700;letter-spacing:calc(var(--u)*2);color:#7e849a}
+  #rank .live{display:flex;align-items:center;gap:calc(var(--u)*6);font-size:max(10px,calc(var(--u)*10));font-weight:700;letter-spacing:calc(var(--u)*2);color:#7e849a}
   #rank .live::before{content:'';width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:50%;background:#7e849a}
   #rank .live.on{color:#7dffa6}
   #rank .live.on::before{background:#35e07a;animation:livePulse 1.6s ease-in-out infinite}
   #rank .live.bump{animation:liveBump .8s ease}
-  #rank .cols{display:grid;grid-template-columns:calc(var(--u)*46) 1fr calc(var(--u)*96);margin-top:calc(var(--u)*12);padding:0 calc(var(--u)*6) calc(var(--u)*6);font-size:calc(var(--u)*10);letter-spacing:calc(var(--u)*2);color:#7e849a;border-bottom:1px solid rgba(255,255,255,.12)}
+  #rank .cols{display:grid;grid-template-columns:calc(var(--u)*46) 1fr calc(var(--u)*96);margin-top:calc(var(--u)*12);padding:0 calc(var(--u)*6) calc(var(--u)*6);font-size:max(10px,calc(var(--u)*10));letter-spacing:calc(var(--u)*2);color:#7e849a;border-bottom:1px solid rgba(255,255,255,.12)}
   #rank .cols span:last-child{text-align:right}
   #rank ol{list-style:none;margin:0;padding:0;flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent}
   #rank li{display:grid;grid-template-columns:calc(var(--u)*46) 1fr calc(var(--u)*96);align-items:center;height:calc(var(--u)*28);padding:0 calc(var(--u)*6);font-size:calc(var(--u)*14);border-bottom:1px solid rgba(255,255,255,.05);border-left:calc(var(--u)*3) solid transparent}
@@ -84,7 +84,7 @@
   #chars{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#f2f2f2;animation:menuIn .4s ease both}
   #chars.hidden{display:none}
   #chars .ttl{position:absolute;left:calc(var(--u)*30);top:calc(var(--u)*16);font-size:calc(var(--u)*15);font-weight:700;letter-spacing:calc(var(--u)*6);text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.9)}
-  #chars .ttl small{display:block;margin-top:calc(var(--u)*4);font-size:calc(var(--u)*10);font-weight:500;letter-spacing:calc(var(--u)*1);color:#aab0c4}
+  #chars .ttl small{display:block;margin-top:calc(var(--u)*4);font-size:max(10px,calc(var(--u)*10));font-weight:500;letter-spacing:calc(var(--u)*1);color:#aab0c4}
   #chars .done{pointer-events:auto;position:absolute;right:calc(var(--u)*30);top:calc(var(--u)*18)}
   #chars .card{pointer-events:auto;cursor:pointer;position:absolute;top:calc(var(--u)*84);height:calc(var(--u)*452);width:calc(var(--u)*262);box-sizing:border-box;border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*14);transition:border-color .15s,box-shadow .15s,background .15s}
   #chars .card[data-ch=outfighter]{left:calc(var(--u)*59)} #chars .card[data-ch=infighter]{left:calc(var(--u)*349)} #chars .card[data-ch=slugger]{left:calc(var(--u)*639)}
@@ -94,15 +94,15 @@
   #chars .ct{top:0;border-radius:calc(var(--u)*13) calc(var(--u)*13) 0 0;text-align:center}
   #chars .cb{bottom:0;border-radius:0 0 calc(var(--u)*13) calc(var(--u)*13)}
   #chars .nm{font-size:calc(var(--u)*20);font-weight:800;letter-spacing:calc(var(--u)*3)}
-  #chars .tg{margin-top:calc(var(--u)*2);font-size:calc(var(--u)*10);font-weight:600;letter-spacing:calc(var(--u)*3);color:#7e849a}
-  #chars .ds{margin-top:calc(var(--u)*8);font-size:calc(var(--u)*11.5);line-height:1.55;color:#c4c9da}
-  #chars .badge{position:absolute;right:calc(var(--u)*10);top:calc(var(--u)*-11);padding:calc(var(--u)*3) calc(var(--u)*10);border-radius:calc(var(--u)*10);background:#ffd166;color:#241a00;font-size:calc(var(--u)*10);font-weight:800;letter-spacing:calc(var(--u)*2);opacity:0;transition:opacity .15s}
+  #chars .tg{margin-top:calc(var(--u)*2);font-size:max(10px,calc(var(--u)*10));font-weight:600;letter-spacing:calc(var(--u)*3);color:#7e849a}
+  #chars .ds{margin-top:calc(var(--u)*8);font-size:max(10px,calc(var(--u)*11.5));line-height:1.55;color:#c4c9da}
+  #chars .badge{z-index:2;position:absolute;right:calc(var(--u)*10);top:calc(var(--u)*-11);padding:calc(var(--u)*3) calc(var(--u)*10);border-radius:calc(var(--u)*10);background:#ffd166;color:#241a00;font-size:max(10px,calc(var(--u)*10));font-weight:800;letter-spacing:calc(var(--u)*2);opacity:0;transition:opacity .15s}
   #chars .card.on .badge{opacity:1}
-  #chars .stat{display:grid;grid-template-columns:calc(var(--u)*56) 1fr;align-items:center;height:calc(var(--u)*16);font-size:calc(var(--u)*10.5);color:#aab0c4}
+  #chars .stat{display:grid;grid-template-columns:calc(var(--u)*56) 1fr;align-items:center;height:calc(var(--u)*16);font-size:max(10px,calc(var(--u)*10.5));color:#aab0c4}
   #chars .bar{height:calc(var(--u)*6);border-radius:calc(var(--u)*3);background:rgba(255,255,255,.1);overflow:hidden}
   #chars .bar i{display:block;height:100%;border-radius:inherit;background:#5185ff}
   #chars .stat.p .bar i{background:#ff5a5f} #chars .stat.s .bar i{background:#8de0c4} #chars .stat.r .bar i{background:#ffd166}
-  #chars .mv{margin-top:calc(var(--u)*7);font-size:calc(var(--u)*10.5);color:#9aa0b4;line-height:1.5}
+  #chars .mv{margin-top:calc(var(--u)*7);font-size:max(10px,calc(var(--u)*10.5));color:#9aa0b4;line-height:1.5}
   #chars .mv b{color:#e6e9f5;font-weight:700}
   /* ----- 안내 문구 (메인 화면) ----- */
   #menu .toast{position:absolute;left:0;right:0;top:calc(var(--u)*430);text-align:center;font-size:calc(var(--u)*13);font-weight:600;letter-spacing:calc(var(--u)*1);color:#ffd166;opacity:0;pointer-events:none;text-shadow:0 0 calc(var(--u)*8) rgba(0,0,10,.9);transition:opacity .4s}
@@ -112,14 +112,14 @@
   /* ----- 오른쪽 위: 이름 표시 / CrazyGames 로그인 버튼 (게스트일 때만 버튼) ----- */
   #menu .chip{width:auto;min-width:calc(var(--u)*136);max-width:calc(var(--u)*260)}
   #menu .chip.static{pointer-events:none;cursor:default;background:transparent}
-  #menu .privacy{position:absolute;left:0;right:0;bottom:calc(var(--u)*5);text-align:center;font-size:calc(var(--u)*7.5);line-height:1.35;color:#596080;pointer-events:none}
-  .ghost kbd{display:inline-block;margin-left:calc(var(--u)*8);padding:0 calc(var(--u)*5);border:1px solid currentColor;border-radius:calc(var(--u)*4);font:inherit;font-size:.78em;line-height:1.5;opacity:.75}
+  #menu .privacy{position:absolute;left:0;right:0;bottom:calc(var(--u)*5);text-align:center;font-size:max(10px,calc(var(--u)*7.5));line-height:1.35;color:#596080;pointer-events:none}
+  .ghost kbd{display:inline-block;margin-left:calc(var(--u)*8);padding:0 calc(var(--u)*5);border:1px solid currentColor;border-radius:calc(var(--u)*4);font:inherit;font-size:max(9px,.78em);line-height:1.5;opacity:.75}
   /* ----- 결과 화면 버튼 / 일시정지 (캔버스 위 HTML) ----- */
   #over,#pause{position:absolute;inset:0;pointer-events:none;font-family:system-ui,'Segoe UI',Arial,sans-serif;color:#f2f2f2}
   #over.hidden,#pause.hidden{display:none}
   #over .btns{position:absolute;left:0;right:0;top:calc(var(--u)*312);display:flex;justify-content:center;gap:calc(var(--u)*12)}
   #over .ghost,#pause .ghost{pointer-events:auto;font-size:calc(var(--u)*13);padding:calc(var(--u)*10) calc(var(--u)*18);min-width:calc(var(--u)*170);border-radius:calc(var(--u)*10);white-space:nowrap}
-  #over .note{position:absolute;left:0;right:0;top:calc(var(--u)*366);text-align:center;font-size:calc(var(--u)*11.5);color:#9aa0b4}
+  #over .note{position:absolute;left:0;right:0;top:calc(var(--u)*366);text-align:center;font-size:max(10px,calc(var(--u)*11.5));color:#9aa0b4}
   #pause{background:rgba(2,3,10,.62);pointer-events:auto}
   #pause .box{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*12)}
   #pause .ttl{font-size:calc(var(--u)*34);font-weight:200;letter-spacing:calc(var(--u)*12);padding-left:calc(var(--u)*12);margin-bottom:calc(var(--u)*8)}
@@ -162,7 +162,7 @@
   <div id="rank" class="hidden">
     <div class="panel">
       <div class="head"><span class="ttl">RANKING</span><span class="live" id="rankLive">CONNECTING</span></div>
-      <div class="cols"><span>RANK</span><span>PLAYER</span><span>BEST STAGE</span></div>
+      <div class="cols"><span>RANK</span><span>PLAYER</span><span>BEST ROUND</span></div>
       <ol id="rankList"></ol>
       <div class="empty" id="rankEmpty">Loading…</div>
       <div class="foot">
@@ -575,26 +575,45 @@ function stageTicket(level){
   const go = n => api('/api/stage', { token: game.token, level }).catch(() => { if(n > 0) setTimeout(() => go(n - 1), 2000); });   // 접속이 잠깐 끊겼으면 한 번 더 시도
   go(1);
 }
-/* ---------- 연속 대전 (한 판씩 새로 시작하지 않는다) ----------
-   상대를 쓰러뜨리면 잠시 뒤 다음 상대가 슥 들어온다. 내 체력은 그대로 이어지고(조금만 회복), 스태미나/가드만 새로 찬다.
-   쓰러지면 '이어하기' 로 같은 스테이지를 체력 RUN.cont 로 다시 시작한다. 처음부터 시작하려면 메인 화면의 PLAY. */
-const RUN = { heal: lv => 8, cont: 50 };               // heal: 상대를 이길 때마다 회복하는 체력 / cont: 이어하기 체력 (밸런스 시뮬레이션으로 정한 값)
-function nextOpponent(){ start(Math.min(99, game.level + 1), { hp: P.hp + RUN.heal(game.level), slide: true }); }
-function continueRun(level){ start(level, { hp: RUN.cont, slide: true }); }
+/* ---------- 연속 라운드 (한 판씩 새로 시작하지 않는다) ----------
+   상대를 쓰러뜨리면 화면이 끊기지 않고 이어진다: 나는 서 있던 자리 그대로, 쓰러진 상대는 사라지고 다음 상대가 넓은 쪽에서 걸어 들어온다.
+   내 체력은 그대로 이어지고(조금만 회복), 스태미나/가드만 새로 찬다. 카운터 게이지도 그대로 남는다. 화면에는 'ROUND n' 으로 보인다 (서버 기록은 그대로 stage).
+   쓰러지면 '이어하기' 로 같은 라운드를 체력 RUN.cont 로 다시 시작한다. 처음부터 시작하려면 메인 화면의 PLAY. */
+const RUN = { heal: lv => lv % BOSS.every === 0 ? BOSS.heal : 8, cont: 50, pity: 20 };
+/* 보스 라운드: BOSS.every 라운드마다 (10, 20, 30 …). 체력이 많고(일반 + BOSS.hp), AI 실력이 BOSS.lv 라운드만큼 앞서 있다.
+   체력이 BOSS.rageAt 아래로 떨어지면 '분노': 펀치가 빨라지고(BOSS.rageSpeed) 더 공격적이 된다. 이기면 체력을 BOSS.heal 만큼 회복 */
+const BOSS = { every: 10, hp: 25, lv: 3, rageAt: .4, rageSpeed: .92, rageLv: 2, heal: 35 };     // 밸런스 시뮬레이션으로 정한 값 (전문가 수준 반응이면 거의 이기지만 체력을 36~42 잃는다)
+const isBoss = lv => lv % BOSS.every === 0;               // heal: 상대를 이길 때마다 회복하는 체력 / cont: 이어하기 체력 (밸런스 시뮬레이션으로 정한 값)
+function nextOpponent(){ start(Math.min(99, game.level + 1), { hp: P.hp + RUN.heal(game.level), keepP: true }); }
+// 이어하기 체력: 처음은 RUN.cont(50). 같은 라운드에서 연달아 지면 한 번마다 RUN.pity 씩 더 준다 (50 → 70 → 90 → …) — 깊은 라운드에서 끝없이 막히지 않게
+function contHp(level){ return Math.min(CHARS[game.char].hp, RUN.cont + RUN.pity*Math.max(0, (game.deathLv === level ? game.deathStreak : 1) - 1)); }
+function continueRun(level){ start(level, { hp: contHp(level), slide: true }); }
 function start(level, opts){
   opts = opts || {};
   hideMenu(); hideResult(); stageTicket(level);
   game.paused = false; game.adWait = false; $('pause').classList.add('hidden');
   game.level = level; game.newBest = false; game.rank = null; game.saveError = null; game.escAt = 0;
-  P = mk(310, 1, true, 1, game.char);
+  game.oldE = null; game.entry = null;
+  if(opts.keepP && P && P.player){                                   // 이어지는 라운드: 내 파이터는 자리·방향·카운터 게이지 그대로, 동작만 대기 상태로
+    const cg = P.cg, keepX = Math.max(100, Math.min(860, P.x)), hp = P.hp;
+    game.oldE = E;                                                   // 쓰러진 상대는 잠깐 남았다가 사라진다
+    P = Object.assign(mk(keepX, P.face, true, 1, game.char), { cg, lag: Math.max(hp, P.lag || hp) });
+    P.hp = hp;
+    const side = keepX <= 480 ? 1 : -1, to = Math.max(100, Math.min(860, keepX + side*300));   // 다음 상대는 넓은 쪽에서 들어온다
+    E = mk(side > 0 ? 1080 : -120, -side, false, level, cpuChar(level));
+    game.entry = { from: E.x, to }; P.face = side;
+  } else {
+    P = mk(310, 1, true, 1, game.char);
+    E = mk(650, -1, false, level, cpuChar(level));
+    if(opts.slide) game.entry = { from: 1080, to: 650 };               // 이어하기: 상대가 오른쪽에서 슥 들어온다
+  }
   if(typeof opts.hp === 'number') P.hp = P.lag = Math.max(1, Math.min(P.maxhp, opts.hp));         // 이어지는 체력
-  E = mk(650, -1, false, level, cpuChar(level));
-  game.slide = !!opts.slide;                                         // 다음 상대가 오른쪽에서 슥 들어온다
   // 스테이지가 올라가도 CPU의 체력·공격력·이동속도는 그대로(그 캐릭터의 기본값). 달라지는 건 AI의 '실력'뿐이다 (aiProfile 참고)
   E.spd = 1;
   // 10스테이지부터 CPU 체력이 오른다: 10~19 → 110, 20~29 → 120, 30 이상 → 130 (이후 고정). 공격력/속도는 그대로
   const hpUp = level >= 30 ? 130 : level >= 20 ? 120 : level >= 10 ? 110 : 0;
   if(hpUp){ E.maxhp = E.hp = E.lag = hpUp; }
+  if(isBoss(level)){ E.boss = true; E.lvl = level + BOSS.lv; E.maxhp = E.hp = E.lag = (hpUp || E.maxhp) + BOSS.hp; }
   game.state = 'intro'; game.introT = 0; game.koT = 0; game.slow = 0; game.freeze = 0;
   parts.length = rings.length = texts.length = stars.length = 0; buf = [];
 }
@@ -609,7 +628,7 @@ function perform(f, act){
     f.st -= 12*STAM_USE; f.dodgeCd = f.cd.dodgeCd; f.dodgeInv = DODGE_INV; setState(f,'dodge'); sfx('dodge');
     return true;
   }
-  const k = (f.player || f.human) ? f.chATK[act] : cpuAtk(f.lvl, f.ch, act);    // CPU는 스테이지 초반일수록 준비/후딜레이가 길다
+  const k = (f.player || f.human) ? f.chATK[act] : cpuAtk(f.lvl, f.ch, act, f.rage);    // CPU는 스테이지 초반일수록 준비/후딜레이가 길다
   if(!k || f.st < k.stamina*STAM_USE) return false;
   if(f.atkCd[act] > 0) return false;
   if(k.name === 'skill'){
@@ -803,7 +822,8 @@ function resolve(a, d, k){
 function koCheck(a, d, dir){
   if(d.hp > 0 || d.state === 'ko') return;
   d.hp = 0; setState(d,'ko'); d.vx = dir*420; if(d.player) buf.length = 0;
-  if(d.player) reportResult(false); else { recordWin(); reportResult(true); }
+  if(d.player){ reportResult(false); if(game.deathLv === game.level) game.deathStreak++; else { game.deathLv = game.level; game.deathStreak = 1; } }
+  else { recordWin(); reportResult(true); }
   game.state = 'ko'; game.koT = 0; game.slow = 1.5; game.freeze = .22; game.shake = 24; game.flash = .5;
   sfx('ko');
 }
@@ -829,34 +849,42 @@ function addText(x, y, s, color, size){ texts.push({ x, y, s, color, size, life:
    스테이지 3 → 내가 가드를 내린 순간을 노리기 시작
    스테이지 4 → 가드 게이지가 바닥나기 직전이면 몰아붙임
    스테이지 5 이상 → 내가 가드를 쥐고 있는 시간을 학습해서, 가드가 풀리는 순간에 주먹이 닿도록 미리 휘두름 */
+/* 깊은 라운드 (AIDEEP): 4라운드 이후에도 천천히 계속 강해진다 (예전에는 4~15라운드에서 멈췄다 → 후반이 다 비슷했다).
+   deep = 0 (4라운드) → 1 (AIDEEP.full 라운드). 펀치 준비·후딜레이가 조금씩 짧아지고, 반응이 빨라지고,
+   '회피 → 카운터' 만 노리는 플레이를 읽어서 짧은 펀치로 회피를 유도한 뒤 카운터를 가드/회피로 받아낸다. */
+const AIDEEP = { full: 30, windup: 1.22, recover: 1.0, react: .035, guardBack: .75, bait: .7, readDodge: .85 };
 function aiProfile(lv){
+  const deep = Math.min(1, Math.max(0, (lv - 4)/(AIDEEP.full - 4)));
   const c = Math.min(1, (lv-1)/4);               // 스테이지 1 → 0, 스테이지 5 이상 → 1
   const cs = Math.min(1, (lv-1)/3);              // 펀치 속도 곡선: 스테이지 1 → 0, 스테이지 4 이상 → 1
   const late = Math.min(3, Math.max(0, lv-5));   // 6스테이지부터는 반응 속도만 조금씩 더 빨라진다
   const p = Math.min(1, Math.max(0, (lv-3)/2));  // 가드 타이밍 읽기 숙련도 (스테이지 3 → 0, 5 → 1)
   return {
-    react: lerp(.62, .10, c) - .012*late,        // 내 공격을 본 뒤 반응하기까지 걸리는 시간
+    react: Math.max(.05, lerp(.62, .10, c) - .012*late - AIDEEP.react*deep),        // 내 공격을 본 뒤 반응하기까지 걸리는 시간
     defend: Math.min(.97, lerp(.10, .90, c) + .008*Math.min(10, Math.max(0, lv-5))),   // 반응(회피/가드)을 시도할 확률 (스테이지 6 이후에도 15까지 조금씩 오른다)
     think: Math.max(.05, lerp(.85, .10, c) - .005*Math.min(10, Math.max(0, lv-5))),   // 다음 판단까지 걸리는 시간
     thinkJit: lerp(.60, .10, c),
     aggr: lerp(.32, .88, c),
-    windupMul: lerp(2.1, 1.4625, cs),            // CPU 펀치의 준비 동작 길이 배율 (길수록 눈에 보인다). 스테이지 1 → 4에서만 빨라지고, 4 이상은 같은 속도로 고정 → 사람이 보고 반응할 여지를 남긴다
-    recoverMul: lerp(1.7, 1.175, cs),            // CPU 펀치의 후딜레이 배율 (마찬가지로 스테이지 4에서 멈춘다)
+    windupMul: cs < 1 ? lerp(2.1, 1.4625, cs) : lerp(1.4625, AIDEEP.windup, deep),            // CPU 펀치의 준비 동작 길이 배율 (길수록 눈에 보인다). 스테이지 1 → 4에서만 빨라지고, 4 이상은 같은 속도로 고정 → 사람이 보고 반응할 여지를 남긴다
+    recoverMul: cs < 1 ? lerp(1.7, 1.175, cs) : lerp(1.175, AIDEEP.recover, deep),            // CPU 펀치의 후딜레이 배율 (마찬가지로 스테이지 4에서 멈춘다)
     whiff: lerp(.5, 0, c),                       // 사거리 밖에서 헛스윙할 확률
     punishP: lv < 3 ? 0 : lerp(.25, .97, p),     // 내가 가드를 내린 순간 공격할 확률
     punishDelay: lerp(.55, .08, p),              // 가드가 내려간 걸 보고 공격하기까지의 시간
     pressure: lv >= 4,
     patience: lv < 4 ? 0 : lv === 4 ? .5 : .9,   // 내가 가드 중일 때 공격을 참고 기다릴 확률
     read: lv >= 4,                               // 4스테이지부터 가드 유지 시간을 학습하지만, 예측이 부정확(오차 ±0.14초) → 5스테이지 ±0.03초 → 6스테이지 이상 ±0.01초
-    readJitter: lv === 4 ? .14 : lv === 5 ? .03 : .01
+    readJitter: lv === 4 ? .14 : lv === 5 ? .03 : .01,
+    deep,
+    guardBack: lv >= 8 ? AIDEEP.guardBack*deep : 0,   // 내 공격이 회피당했으면, 후딜레이가 끝나자마자 카운터를 막으려 가드/회피할 확률
+    bait: lv >= 8 ? AIDEEP.bait*deep : 0,             // 상대가 회피만 노리면 짧은 잽으로 회피를 끌어낼 확률
   };
 }
 const cpuAtkCache = {};
-function cpuAtk(lv, ch, act){
-  const key = Math.min(lv, 5) + ch + act;
+function cpuAtk(lv, ch, act, rage){
+  const key = lv + ch + act + (rage ? 'R' : '');
   if(!cpuAtkCache[key]){
-    const pf = aiProfile(lv), k = CHARS[ch].atk[act];
-    cpuAtkCache[key] = Object.assign({}, k, { windup: k.windup*pf.windupMul, recover: k.recover*pf.recoverMul });
+    const pf = aiProfile(lv), k = CHARS[ch].atk[act], rm = rage ? BOSS.rageSpeed : 1;
+    cpuAtkCache[key] = Object.assign({}, k, { windup: k.windup*pf.windupMul*rm, recover: k.recover*pf.recoverMul*rm });
   }
   return cpuAtkCache[key];
 }
@@ -871,7 +899,8 @@ function aiInit(A){
   A.seq = []; A.pend = null; A.chain = 0; A.last = ''; A.dpun = false; A.firstDone = false;
 }
 function runAI(f, o, dt){
-  const c = f.ctrl, A = f.ai, d = Math.abs(o.x - f.x), lv = f.lvl, pf = aiProfile(lv);
+  if(f.boss && !f.rage && f.hp > 0 && f.hp < f.maxhp*BOSS.rageAt){ f.rage = true; addText(f.x, GY - 260, 'RAGE!', COL.red, 26); sfx('charge'); }
+  const c = f.ctrl, A = f.ai, d = Math.abs(o.x - f.x), lv = f.lvl + (f.rage ? BOSS.rageLv : 0), pf = aiProfile(lv);
   if(A.style === undefined) aiInit(A);
   A.open = Math.max(0, A.open - dt);
   let pre = false;                                        // true: 타이밍이 정확해야 하는 공격(가드 풀림 노리기, 회피 직후 반격 등)은 무작위 지연/오프닝 대기를 적용하지 않는다
@@ -910,6 +939,16 @@ function runAI(f, o, dt){
     }
   } else { A.reacting = false; A.did = false; }
 
+  // ②-b (8라운드~, 점점 강하게) '회피 → 카운터' 읽기: 내 펀치가 회피당하면 기억하고(A.dodged), 후딜레이가 끝나는 순간 카운터를 가드/회피로 받는다
+  if(f.state === 'attack'){ if(!A.inAtk){ A.inAtk = true; A.wasDodged = false; } if(o.state === 'dodge') A.wasDodged = true; }
+  else if(A.inAtk){ A.inAtk = false; A.hist = (A.hist || []).concat(A.wasDodged ? 1 : 0).slice(-6); }
+  const habit = A.hist && A.hist.length >= 3 ? A.hist.reduce((a, b) => a + b, 0)/A.hist.length : 0;     // 최근 공격 중 회피당한 비율
+  if(pf.guardBack && o.counter > 0 && f.state === 'idle' && !A.gb){
+    A.gb = true;
+    if(Math.random() < pf.guardBack*(.5 + habit)) { if(o.state === 'attack' && Math.random() < .5) c.act = 'dodge'; else A.hold = .5; }
+  }
+  if(o.counter <= 0) A.gb = false;
+
   // ③ 가드를 내린 순간 공격
   if(A.punishT >= 0){ A.punishT -= dt; if(A.punishT < 0) A.punishWait = .35; }   // 반응 시간이 지나면, 행동 가능해질 때까지 최대 0.35초 기다렸다 공격
   if(A.punishWait > 0){
@@ -929,7 +968,7 @@ function runAI(f, o, dt){
     let use = d <= R('jab') - 4 ? 'jab' : d <= R('straight') - 8 ? 'straight' : null;
     if(use && f.st < fa(use).stamina) use = null;                                        // 스태미나가 모자라면 이 타이밍은 포기
     // 준비 동작이 끝나 주먹이 나가는 순간(= 평균 가드 유지 시간 + 0.03초)이 내가 가드를 내린 직후가 되도록 시작 시점을 계산
-    const realWind = (f.player || f.human) ? fa(use || 'jab').windup : cpuAtk(lv, f.ch, use || 'jab').windup;      // CPU는 스테이지별로 늘어난 준비 동작 길이로 계산한다
+    const realWind = (f.player || f.human) ? fa(use || 'jab').windup : cpuAtk(lv, f.ch, use || 'jab', f.rage).windup;      // CPU는 스테이지별로 늘어난 준비 동작 길이로 계산한다
     if(use && now - A.pgStart >= avg - realWind + .03 + A.jit){ c.act = use; A.fired = true; pre = true; }
   }
 
@@ -937,7 +976,7 @@ function runAI(f, o, dt){
   const late6 = Math.min(10, Math.max(0, lv - 5));       // 스테이지 6~15에 걸쳐 조금씩 더 어려워진다 (15 이후는 고정)
   if(AIX.ext && lv >= 5 && !c.act && f.state === 'idle'){
     if(f.counter > 0 && d <= R('straight') - 6 && Math.random() < dt*(8 + late6*1.5)){ c.act = f.atkCd.straight > 0 ? 'jab' : 'straight'; pre = true; }       // 내가 피했다 → 곧바로 카운터
-    else if(o.state === 'dodge' && o.t > .14 && !A.dpun && d <= R('straight') - 10){ A.dpun = true; if(Math.random() < Math.min(.85, .25 + .06*late6)){ c.act = 'straight'; pre = true; } }   // 상대 회피 끝자락을 노린다
+    else if(o.state === 'dodge' && o.t > .14 && !A.dpun && d <= R('straight') - 10){ A.dpun = true; if(Math.random() < Math.min(.85, .25 + .06*late6 + AIDEEP.readDodge*pf.deep*habit)){ c.act = 'straight'; pre = true; } }   // 상대 회피 끝자락을 노린다 (회피를 자주 하는 상대일수록 더 자주)
   }
   if(o.state !== 'dodge') A.dpun = false;
   if(lv >= 6 && f.state === 'attack' && f.connected && !c.act && A.chain < (lv >= 9 ? 2 : 1) && Math.random() < Math.min(.6, .1 + .05*late6)){
@@ -994,6 +1033,8 @@ function runAI(f, o, dt){
       else A.move = 0;
     }
   }
+  if(c.act && c.act !== 'dodge' && c.act !== 'jab' && c.act !== 'skill' && pf.bait && habit >= .5 && d <= R('jab') + 4 && f.atkCd.jab <= 0 && Math.random() < pf.bait*habit) c.act = 'jab';   // 회피 유도용 잽
+
   // 재사용 대기 중인 공격은 낼 수 없으니 가까우면 기본기(J 슬롯)로 대신하고, 아니면 이번 판단은 넘긴다
   if(c.act && f.atkCd[c.act] > 0) c.act = (f.atkCd.jab === 0 && d <= R('jab') - 4) ? 'jab' : null;
   // 오프닝 대기 / 무작위 지연: 같은 타이밍으로 달려드는 패턴을 없앤다 (정확한 타이밍이 필요한 공격은 제외). 판단한 공격의 약 70%는 잠깐 뜸을 들였다가 나간다
@@ -1027,7 +1068,7 @@ function step(dt){
   if(game.paused || CG.adBusy) return;                 // 일시정지 / 광고 중에는 시간이 멈춘다
   game.t += dt;
   if(game.state === 'ko') game.koT += dt;
-  if(game.state === 'ko' && E.hp <= 0 && P.hp > 0 && game.koT > 3.2){ advanceRun(); if(game.state !== 'ko') return; }   // 이기면 잠시 뒤 다음 상대가 나온다 (버튼/Enter 로 바로 넘어갈 수도 있음)
+  if(game.state === 'ko' && E.hp <= 0 && P.hp > 0 && game.koT > 2.3){ advanceRun(); if(game.state !== 'ko') return; }   // 이기면 잠시 뒤 다음 상대가 걸어 들어온다 (Enter 로 바로 넘어갈 수도 있음)
   game.shake *= Math.pow(.0008, dt);
   game.flash = Math.max(0, game.flash - dt);
 
@@ -1051,9 +1092,14 @@ function step(dt){
 
   if(game.state === 'intro'){
     game.introT += dt; P.bob += dt*5; E.bob += dt*5;
-    if(game.slide) E.x = lerp(1080, 650, easeOut(Math.min(1, game.introT/.8)));
-    if(game.introT > .9 && !game.bell){ game.bell = true; sfx('bell'); }
-    if(game.introT > 1.6){ game.state = 'fight'; game.bell = false; }
+    const quick = !!game.oldE || game.level > 1 && !!game.entry;      // 이어지는 라운드는 짧게 (끊기는 느낌이 없게)
+    if(game.entry){
+      const nx = lerp(game.entry.from, game.entry.to, easeOut(Math.min(1, game.introT/.85)));
+      E.vx = dt > 0 ? (nx - E.x)/dt : 0; E.x = nx;                    // 걸어 들어오는 동작
+      if(game.introT >= .85) E.vx = 0;
+    }
+    if(game.introT > (quick ? .7 : .9) && !game.bell){ game.bell = true; sfx('bell'); }
+    if(game.introT > (quick ? 1.15 : 1.6)){ game.state = 'fight'; game.bell = false; game.oldE = null; E.vx = 0; }
     return;
   }
 
@@ -1594,7 +1640,7 @@ function drawFighter(f){
   ctx.beginPath(); ctx.ellipse(-3, 2, 78*sh0, 7*sh0, 0, 0, Math.PI*2); ctx.fill();    // 스프라이트의 넓은 보폭에 맞춘 폭
 
   // 배경이 밝은 링/조명 위에서도 캐릭터 윤곽이 묻히지 않도록 은은한 어두운 테두리 그림자
-  ctx.shadowColor = 'rgba(0,0,10,.6)'; ctx.shadowBlur = 9;
+  ctx.shadowColor = f.boss ? (f.rage ? 'rgba(255,40,60,.95)' : 'rgba(255,200,80,.8)') : 'rgba(0,0,10,.6)'; ctx.shadowBlur = f.boss ? (f.rage ? 26 + 6*Math.sin(game.t*12) : 18) : 9;   // 보스: 금색 빛, 분노하면 붉게 일렁인다
 
   // 코너 탈출(피벗): 몸을 팽이처럼 돌려 세운다 (가운데에서 가장 얇게 — 이때 방향이 바뀐다). 살짝 떠올랐다 내려앉는다
   if(f.state === 'pivot'){
@@ -1828,6 +1874,10 @@ function draw(){
   } else if(P && E){
     // 그리는 순서: 쓰러진 쪽 → 서 있는 쪽 → 펀치를 내는 쪽 (주먹이 상대 몸에 가려지지 않게 공격하는 캐릭터를 맨 위에)
     const layer = f => f.state === 'ko' ? 0 : (f.state === 'attack' || f.state === 'pivot') ? 2 : 1;     // 피벗으로 돌아 지나가는 쪽도 앞에 보이게
+    if(game.oldE && game.state === 'intro'){                // 쓰러진 상대가 서서히 사라진다
+      const a = Math.max(0, 1 - game.introT/.6);
+      if(a > 0){ ctx.save(); ctx.globalAlpha = a; drawFighter(game.oldE); ctx.restore(); }
+    }
     const order = [P, E].sort((a,b) => layer(a) - layer(b));
     order.forEach(drawFighter);
   }
@@ -1898,8 +1948,8 @@ function draw(){
     drawBar(40, 380, 36, 7, P, false);
     drawBar(W-40-380, 380, 36, 7, E, true);
     txt((game.user || 'YOU') + '  ·  ' + P.cd.name, 40, 20, 14, COL.fg, 'left', 700, 2);
-    txt('CPU  LV ' + game.level + '  ·  ' + E.cd.name, W-40, 20, 14, COL.red, 'right', 700, 2);
-    txt('STAGE ' + game.level, W/2, 22, 13, COL.dim, 'center', 600, 5);
+    txt((E.boss ? (E.rage ? 'BOSS · RAGE' : 'BOSS') : 'CPU  LV ' + game.level) + '  ·  ' + E.cd.name, W-40, 20, 14, E.boss ? COL.gold : COL.red, 'right', 700, 2);
+    txt('ROUND ' + game.level, W/2, 22, 13, COL.dim, 'center', 600, 5);
     if(P.cg >= 100) txt('COUNTER READY — ' + keyLabel('KeyU'), 40, 86, 13, Math.sin(game.t*14) > 0 ? '#fff' : COL.gold, 'left', 700, 2);
     if(E.cg >= 100) txt('COUNTER READY', W-40, 86, 13, COL.red, 'right', 700, 2);
     if(P.combo >= 2) txt('COMBO x' + P.combo, 40, 108, 16, COL.gold, 'left', 700, 2);
@@ -1909,21 +1959,22 @@ function draw(){
   // 메인 화면의 버튼/계정 정보는 HTML(#menu)이 그린다. 배경 이미지가 없을 때만 제목을 직접 그린다
   if(game.state === 'title' && !BG.canvas) txt('UPBOX', W/2, 110, 70, COL.fg, 'center', 200, 18);
   if(game.state === 'intro'){
-    const s = game.introT < .9 ? 'STAGE ' + game.level : 'FIGHT!';
-    txt(s, W/2, 170, game.introT < .9 ? 54 : 74, game.introT < .9 ? COL.fg : COL.gold, 'center', 300, 12);
+    const cut = game.oldE || (game.level > 1 && game.entry) ? .7 : .9;
+    const s = game.introT < cut ? (E.boss ? 'BOSS ROUND ' : 'ROUND ') + game.level : 'FIGHT!';
+    txt(s, W/2, 170, game.introT < cut ? (E.boss ? 50 : 54) : 74, game.introT < cut ? (E.boss ? COL.gold : COL.fg) : COL.gold, 'center', 300, 12);
   }
   if(game.state === 'ko' && game.koT > .15){
     const u = Math.min(1, (game.koT-.15)/.2);
     txt('K.O.', W/2, 160, 110*(1.3 - .3*easeOut(u)), COL.fg, 'center', 800, 8);
-    if(game.koT > 1.8){                      // 결과 (버튼은 HTML #over)
+    if(game.koT > (E.hp <= 0 ? 1.0 : 1.8)){   // 결과 (패배 버튼은 HTML #over)
       const win = E.hp <= 0;
-      txt(win ? 'YOU WIN' : 'YOU LOSE', W/2, 236, 22, win ? COL.gold : COL.red, 'center', 600, 8);
+      txt(win ? (E.boss ? 'BOSS DOWN!' : 'ROUND ' + game.level + ' CLEAR') : 'YOU LOSE', W/2, 236, 22, win ? COL.gold : COL.red, 'center', 600, 8);
       let info = '', col = COL.gold;
       if(win && game.saveError){ info = game.saveError === 'session' ? 'Record not saved — please reload the game' : 'Could not reach the server — the record will be saved with your next win'; col = COL.red; }
-      else if(win && game.newBest) info = 'NEW BEST  STAGE ' + game.level + (game.rank ? '   ·   RANK #' + game.rank : '');
+      else if(win && game.newBest) info = 'NEW BEST  ROUND ' + game.level + (game.rank ? '   ·   RANK #' + game.rank : '');
       if(info) txt(info, W/2, 266, 14, col, 'center', 700, 2);
-      if(win) txt('HP ' + Math.round(P.hp) + ' → ' + Math.round(Math.min(P.maxhp, P.hp + RUN.heal(game.level))) + '   ·   the next opponent is coming', W/2, 290, 12, '#aab0c4', 'center', 500, 2);
-      else txt('Continue from STAGE ' + game.level, W/2, 290, 12, '#aab0c4', 'center', 500, 2);
+      if(win) txt('HP ' + Math.round(P.hp) + ' → ' + Math.round(Math.min(P.maxhp, P.hp + RUN.heal(game.level))) + '   ·   next: ROUND ' + Math.min(99, game.level + 1) + '   ·   ENTER to skip', W/2, 290, 12, '#aab0c4', 'center', 500, 2);
+      else txt('Continue from ROUND ' + game.level, W/2, 290, 12, '#aab0c4', 'center', 500, 2);
     }
   }
   if(game.state !== 'auth' && game.state !== 'ranking' && game.state !== 'charsel' && game.state !== 'stagesel' && !titleArt) drawKeys();
@@ -1961,7 +2012,7 @@ addEventListener('keydown', e => {
     if(ACTION_KEYS[e.code]) pushInput(ACTION_KEYS[e.code]);
     else if(GUARD_KEYS.includes(e.code)) pushInput('guard');
   }
-  if(game.state === 'ko' && game.koT > 1.8){
+  if(game.state === 'ko' && game.koT > (P.hp > 0 ? 1.0 : 1.8)){
     if(e.code === 'Enter' || e.code === 'NumpadEnter'){ e.preventDefault(); resultAction('main'); }
     else if(e.code === 'KeyV') resultAction('ad');
   }
@@ -2024,14 +2075,14 @@ function toast(t){ const e = $('toast'); e.textContent = t; e.classList.add('on'
 function showMenu(){
   $('menuUser').textContent = game.user || '';
   $('menuChar').textContent = '● ' + CHARS[game.char].name;
-  $('menuBest').textContent = 'BEST STAGE ' + (game.best || 0);
+  $('menuBest').textContent = 'BEST ROUND ' + (game.best || 0);
   const login = canLogin(), chip = $('menuChip');
   chip.classList.toggle('static', !login);
   chip.textContent = login ? 'LOG IN WITH CRAZYGAMES' : '👤 ' + (game.user || '');
   chip.title = login ? 'Log in to keep your progress on every device and join the ranking' : '';
   const nx = Math.min(99, (game.best || 0) + 1);
-  $('continueBtn').hidden = !((game.best || 0) > 0); $('continueBtn').textContent = 'CONTINUE  ·  STAGE ' + nx + '  (HP ' + RUN.cont + ')';
-  $('privacy').textContent = game.token ? 'Your player name and best stage are stored on the UPBOX server for the ranking.' : '';
+  $('continueBtn').hidden = !((game.best || 0) > 0); $('continueBtn').textContent = 'CONTINUE  ·  ROUND ' + nx + '  (HP ' + RUN.cont + ')';
+  $('privacy').textContent = game.token ? 'Your player name and best round are stored on the UPBOX server for the ranking.' : '';
   $('menu').classList.remove('hidden');
   if(document.activeElement && document.activeElement !== document.body) document.activeElement.blur();   // Enter 가 마지막에 누른 버튼이 아니라 PLAY 로 가게
   refreshMenuRank();
@@ -2039,12 +2090,12 @@ function showMenu(){
 // 메인 화면의 내 순위 표시 (서버에서 가져온다. 실패해도 메인 화면은 그대로 쓸 수 있다)
 async function refreshMenuRank(){
   const who = game.user;
-  if(!game.token){ if(canLogin()) $('menuBest').textContent = 'BEST STAGE ' + (game.best || 0) + ' · GUEST'; return; }
+  if(!game.token){ if(canLogin()) $('menuBest').textContent = 'BEST ROUND ' + (game.best || 0) + ' · GUEST'; return; }
   try{
     const r = await api('/api/ranking', { token: game.token, limit: 0 });
     if(game.state !== 'title' || game.user !== who || !r.me) return;       // 그 사이 화면/계정이 바뀌었으면 무시
     game.best = Math.max(game.best || 0, r.me.best);
-    $('menuBest').textContent = 'BEST STAGE ' + r.me.best + (r.me.rank ? ' · RANK #' + r.me.rank + '/' + r.total : ' · UNRANKED');
+    $('menuBest').textContent = 'BEST ROUND ' + r.me.best + (r.me.rank ? ' · RANK #' + r.me.rank + '/' + r.total : ' · UNRANKED');
   }catch(e){}
 }
 $('menuChip').addEventListener('click', async () => {                  // 'Login with CrazyGames' (게스트에게만 보인다)
@@ -2067,22 +2118,22 @@ function renderRank(r){
     li.className = (it.rank <= 3 ? 'r' + it.rank : '') + (it.me ? ' me' : '');          // it.me: 서버가 표시 (이름이 같은 사람이 있어도 내 줄만)
     if(!RANK.first && RANK.prev.get(it.id) !== sig) li.classList.add('flash');   // 새로 들어왔거나 순위/기록이 바뀐 줄만 반짝
     const no = document.createElement('span'), nm = document.createElement('span'), st = document.createElement('span');
-    no.className = 'no'; no.textContent = it.rank; nm.className = 'nm'; nm.textContent = it.id; st.className = 'st'; st.textContent = 'STAGE ' + it.best;
+    no.className = 'no'; no.textContent = it.rank; nm.className = 'nm'; nm.textContent = it.id; st.className = 'st'; st.textContent = 'ROUND ' + it.best;
     li.append(no, nm, st); ol.append(li);
   }
   ol.scrollTop = keep;
   RANK.prev = next; RANK.first = false;
   const empty = $('rankEmpty'); empty.hidden = r.list.length > 0; ol.hidden = r.list.length === 0;
-  if(!r.list.length) empty.innerHTML = 'No one is on the board yet.<br>Clear a stage to be the first!';
+  if(!r.list.length) empty.innerHTML = 'No one is on the board yet.<br>Clear a round to be the first!';
   const me = r.me, mine = $('rankMine');
   mine.textContent = '';
   if(me && me.rank){
     const a = document.createElement('div'), b = document.createElement('b');
     b.textContent = me.id; a.append('YOUR RANK  ', Object.assign(document.createElement('span'), { className:'gold', textContent:'#' + me.rank }), ' / ' + r.total);
-    const c = document.createElement('div'); c.textContent = 'BEST STAGE ' + me.best;
+    const c = document.createElement('div'); c.textContent = 'BEST ROUND ' + me.best;
     mine.append(a, c);
   } else {
-    mine.textContent = !game.token ? (canLogin() ? 'Log in with CrazyGames to join the ranking.' : 'Playing offline — your best stage is saved on this device.') : 'Not ranked yet. Clear stage 1 to get on the board.';
+    mine.textContent = !game.token ? (canLogin() ? 'Log in with CrazyGames to join the ranking.' : 'Playing offline — your best round is saved on this device.') : 'Not ranked yet. Clear round 1 to get on the board.';
   }
 }
 async function pollRank(force){
@@ -2162,7 +2213,7 @@ function showResult(){
   if(win) btn('NEXT OPPONENT', 'ENTER', () => resultAction('main'));
   else {
     RES.offerAd = adOffer();
-    btn('CONTINUE · HP ' + RUN.cont, 'ENTER', () => resultAction('main'));
+    btn('CONTINUE · HP ' + contHp(game.level), 'ENTER', () => resultAction('main'));
     if(RES.offerAd) btn('▶ WATCH AD · FULL HP', keyLabel('KeyV'), () => resultAction('ad')).dataset.ad = '1';      // 광고 버튼과 광고 없는 버튼은 같은 크기·모양
   }
   btn('MAIN MENU', keyLabel('KeyM'), () => toTitle());
@@ -2171,7 +2222,7 @@ function showResult(){
 }
 function hideResult(){ RES.shown = false; $('over').classList.add('hidden'); $('overBtns').textContent = ''; $('overNote').textContent = ''; }
 function resultAction(kind){
-  if(game.state !== 'ko' || CG.adBusy || game.adWait || game.koT < 1.8) return;
+  if(game.state !== 'ko' || CG.adBusy || game.adWait || game.koT < (P.hp > 0 ? 1.0 : 1.8)) return;
   if(E.hp <= 0 && P.hp > 0){ if(kind === 'main') advanceRun(); return; }
   if(kind === 'ad'){
     if(!RES.offerAd) return;
@@ -2181,7 +2232,7 @@ function resultAction(kind){
       else {                                            // 광고가 없으면 보상도 없다 (광고 없는 이어하기는 그대로 쓸 수 있다)
         RES.offerAd = false;
         [...$('overBtns').children].forEach(b => { if(b.dataset.ad) b.remove(); });
-        $('overNote').textContent = err === 'adblock' ? 'Ad rewards are unavailable while an ad blocker is on.' : 'No ad is available right now — you can still continue with HP ' + RUN.cont + '.';
+        $('overNote').textContent = err === 'adblock' ? 'Ad rewards are unavailable while an ad blocker is on.' : 'No ad is available right now — you can still continue with HP ' + contHp(game.level) + '.';
       }
     });
     return;
@@ -2303,7 +2354,7 @@ function frame(now){
   const dt = Math.min(.033, (now - last)/1000); last = now;
   try{
     step(dt); draw();
-    if(game.state === 'ko' && game.koT > 1.8 && !RES.shown) showResult();
+    if(game.state === 'ko' && game.koT > 1.8 && !RES.shown && P.hp <= 0) showResult();     // 결과 버튼은 졌을 때만 (이기면 그대로 다음 라운드)
     cgPlaying((game.state === 'intro' || game.state === 'fight') && !game.paused && !CG.adBusy);     // CrazyGames: 실제로 싸우는 동안만 '플레이 중'
   }catch(e){ if(!frame.err || now - frame.err > 5000){ frame.err = now; console.error('frame error', e && e.stack || e); } }
 }

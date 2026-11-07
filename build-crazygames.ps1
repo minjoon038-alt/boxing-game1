@@ -14,6 +14,10 @@ $assets = @('title-bg.jpg', 'ring-bg.webp', 'glove-blue.png', 'glove-red.png',
 foreach ($a in $assets) { Copy-Item (Join-Path $root $a) (Join-Path $out $a) }
 
 if (Test-Path $zip) { Remove-Item -Force $zip }
-Compress-Archive -Path (Join-Path $out '*') -DestinationPath $zip
+# OneDrive may briefly lock freshly copied files while it syncs them: retry a few times
+for ($try = 1; $try -le 5; $try++) {
+  try { Compress-Archive -Path (Join-Path $out '*') -DestinationPath $zip -Force -ErrorAction Stop; break }
+  catch { if ($try -eq 5) { throw }; Start-Sleep -Seconds 3 }
+}
 $size = (Get-ChildItem $out | Measure-Object Length -Sum).Sum
 Write-Host ("Built {0} files, {1:N0} KB -> {2}" -f (Get-ChildItem $out).Count, ($size / 1KB), $zip)
